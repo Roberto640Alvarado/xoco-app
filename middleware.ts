@@ -1,39 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
+import { AUTH_COOKIE_NAME, decodeToken } from "@/lib/auth/decode-token";
 
-const COOKIE_NAME = "xoco_token";
 const AUTH_ROUTES = ["/login"];
 
-type Role = "SUPER_ADMIN" | "FINANZAS";
+// Rutas reales de la app (fuera de /dashboard, que ya se cubre por
+// prefijo). Cualquier otra ruta que no matchee ni esto ni /dashboard/* se
+// considera "URL errónea" para efectos de a dónde mandar al usuario: sin
+// sesión, a login (nunca ve el 404 — no hay nada que "no encontrar" si ni
+// siquiera puede entrar); con sesión, sí se le muestra app/not-found.tsx.
+const KNOWN_ROUTES = ["/", "/login"];
 
-interface DecodedToken {
-  role?: Role;
-  exp?: number;
-}
-
-/**
- * Decodifica el payload del JWT sin verificar la firma. Sirve únicamente
- * para decisiones de UX en el edge (a qué ruta redirigir); la autorización
- * real siempre la valida xoco-api con la firma completa vía el header
- * Authorization en cada request (JwtAuthGuard + RolesGuard).
- */
-function decodeToken(token: string): DecodedToken | null {
-  try {
-    const payload = token.split(".")[1];
-    const json = Buffer.from(payload, "base64url").toString("utf-8");
-    const decoded = JSON.parse(json) as DecodedToken;
-
-    if (decoded.exp && decoded.exp * 1000 < Date.now()) {
-      return null;
-    }
-
-    return decoded;
-  } catch {
-    return null;
-  }
+function isKnownRoute(pathname: string): boolean {
+  return KNOWN_ROUTES.includes(pathname) || pathname.startsWith("/dashboard");
 }
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get(COOKIE_NAME)?.value;
+  const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
   const decoded = token ? decodeToken(token) : null;
   const { pathname } = request.nextUrl;
 
@@ -43,6 +25,14 @@ export function middleware(request: NextRequest) {
   // configuración de Odoo) — FINANZAS solo ve ventas/reportes dentro de
   // /dashboard (ver CLAUDE.md, "Autorización").
   const isAdminRoute = pathname.startsWith("/dashboard/admin");
+
+  // Sin sesión y la URL ni siquiera es una ruta conocida: a login
+  // directamente, nunca al 404 — no hay registro público, así que no tiene
+  // sentido dejarle "explorar" URLs sueltas antes de autenticarse.
+  if (!decoded?.role && !isKnownRoute(pathname)) {
+    const loginUrl = new URL("/login", request.url);
+    return NextResponse.redirect(loginUrl);
+  }
 
   // Ya con sesión activa: no tiene sentido ver login de nuevo.
   if (isAuthRoute && decoded?.role) {
@@ -68,5 +58,16 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/login", "/dashboard/:path*"],
+  // Antes solo cubría /login y /dashboard/:path* — ahora cubre todo menos
+  // assets estáticos y las rutas internas de Next/API, para poder
+  // interceptar URLs desconocidas antes de que lleguen al 404 (ver
+  // isKnownRoute arriba). api/ queda afuera a propósito: incluye
+  // /api/auth/session, la ruta que la propia app usa para leer/escribir la
+  // cookie de sesión. También se excluyen extensiones de archivo estático
+  // (svg, png, css, js, ...) — sin esto, un asset público (ej. un ícono
+  // referenciado desde una página pública) quedaría atrapado por el
+  // redirect a /login cuando no hay sesión, rompiendo su carga.
+  matcher: [
+    "/((?!_next/static|_next/image|favicon\.ico|api/|.*\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|txt|xml|json|map|woff|woff2)$).*)",
+  ],
 };
