@@ -149,20 +149,6 @@ export function TrafficGoalsTable() {
         </div>
       </div>
 
-      <div className="max-w-xs">
-        <StatTile
-          label="Cumplimiento de meta a la fecha"
-          value={formatPercent(totals.reachPercent)}
-          isLoading={summary.isLoading}
-        />
-      </div>
-
-      <StoreReachChart
-        items={items}
-        isLoading={summary.isLoading}
-        emptyLabel="Sin tiendas activas."
-      />
-
       <div className="rounded-xl border border-border bg-card p-4">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[860px] border-collapse">
@@ -213,6 +199,20 @@ export function TrafficGoalsTable() {
           </table>
         </div>
       </div>
+
+      <div className="max-w-xs">
+        <StatTile
+          label="Cumplimiento de meta a la fecha"
+          value={formatPercent(totals.reachPercent)}
+          isLoading={summary.isLoading}
+        />
+      </div>
+
+      <StoreReachChart
+        items={items}
+        isLoading={summary.isLoading}
+        emptyLabel="Sin tiendas activas."
+      />
 
       <GrowthPercentModal
         open={isModalOpen}
