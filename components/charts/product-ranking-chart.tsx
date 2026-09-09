@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { formatCurrency, formatInteger } from "@/lib/format";
 import type { TopProduct } from "@/features/sales/types/sales.types";
+import { ChartSkeleton } from "@/components/ui/chart-skeleton";
 
 function ProductTooltip({
   active,
@@ -71,9 +72,7 @@ export function ProductRankingChart({
       </div>
 
       {isLoading ? (
-        <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-          Cargando...
-        </div>
+        <ChartSkeleton height={256} />
       ) : data.length === 0 ? (
         <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
           {emptyLabel}

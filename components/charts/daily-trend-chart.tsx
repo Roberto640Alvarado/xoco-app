@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/table";
 import { formatLongDate, formatShortDate } from "@/lib/format";
 import type { DailySalesPoint } from "@/features/sales/types/sales.types";
+import { ChartSkeleton } from "@/components/ui/chart-skeleton";
 
 interface DailyTrendChartProps {
   data: DailySalesPoint[];
@@ -85,9 +86,7 @@ export function DailyTrendChart({
       </div>
 
       {isLoading ? (
-        <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-          Cargando...
-        </div>
+        <ChartSkeleton height={256} />
       ) : !hasData ? (
         <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
           {emptyLabel}

@@ -128,7 +128,7 @@ export function UsersTable() {
           <TableRow>
             <TableHead>Usuario</TableHead>
             <TableHead>Rol</TableHead>
-            <TableHead>Creado</TableHead>
+            <TableHead className="hidden md:table-cell">Creado</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
@@ -168,7 +168,7 @@ export function UsersTable() {
                   <TableCell>
                     <RolePill role={user.role} />
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell className="hidden text-sm text-muted-foreground md:table-cell">
                     {formatLongDate(user.createdAt.slice(0, 10))}
                   </TableCell>
                   <TableCell>
@@ -183,14 +183,26 @@ export function UsersTable() {
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1.5">
-                      <Button type="button" variant="outline" size="sm" onClick={() => setEditTarget(user)}>
+                    <div className="flex flex-wrap items-center justify-end gap-1.5">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditTarget(user)}
+                        aria-label={`Editar a ${user.email}`}
+                      >
                         <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                        Editar
+                        <span className="hidden sm:inline">Editar</span>
                       </Button>
-                      <Button type="button" variant="outline" size="sm" onClick={() => setPasswordTarget(user)}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPasswordTarget(user)}
+                        aria-label={`Cambiar contraseña de ${user.email}`}
+                      >
                         <KeyRound className="h-3.5 w-3.5" aria-hidden="true" />
-                        Cambiar contraseña
+                        <span className="hidden sm:inline">Cambiar contraseña</span>
                       </Button>
                     </div>
                   </TableCell>
