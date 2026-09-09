@@ -50,8 +50,9 @@ function PercentInput({
         id={id}
         type="number"
         step="0.1"
+        min="0"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => onChange(e.target.value.replace("-", ""))}
         className="pr-7 text-right tabular-nums"
       />
       <span className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-sm text-muted-foreground">
@@ -125,13 +126,16 @@ export function TicketGoalPercentModal({
     );
   }
 
+  // No se aceptan % negativos en este modal — el crecimiento del ticket
+  // promedio se define siempre como un valor positivo (0 incluido).
+  function isValidPercent(value: string | undefined): boolean {
+    return value !== undefined && value !== "" && !Number.isNaN(Number(value)) && Number(value) >= 0;
+  }
+
   const isValid =
     mode === "same"
-      ? sameValue !== "" && !Number.isNaN(Number(sameValue))
-      : items.every((item) => {
-          const value = perStoreValues[item.posConfigId];
-          return value !== undefined && value !== "" && !Number.isNaN(Number(value));
-        });
+      ? isValidPercent(sameValue)
+      : items.every((item) => isValidPercent(perStoreValues[item.posConfigId]));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -150,8 +154,7 @@ export function TicketGoalPercentModal({
           </div>
           <DialogDescription className="pt-1 leading-relaxed">
             La <span className="font-medium text-foreground">meta</span> de ticket promedio de cada
-            tienda se calcula sobre la meta del mes anterior, más el porcentaje que definas aquí. Es un
-            % propio de este módulo, independiente de Tráfico de tiendas y Venta Mensual.
+            tienda se calcula sobre la meta del mes anterior, más el porcentaje que definas aquí.
           </DialogDescription>
         </DialogHeader>
 
