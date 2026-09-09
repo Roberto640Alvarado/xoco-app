@@ -1,7 +1,15 @@
 import Link from "next/link";
-import { KeyRound, Users } from "lucide-react";
+import { KeyRound, Users, type LucideIcon } from "lucide-react";
 
-const ADMIN_SECTIONS = [
+interface AdminSection {
+  href: string;
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  disabled?: boolean;
+}
+
+const ADMIN_SECTIONS: AdminSection[] = [
   {
     href: "/dashboard/admin/odoo",
     icon: KeyRound,
@@ -9,11 +17,10 @@ const ADMIN_SECTIONS = [
     description: "API key y duración de la conexión con Odoo.",
   },
   {
-    href: "/dashboard/admin",
+    href: "/dashboard/admin/users",
     icon: Users,
     title: "Usuarios",
-    description: "Próximamente: alta de cuentas SUPER_ADMIN / FINANZAS.",
-    disabled: true,
+    description: "Alta de cuentas, rol y activo/inactivo — SUPER_ADMIN / FINANZAS.",
   },
 ];
 
