@@ -1,12 +1,13 @@
 "use client";
 
-import { CalendarDays, DollarSign, LayoutDashboard, Package, Settings, TrendingUp, Users } from "lucide-react";
+import { CalendarClock, CalendarDays, DollarSign, LayoutDashboard, Package, Settings, TrendingUp, Users } from "lucide-react";
 import { DashboardShell, type DashboardNavItem } from "@/components/layout/dashboard-shell";
 
 const NAV_ITEMS: DashboardNavItem[] = [
   { label: "Tráfico de tiendas", href: "/dashboard/trafico-tiendas", icon: TrendingUp },
   { label: "Tráfico Diario", href: "/dashboard/trafico-diario", icon: CalendarDays },
   { label: "Venta Mensual", href: "/dashboard/venta-mensual", icon: DollarSign },
+  { label: "Venta Diaria", href: "/dashboard/venta-diaria", icon: CalendarClock },
   { label: "Ventas", href: "/dashboard", icon: LayoutDashboard },
   { label: "Visitas", href: "/dashboard/visitas", icon: Users },
   { label: "Productos", href: "/dashboard/productos", icon: Package },
