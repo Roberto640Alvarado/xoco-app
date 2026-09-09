@@ -20,11 +20,6 @@ const ADMIN_SECTIONS = [
 export default function AdminIndexPage() {
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-muted-foreground">
-        Exclusivo de SUPER_ADMIN — el middleware redirige a /dashboard a cualquier
-        sesión FINANZAS que intente entrar aquí.
-      </p>
-
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {ADMIN_SECTIONS.map((section) => (
           <Link
