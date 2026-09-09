@@ -3,8 +3,10 @@
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { StatTile } from "@/components/ui/stat-tile";
 import { useGoalsSummary } from "../hooks/use-goals-summary";
 import { GrowthPercentModal } from "./growth-percent-modal";
+import { StoreReachChart } from "./store-reach-chart";
 import { formatInteger, formatPercent } from "@/lib/format";
 import type { GoalSummaryItem } from "../types/goals.types";
 
@@ -146,6 +148,20 @@ export function TrafficGoalsTable() {
           </Button>
         </div>
       </div>
+
+      <div className="max-w-xs">
+        <StatTile
+          label="Cumplimiento de meta a la fecha"
+          value={formatPercent(totals.reachPercent)}
+          isLoading={summary.isLoading}
+        />
+      </div>
+
+      <StoreReachChart
+        items={items}
+        isLoading={summary.isLoading}
+        emptyLabel="Sin tiendas activas."
+      />
 
       <div className="rounded-xl border border-border bg-card p-4">
         <div className="overflow-x-auto">
