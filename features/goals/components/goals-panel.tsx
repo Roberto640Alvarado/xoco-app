@@ -168,6 +168,12 @@ export function GoalsPanel() {
                   Cargando...
                 </td>
               </tr>
+            ) : summary.isError ? (
+              <tr>
+                <td colSpan={6} className="py-4 text-center text-sm text-destructive">
+                  No se pudo cargar el resumen de metas{summary.error?.message ? `: ${summary.error.message}` : "."}
+                </td>
+              </tr>
             ) : summary.data && summary.data.length > 0 ? (
               summary.data.map((item) => (
                 <GoalRow
