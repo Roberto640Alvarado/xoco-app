@@ -7,6 +7,7 @@ import { Loader2, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import { useLogin } from "@/features/auth/hooks/use-login";
 import {
   loginSchema,
@@ -83,10 +84,9 @@ function LoginForm() {
             control={control}
             name="password"
             render={({ field }) => (
-              <Input
+              <PasswordInput
                 {...field}
                 id="password"
-                type="password"
                 placeholder="••••••••"
                 autoComplete="current-password"
                 aria-invalid={!!errors.password}
@@ -112,11 +112,6 @@ function LoginForm() {
           )}
         </Button>
       </form>
-
-      <p className="text-center text-xs text-muted-foreground">
-        Acceso exclusivo para personal de Xocolatísimo (SUPER_ADMIN / FINANZAS).
-        No hay registro público — tu cuenta la crea un administrador.
-      </p>
     </div>
   );
 }
