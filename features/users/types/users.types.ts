@@ -16,3 +16,8 @@ export interface CreateUserPayload {
   password: string;
   confirmPassword: string;
 }
+
+export interface SetUserPasswordPayload {
+  password: string;
+  confirmPassword: string;
+}

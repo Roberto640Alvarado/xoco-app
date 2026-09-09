@@ -2,10 +2,11 @@
 
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateUser } from "../hooks/use-create-user";
 import { createUserSchema, type CreateUserFormValues } from "../schemas/create-user.schema";
@@ -52,12 +53,19 @@ export function CreateUserForm() {
   const errorMessage = (createUser.error as ApiError | null)?.message;
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <h2 className="text-sm font-medium text-foreground">Agregar usuario</h2>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Crea la cuenta con la contraseña que definas aquí — el usuario ya puede iniciar sesión con ella de
-        inmediato.
-      </p>
+    <div className="rounded-xl border border-border bg-card p-5">
+      <div className="flex items-start gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <UserPlus className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <div className="pt-0.5">
+          <h2 className="text-sm font-medium text-foreground">Agregar usuario</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Crea la cuenta con la contraseña que definas aquí — el usuario ya puede iniciar sesión con ella de
+            inmediato.
+          </p>
+        </div>
+      </div>
 
       {createUser.isSuccess && (
         <div className="mt-3 flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-sm text-primary">
@@ -124,9 +132,7 @@ export function CreateUserForm() {
             <Controller
               control={control}
               name="password"
-              render={({ field }) => (
-                <Input {...field} id="password" type="password" autoComplete="new-password" />
-              )}
+              render={({ field }) => <PasswordInput {...field} id="password" autoComplete="new-password" />}
             />
             {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
           </div>
@@ -137,7 +143,7 @@ export function CreateUserForm() {
               control={control}
               name="confirmPassword"
               render={({ field }) => (
-                <Input {...field} id="confirmPassword" type="password" autoComplete="new-password" />
+                <PasswordInput {...field} id="confirmPassword" autoComplete="new-password" />
               )}
             />
             {errors.confirmPassword && (
