@@ -3,9 +3,13 @@ export interface GoalSummaryItem {
   storeName: string;
   year: number;
   month: number;
+  growthPercent: number | null;
+  previousMonthActualOrders: number;
   targetOrders: number | null;
   actualOrders: number;
   reachPercent: number | null;
+  missingOrders: number | null;
+  dailyNeededOrders: number | null;
   isCurrentMonth: boolean;
   daysElapsed: number;
   daysInMonth: number;
@@ -18,13 +22,17 @@ export interface StoreGoal {
   posConfigId: number;
   year: number;
   month: number;
-  targetOrders: number;
+  growthPercent: number;
   updatedAt: string;
 }
 
-export interface UpsertGoalPayload {
+export interface GoalEntry {
   posConfigId: number;
+  growthPercent: number;
+}
+
+export interface UpsertGoalsBulkPayload {
   year: number;
   month: number;
-  targetOrders: number;
+  entries: GoalEntry[];
 }

@@ -1,12 +1,13 @@
 "use client";
 
-import { LayoutDashboard, Package, Settings, Users } from "lucide-react";
+import { LayoutDashboard, Package, Settings, TrendingUp, Users } from "lucide-react";
 import { DashboardShell, type DashboardNavItem } from "@/components/layout/dashboard-shell";
 
 const NAV_ITEMS: DashboardNavItem[] = [
   { label: "Ventas", href: "/dashboard", icon: LayoutDashboard },
   { label: "Visitas", href: "/dashboard/visitas", icon: Users },
   { label: "Productos", href: "/dashboard/productos", icon: Package },
+  { label: "Tráfico de tiendas", href: "/dashboard/trafico-tiendas", icon: TrendingUp },
   { label: "Administración", href: "/dashboard/admin", icon: Settings, roles: ["SUPER_ADMIN"] },
 ];
 
