@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { TableSkeletonRows } from "@/components/ui/table-skeleton";
 import { formatCurrency, formatShortDate } from "@/lib/format";
 import type { DailySalesPoint } from "@/features/sales/types/sales.types";
 
@@ -45,11 +46,7 @@ export function DailySalesTable({ title, data, isLoading, isError, errorMessage 
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={2} className="text-center text-muted-foreground">
-                  Cargando...
-                </TableCell>
-              </TableRow>
+              <TableSkeletonRows rows={6} columns={2} />
             ) : isError ? (
               <TableRow>
                 <TableCell colSpan={2} className="text-center text-destructive">

@@ -3,6 +3,7 @@
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatCurrency } from "@/lib/format";
 import type { TicketGoalSummaryItem } from "../types/ticket-goals.types";
+import { ChartSkeleton } from "@/components/ui/chart-skeleton";
 
 // Definido fuera del componente — mismo motivo que el resto de tooltips
 // de la app (recharts clona este elemento inyectando active/payload).
@@ -48,7 +49,7 @@ export function TicketReachChart({ items, isLoading, emptyLabel }: TicketReachCh
       <p className="mt-0.5 text-xs text-muted-foreground">Ticket promedio a la fecha vs. meta del mes</p>
 
       {isLoading ? (
-        <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">Cargando...</div>
+        <ChartSkeleton height={256} />
       ) : !hasData ? (
         <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">{emptyLabel}</div>
       ) : (

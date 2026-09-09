@@ -10,6 +10,7 @@ import { SalesGoalPercentModal } from "./sales-goal-percent-modal";
 import { SalesReachChart } from "./sales-reach-chart";
 import { formatCurrency, formatPercent } from "@/lib/format";
 import type { SalesGoalSummaryItem } from "../types/sales-goals.types";
+import { TableSkeletonRows } from "@/components/ui/table-skeleton";
 
 const EMPTY_ITEMS: SalesGoalSummaryItem[] = [];
 
@@ -125,11 +126,7 @@ export function MonthlySalesTable() {
             </thead>
             <tbody>
               {summary.isLoading ? (
-                <tr>
-                  <td colSpan={5} className="py-4 text-center text-sm text-muted-foreground">
-                    Cargando...
-                  </td>
-                </tr>
+                <TableSkeletonRows rows={4} columns={5} />
               ) : summary.isError ? (
                 <tr>
                   <td colSpan={5} className="py-4 text-center text-sm text-destructive">

@@ -11,6 +11,7 @@ import { TicketGoalPercentModal } from "./ticket-goal-percent-modal";
 import { TicketReachChart } from "./ticket-reach-chart";
 import { formatCurrency, formatPercent } from "@/lib/format";
 import type { TicketGoalSummaryItem } from "../types/ticket-goals.types";
+import { TableSkeletonRows } from "@/components/ui/table-skeleton";
 
 const EMPTY_ITEMS: TicketGoalSummaryItem[] = [];
 
@@ -129,11 +130,7 @@ export function AverageTicketTable() {
             </thead>
             <tbody>
               {summary.isLoading ? (
-                <tr>
-                  <td colSpan={4} className="py-4 text-center text-sm text-muted-foreground">
-                    Cargando...
-                  </td>
-                </tr>
+                <TableSkeletonRows rows={4} columns={4} />
               ) : summary.isError ? (
                 <tr>
                   <td colSpan={4} className="py-4 text-center text-sm text-destructive">

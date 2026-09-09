@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { formatCurrency, formatCurrencyCompact, formatLongDate, formatShortDate } from "@/lib/format";
 import type { StoreDailyRevenueSeries } from "../types/venta-diaria.types";
+import { ChartSkeleton } from "@/components/ui/chart-skeleton";
 
 const LINE_COLORS = [
   "var(--color-chart-1)",
@@ -92,7 +93,7 @@ export function StoreDailySalesChart({ series, isLoading, monthLabel }: StoreDai
       <p className="mt-0.5 text-xs capitalize text-muted-foreground">{monthLabel}</p>
 
       {isLoading ? (
-        <div className="flex h-72 items-center justify-center text-sm text-muted-foreground">Cargando...</div>
+        <ChartSkeleton height={288} />
       ) : !hasData ? (
         <div className="flex h-72 items-center justify-center text-sm text-muted-foreground">
           Sin venta en el mes seleccionado.

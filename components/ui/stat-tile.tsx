@@ -1,3 +1,5 @@
+import { Skeleton } from "./skeleton";
+
 interface StatTileProps {
   label: string;
   value: string;
@@ -10,7 +12,11 @@ export function StatTile({ label, value, isLoading }: StatTileProps) {
   return (
     <div className="rounded-xl border border-border bg-card p-4">
       <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-foreground">{isLoading ? "—" : value}</p>
+      {isLoading ? (
+        <Skeleton className="mt-2 h-7 w-20" />
+      ) : (
+        <p className="mt-1 text-2xl font-semibold text-foreground">{value}</p>
+      )}
     </div>
   );
 }

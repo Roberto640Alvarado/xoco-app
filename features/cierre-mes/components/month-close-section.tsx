@@ -3,6 +3,7 @@
 import { cn } from "cn";
 import { formatPercent } from "@/lib/format";
 import type { MonthCloseSection } from "../lib/aggregate";
+import { TableSkeletonRows } from "@/components/ui/table-skeleton";
 
 interface MonthCloseSectionTableProps {
   title: string;
@@ -49,11 +50,7 @@ export function MonthCloseSectionTable({
           </thead>
           <tbody>
             {isLoading ? (
-              <tr>
-                <td colSpan={5} className="py-4 text-center text-sm text-muted-foreground">
-                  Cargando...
-                </td>
-              </tr>
+              <TableSkeletonRows rows={1} columns={5} />
             ) : isError ? (
               <tr>
                 <td colSpan={5} className="py-4 text-center text-sm text-destructive">

@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { formatInteger, formatLongDate, formatShortDate } from "@/lib/format";
 import type { StoreDailySeries } from "../types/trafico-diario.types";
+import { ChartSkeleton } from "@/components/ui/chart-skeleton";
 
 const LINE_COLORS = [
   "var(--color-chart-1)",
@@ -91,7 +92,7 @@ export function StoreDailyTrafficChart({ series, isLoading, monthLabel }: StoreD
       <p className="mt-0.5 text-xs capitalize text-muted-foreground">{monthLabel}</p>
 
       {isLoading ? (
-        <div className="flex h-72 items-center justify-center text-sm text-muted-foreground">Cargando...</div>
+        <ChartSkeleton height={288} />
       ) : !hasData ? (
         <div className="flex h-72 items-center justify-center text-sm text-muted-foreground">
           Sin tráfico en el mes seleccionado.

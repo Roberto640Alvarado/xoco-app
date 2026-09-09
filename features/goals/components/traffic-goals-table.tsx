@@ -9,6 +9,7 @@ import { GrowthPercentModal } from "./growth-percent-modal";
 import { StoreReachChart } from "./store-reach-chart";
 import { formatInteger, formatPercent } from "@/lib/format";
 import type { GoalSummaryItem } from "../types/goals.types";
+import { TableSkeletonRows } from "@/components/ui/table-skeleton";
 
 const MONTH_LABELS = [
   "enero", "febrero", "marzo", "abril", "mayo", "junio",
@@ -164,11 +165,7 @@ export function TrafficGoalsTable() {
             </thead>
             <tbody>
               {summary.isLoading ? (
-                <tr>
-                  <td colSpan={COLUMNS.length + 1} className="py-4 text-center text-sm text-muted-foreground">
-                    Cargando...
-                  </td>
-                </tr>
+                <TableSkeletonRows rows={4} columns={COLUMNS.length + 1} />
               ) : summary.isError ? (
                 <tr>
                   <td colSpan={COLUMNS.length + 1} className="py-4 text-center text-sm text-destructive">

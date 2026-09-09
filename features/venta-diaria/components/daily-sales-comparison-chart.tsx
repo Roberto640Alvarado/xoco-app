@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { formatCurrency, formatCurrencyCompact } from "@/lib/format";
 import type { DailySalesPoint } from "@/features/sales/types/sales.types";
+import { ChartSkeleton } from "@/components/ui/chart-skeleton";
 
 interface ComparisonRow {
   day: number;
@@ -88,7 +89,7 @@ export function DailySalesComparisonChart({
       <p className="mt-0.5 text-xs text-muted-foreground">Venta por día del mes</p>
 
       {isLoading ? (
-        <div className="flex h-72 items-center justify-center text-sm text-muted-foreground">Cargando...</div>
+        <ChartSkeleton height={288} />
       ) : !hasData ? (
         <div className="flex h-72 items-center justify-center text-sm text-muted-foreground">
           Sin venta en los meses comparados.

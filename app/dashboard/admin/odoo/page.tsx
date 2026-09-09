@@ -6,6 +6,7 @@ import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useOdooConfig } from "@/features/odoo-config/hooks/use-odoo-config";
 import { useRotateOdooConfig } from "@/features/odoo-config/hooks/use-rotate-odoo-config";
 import {
@@ -49,7 +50,14 @@ export default function OdooConfigPage() {
       <div className="rounded-xl border border-border bg-card p-4">
         <h2 className="text-sm font-medium text-foreground">Estado actual</h2>
         {isLoading ? (
-          <p className="mt-2 text-sm text-muted-foreground">Cargando...</p>
+          <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="col-span-2 grid grid-cols-2 items-center gap-x-4">
+                <Skeleton className="h-3.5 w-20" />
+                <Skeleton className="h-3.5 w-32" />
+              </div>
+            ))}
+          </dl>
         ) : !config ? (
           <p className="mt-2 flex items-center gap-2 text-sm text-destructive">
             <XCircle className="h-4 w-4" aria-hidden="true" />

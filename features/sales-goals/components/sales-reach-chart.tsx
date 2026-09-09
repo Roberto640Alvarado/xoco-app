@@ -3,6 +3,7 @@
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatCurrencyCompact, formatCurrency } from "@/lib/format";
 import type { SalesGoalSummaryItem } from "../types/sales-goals.types";
+import { ChartSkeleton } from "@/components/ui/chart-skeleton";
 
 // Definido fuera del componente — mismo motivo que ReachTooltip de
 // features/goals/components/store-reach-chart.tsx (recharts clona este
@@ -49,7 +50,7 @@ export function SalesReachChart({ items, isLoading, emptyLabel }: SalesReachChar
       <p className="mt-0.5 text-xs text-muted-foreground">Venta a la fecha vs. meta del mes</p>
 
       {isLoading ? (
-        <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">Cargando...</div>
+        <ChartSkeleton height={256} />
       ) : !hasData ? (
         <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">{emptyLabel}</div>
       ) : (

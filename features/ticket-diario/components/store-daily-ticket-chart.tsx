@@ -13,6 +13,7 @@ import {
 import { formatCurrency, formatLongDate, formatShortDate } from "@/lib/format";
 import { averageTicketOf } from "../types/ticket-diario.types";
 import type { StoreDailyTicketSeries } from "../types/ticket-diario.types";
+import { ChartSkeleton } from "@/components/ui/chart-skeleton";
 
 const LINE_COLORS = [
   "var(--color-chart-1)",
@@ -93,7 +94,7 @@ export function StoreDailyTicketChart({ series, isLoading, monthLabel }: StoreDa
       <p className="mt-0.5 text-xs capitalize text-muted-foreground">{monthLabel}</p>
 
       {isLoading ? (
-        <div className="flex h-72 items-center justify-center text-sm text-muted-foreground">Cargando...</div>
+        <ChartSkeleton height={288} />
       ) : !hasData ? (
         <div className="flex h-72 items-center justify-center text-sm text-muted-foreground">
           Sin órdenes en el mes seleccionado.
