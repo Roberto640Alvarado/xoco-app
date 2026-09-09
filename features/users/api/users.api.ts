@@ -1,5 +1,5 @@
 import { apiGet, apiPatch, apiPost } from "@/lib/api/client";
-import type { AppUser, CreateUserPayload, SetUserPasswordPayload } from "../types/users.types";
+import type { AppUser, CreateUserPayload, SetUserPasswordPayload, UpdateUserPayload } from "../types/users.types";
 
 export function fetchUsers() {
   return apiGet<AppUser[]>("/users");
@@ -15,4 +15,8 @@ export function setUserActive(id: string, isActive: boolean) {
 
 export function setUserPassword(id: string, payload: SetUserPasswordPayload) {
   return apiPatch<AppUser>(`/users/${id}/password`, payload);
+}
+
+export function updateUser(id: string, payload: UpdateUserPayload) {
+  return apiPatch<AppUser>(`/users/${id}`, payload);
 }

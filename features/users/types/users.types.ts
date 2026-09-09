@@ -21,3 +21,9 @@ export interface SetUserPasswordPayload {
   password: string;
   confirmPassword: string;
 }
+
+export interface UpdateUserPayload {
+  email: string;
+  name?: string;
+  role: UserRole;
+}

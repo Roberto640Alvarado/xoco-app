@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "cn";
-import { KeyRound, ShieldCheck } from "lucide-react";
+import { KeyRound, Pencil, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -14,10 +14,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { TableSkeletonRows } from "@/components/ui/table-skeleton";
 import { useAuthStore } from "@/store/auth-store";
 import { useUsers } from "../hooks/use-users";
 import { useSetUserActive } from "../hooks/use-set-user-active";
 import { SetUserPasswordModal } from "./set-user-password-modal";
+import { EditUserModal } from "./edit-user-modal";
 import { formatLongDate } from "@/lib/format";
 import type { AppUser } from "../types/users.types";
 import type { UserRole } from "@/features/auth/types/auth.types";
@@ -77,6 +79,7 @@ export function UsersTable() {
   const users = useUsers();
   const setActive = useSetUserActive();
   const [passwordTarget, setPasswordTarget] = useState<AppUser | null>(null);
+  const [editTarget, setEditTarget] = useState<AppUser | null>(null);
 
   const items = users.data ?? [];
   const errorMessage = (setActive.error as ApiError | null)?.message;
@@ -114,11 +117,7 @@ export function UsersTable() {
         </TableHeader>
         <TableBody>
           {users.isLoading ? (
-            <TableRow>
-              <TableCell colSpan={5} className="py-6 text-center text-sm whitespace-normal text-muted-foreground">
-                Cargando...
-              </TableCell>
-            </TableRow>
+            <TableSkeletonRows rows={4} columns={5} />
           ) : users.isError ? (
             <TableRow>
               <TableCell colSpan={5} className="py-6 text-center text-sm whitespace-normal text-destructive">
@@ -166,15 +165,26 @@ export function UsersTable() {
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => setPasswordTarget(user)}
-                      aria-label={`Cambiar contraseña de ${user.email}`}
-                    >
-                      <KeyRound className="h-4 w-4" aria-hidden="true" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => setEditTarget(user)}
+                        aria-label={`Editar a ${user.email}`}
+                      >
+                        <Pencil className="h-4 w-4" aria-hidden="true" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => setPasswordTarget(user)}
+                        aria-label={`Cambiar contraseña de ${user.email}`}
+                      >
+                        <KeyRound className="h-4 w-4" aria-hidden="true" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               );
@@ -183,6 +193,11 @@ export function UsersTable() {
         </TableBody>
       </Table>
 
+      <EditUserModal
+        user={editTarget}
+        isSelf={editTarget?.id === currentUserId}
+        onOpenChange={(open) => !open && setEditTarget(null)}
+      />
       <SetUserPasswordModal user={passwordTarget} onOpenChange={(open) => !open && setPasswordTarget(null)} />
     </div>
   );
