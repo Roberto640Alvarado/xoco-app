@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClock, CalendarDays, DollarSign, LayoutDashboard, Package, Receipt, Settings, TrendingUp, Users } from "lucide-react";
+import { CalendarClock, CalendarDays, DollarSign, LayoutDashboard, ListOrdered, Package, Receipt, Settings, TrendingUp, Users } from "lucide-react";
 import { DashboardShell, type DashboardNavItem } from "@/components/layout/dashboard-shell";
 
 const NAV_ITEMS: DashboardNavItem[] = [
@@ -9,6 +9,7 @@ const NAV_ITEMS: DashboardNavItem[] = [
   { label: "Venta Mensual", href: "/dashboard/venta-mensual", icon: DollarSign },
   { label: "Venta Diaria", href: "/dashboard/venta-diaria", icon: CalendarClock },
   { label: "Ticket Promedio", href: "/dashboard/ticket-promedio", icon: Receipt },
+  { label: "Ticket Detallado", href: "/dashboard/ticket-detallado", icon: ListOrdered },
   { label: "Ventas", href: "/dashboard", icon: LayoutDashboard },
   { label: "Visitas", href: "/dashboard/visitas", icon: Users },
   { label: "Productos", href: "/dashboard/productos", icon: Package },
