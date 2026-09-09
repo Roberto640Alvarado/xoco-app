@@ -13,6 +13,11 @@ const compactCurrencyFormatter = new Intl.NumberFormat("es-SV", {
 
 const integerFormatter = new Intl.NumberFormat("es-SV");
 
+const percentFormatter = new Intl.NumberFormat("es-SV", {
+  style: "percent",
+  maximumFractionDigits: 1,
+});
+
 export function formatCurrency(value: number): string {
   return currencyFormatter.format(value);
 }
@@ -23,6 +28,12 @@ export function formatCurrencyCompact(value: number): string {
 
 export function formatInteger(value: number): string {
   return integerFormatter.format(Math.round(value));
+}
+
+/** 0.0725 -> "7.3%". `null`/`undefined` (sin meta guardada) -> "—". */
+export function formatPercent(value: number | null | undefined): string {
+  if (value == null) return "—";
+  return percentFormatter.format(value);
 }
 
 /** "2026-09-02" -> "2 sep" (para ticks del eje X / tooltips). */

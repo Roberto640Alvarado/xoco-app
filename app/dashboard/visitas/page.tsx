@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { SalesFiltersBar } from "@/features/sales/components/sales-filters";
 import { StatTile } from "@/components/ui/stat-tile";
 import { DailyTrendChart } from "@/components/charts/daily-trend-chart";
+import { GoalsPanel } from "@/features/goals/components/goals-panel";
 import { useDailySummary } from "@/features/sales/hooks/use-daily-summary";
 import { formatInteger, isoDateDaysAgo, todayIsoDate } from "@/lib/format";
 import type { SalesFilters } from "@/features/sales/types/sales.types";
@@ -55,6 +56,8 @@ export default function VisitasPage() {
         emptyLabel="Sin visitas en el rango seleccionado"
         tableValueLabel="Órdenes"
       />
+
+      <GoalsPanel />
     </div>
   );
 }
