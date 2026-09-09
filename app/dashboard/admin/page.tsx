@@ -20,7 +20,7 @@ const ADMIN_SECTIONS: AdminSection[] = [
     href: "/dashboard/admin/users",
     icon: Users,
     title: "Usuarios",
-    description: "Alta de cuentas, rol y activo/inactivo — SUPER_ADMIN / FINANZAS.",
+    description: "Crea cuentas, asigna su rol y activa o desactiva su acceso.",
   },
 ];
 

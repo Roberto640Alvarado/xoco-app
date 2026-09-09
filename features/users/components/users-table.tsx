@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cn } from "cn";
 import { KeyRound, Pencil, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Switch } from "@/components/ui/switch";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import {
@@ -74,18 +75,35 @@ function StatusPill({ isActive }: { isActive: boolean }) {
   );
 }
 
+interface ActiveConfirmTarget {
+  user: AppUser;
+  nextIsActive: boolean;
+}
+
 export function UsersTable() {
   const currentUserId = useAuthStore((state) => state.user?.id);
   const users = useUsers();
   const setActive = useSetUserActive();
   const [passwordTarget, setPasswordTarget] = useState<AppUser | null>(null);
   const [editTarget, setEditTarget] = useState<AppUser | null>(null);
+  const [activeConfirm, setActiveConfirm] = useState<ActiveConfirmTarget | null>(null);
 
   const items = users.data ?? [];
-  const errorMessage = (setActive.error as ApiError | null)?.message;
 
-  function handleToggle(user: AppUser, nextIsActive: boolean) {
-    setActive.mutate({ id: user.id, isActive: nextIsActive });
+  // El banner de arriba de la tabla solo cubre errores fuera de un modal
+  // (no debería quedar ninguno ahora que activar/desactivar también pasa
+  // por ConfirmDialog, que muestra su propio error) — se deja por si
+  // algún error llega sin pasar por el diálogo.
+  const errorMessage = (setActive.error as ApiError | null)?.message;
+  const confirmErrorMessage =
+    activeConfirm && setActive.isError && setActive.variables?.id === activeConfirm.user.id ? errorMessage : null;
+
+  function handleConfirmActive() {
+    if (!activeConfirm) return;
+    setActive.mutate(
+      { id: activeConfirm.user.id, isActive: activeConfirm.nextIsActive },
+      { onSuccess: () => setActiveConfirm(null) },
+    );
   }
 
   return (
@@ -99,7 +117,7 @@ export function UsersTable() {
         </div>
       </div>
 
-      {errorMessage && (
+      {errorMessage && !activeConfirm && (
         <div role="alert" className="mx-4 mt-3 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {errorMessage}
         </div>
@@ -158,31 +176,21 @@ export function UsersTable() {
                       <Switch
                         checked={user.isActive}
                         disabled={isSelf || isTogglingThisRow}
-                        onCheckedChange={(checked) => handleToggle(user, checked)}
+                        onCheckedChange={(checked) => setActiveConfirm({ user, nextIsActive: checked })}
                         aria-label={user.isActive ? `Desactivar a ${user.email}` : `Activar a ${user.email}`}
                       />
                       <StatusPill isActive={user.isActive} />
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => setEditTarget(user)}
-                        aria-label={`Editar a ${user.email}`}
-                      >
-                        <Pencil className="h-4 w-4" aria-hidden="true" />
+                    <div className="flex items-center justify-end gap-1.5">
+                      <Button type="button" variant="outline" size="sm" onClick={() => setEditTarget(user)}>
+                        <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                        Editar
                       </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => setPasswordTarget(user)}
-                        aria-label={`Cambiar contraseña de ${user.email}`}
-                      >
-                        <KeyRound className="h-4 w-4" aria-hidden="true" />
+                      <Button type="button" variant="outline" size="sm" onClick={() => setPasswordTarget(user)}>
+                        <KeyRound className="h-3.5 w-3.5" aria-hidden="true" />
+                        Cambiar contraseña
                       </Button>
                     </div>
                   </TableCell>
@@ -199,6 +207,27 @@ export function UsersTable() {
         onOpenChange={(open) => !open && setEditTarget(null)}
       />
       <SetUserPasswordModal user={passwordTarget} onOpenChange={(open) => !open && setPasswordTarget(null)} />
+      <ConfirmDialog
+        open={activeConfirm !== null}
+        onOpenChange={(open) => !open && setActiveConfirm(null)}
+        title={
+          activeConfirm
+            ? activeConfirm.nextIsActive
+              ? `¿Activar a ${activeConfirm.user.email}?`
+              : `¿Desactivar a ${activeConfirm.user.email}?`
+            : ""
+        }
+        description={
+          activeConfirm?.nextIsActive
+            ? "Podrá iniciar sesión de nuevo de inmediato."
+            : "No podrá iniciar sesión hasta que vuelvas a activar la cuenta."
+        }
+        confirmLabel={activeConfirm?.nextIsActive ? "Activar" : "Desactivar"}
+        variant={activeConfirm?.nextIsActive ? "default" : "destructive"}
+        isLoading={setActive.isPending}
+        errorMessage={confirmErrorMessage}
+        onConfirm={handleConfirmActive}
+      />
     </div>
   );
 }

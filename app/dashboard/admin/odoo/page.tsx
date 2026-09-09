@@ -40,11 +40,6 @@ export default function OdooConfigPage() {
     <div className="flex max-w-2xl flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold text-foreground">Integración con Odoo</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          El API key nunca se guarda en variables de entorno — vive en Mongo (colección
-          <code className="mx-1 rounded bg-muted px-1 py-0.5">odoo_config</code>)
-          y solo un SUPER_ADMIN puede rotarla desde aquí.
-        </p>
       </div>
 
       <div className="rounded-xl border border-border bg-card p-4">

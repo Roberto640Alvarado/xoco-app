@@ -7,7 +7,8 @@ export default function AdminUsersPage() {
       <div>
         <h1 className="text-2xl font-semibold text-foreground">Usuarios</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Altas y bajas de cuentas SUPER_ADMIN / FINANZAS. No hay registro público — toda cuenta se crea desde aquí.
+          Administra quién tiene acceso al panel: crea cuentas, asigna su rol y actívalas o desactívalas. No
+          hay registro público — toda cuenta se crea desde aquí.
         </p>
       </div>
 
