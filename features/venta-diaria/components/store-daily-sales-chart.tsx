@@ -1,10 +1,10 @@
 "use client";
 
 import {
+  Bar,
+  BarChart,
   CartesianGrid,
   Legend,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -14,7 +14,7 @@ import { formatCurrency, formatCurrencyCompact, formatLongDate, formatShortDate 
 import type { StoreDailyRevenueSeries } from "../types/venta-diaria.types";
 import { ChartSkeleton } from "@/components/ui/chart-skeleton";
 
-const LINE_COLORS = [
+const STORE_COLORS = [
   "var(--color-chart-1)",
   "var(--color-chart-2)",
   "var(--color-chart-3)",
@@ -79,10 +79,20 @@ interface StoreDailySalesChartProps {
   monthLabel: string;
 }
 
-// Venta diaria del mes ancla, una línea por tienda — mismo diseño que
+// Venta diaria del mes ancla, por tienda — mismo diseño que
 // StoreDailyTrafficChart (features/trafico-diario/), en dólares. Siempre
 // TODAS las tiendas activas, sin importar el filtro de tienda de la
 // página.
+//
+// Barras APILADAS (no líneas ni barras agrupadas): con hasta 5 tiendas x
+// ~30 días, agrupar lado a lado daría hasta 150 barras angostas e
+// ilegibles — 5 series entra en el "soft cap" del dataviz skill, y el job
+// acá es "parte del total de cada día", que es exactamente lo que pide
+// stacked bar (no grouped). Sin radio en los segmentos: solo el segmento
+// que de verdad toca el borde superior de la pila debería redondearse, y
+// recharts no lo puede distinguir por fila sin una forma custom — mejor
+// cuadrado y honesto que un borde redondeado que no corresponde a un
+// límite real del dato.
 export function StoreDailySalesChart({ series, isLoading, monthLabel }: StoreDailySalesChartProps) {
   const hasData = series.some((s) => s.points.some((p) => p.totalRevenue > 0));
   const rows = mergeByDate(series);
@@ -100,7 +110,7 @@ export function StoreDailySalesChart({ series, isLoading, monthLabel }: StoreDai
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={300} className="mt-2">
-          <LineChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+          <BarChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }} barCategoryGap="14%">
             <CartesianGrid vertical={false} stroke="var(--border)" />
             <XAxis
               dataKey="date"
@@ -119,28 +129,26 @@ export function StoreDailySalesChart({ series, isLoading, monthLabel }: StoreDai
               fontSize={12}
               width={56}
             />
-            <Tooltip content={<MultiStoreTooltip />} cursor={{ stroke: "var(--border)", strokeWidth: 1 }} />
+            <Tooltip content={<MultiStoreTooltip />} cursor={{ fill: "var(--muted)" }} />
             <Legend
               verticalAlign="top"
               align="left"
               height={32}
-              iconType="circle"
-              iconSize={8}
+              iconType="square"
+              iconSize={10}
               formatter={(value: string) => <span className="text-xs text-muted-foreground">{value}</span>}
             />
             {series.map(({ store }, index) => (
-              <Line
+              <Bar
                 key={store.id}
-                type="monotone"
                 dataKey={seriesKeyFor(store.id)}
                 name={store.name}
-                stroke={LINE_COLORS[index % LINE_COLORS.length]}
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4, stroke: "var(--card)", strokeWidth: 2 }}
+                stackId="revenue"
+                fill={STORE_COLORS[index % STORE_COLORS.length]}
+                maxBarSize={24}
               />
             ))}
-          </LineChart>
+          </BarChart>
         </ResponsiveContainer>
       )}
     </div>

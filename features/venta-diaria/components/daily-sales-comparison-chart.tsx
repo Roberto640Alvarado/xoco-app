@@ -1,10 +1,10 @@
 "use client";
 
 import {
+  Bar,
+  BarChart,
   CartesianGrid,
   Legend,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -72,6 +72,12 @@ interface DailySalesComparisonChartProps {
 // diseño que DailyTrafficComparisonChart (features/trafico-diario/), en
 // dólares — día a día (día 1..31 del mes, no fecha real, para alinear
 // meses de distinta duración).
+//
+// Barras agrupadas (no líneas): con solo 2 series es la comparación
+// "día por día" más directa — mismo radio/paleta que StoreReachChart
+// (features/goals/), chart-2 = mes de referencia, chart-1 = mes más
+// reciente (ver dataviz skill, tabla "la job -> el tipo": comparar 2
+// series por categoría es grouped bar).
 export function DailySalesComparisonChart({
   title,
   olderLabel,
@@ -96,7 +102,7 @@ export function DailySalesComparisonChart({
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={300} className="mt-2">
-          <LineChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+          <BarChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }} barGap={2} barCategoryGap="18%">
             <CartesianGrid vertical={false} stroke="var(--border)" />
             <XAxis
               dataKey="day"
@@ -114,34 +120,18 @@ export function DailySalesComparisonChart({
               fontSize={12}
               width={56}
             />
-            <Tooltip content={<ComparisonTooltip />} cursor={{ stroke: "var(--border)", strokeWidth: 1 }} />
+            <Tooltip content={<ComparisonTooltip />} cursor={{ fill: "var(--muted)" }} />
             <Legend
               verticalAlign="top"
               align="left"
               height={32}
-              iconType="circle"
-              iconSize={8}
+              iconType="square"
+              iconSize={10}
               formatter={(value: string) => <span className="text-xs text-muted-foreground">{value}</span>}
             />
-            <Line
-              type="monotone"
-              dataKey="older"
-              name={olderLabel}
-              stroke="var(--color-chart-2)"
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 4, stroke: "var(--card)", strokeWidth: 2 }}
-            />
-            <Line
-              type="monotone"
-              dataKey="recent"
-              name={recentLabel}
-              stroke="var(--color-chart-1)"
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 4, stroke: "var(--card)", strokeWidth: 2 }}
-            />
-          </LineChart>
+            <Bar dataKey="older" name={olderLabel} fill="var(--color-chart-2)" radius={[3, 3, 0, 0]} maxBarSize={12} />
+            <Bar dataKey="recent" name={recentLabel} fill="var(--color-chart-1)" radius={[3, 3, 0, 0]} maxBarSize={12} />
+          </BarChart>
         </ResponsiveContainer>
       )}
     </div>
