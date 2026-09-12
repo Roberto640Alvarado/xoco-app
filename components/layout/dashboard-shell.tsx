@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Loader2, LogOut, Store, type LucideIcon } from "lucide-react";
+import { Collapsible } from "@base-ui/react/collapsible";
+import { ChevronDown, Loader2, LogOut, Store, type LucideIcon } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -22,6 +24,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarProvider,
   SidebarRail,
   SidebarSeparator,
@@ -29,13 +34,36 @@ import {
 } from "@/components/ui/sidebar";
 import type { UserRole } from "@/features/auth/types/auth.types";
 
-export interface DashboardNavItem {
+interface DashboardNavLeafBase {
   label: string;
-  href: string;
   icon: LucideIcon;
-  /** Sección del sidebar donde cae el ítem — ver GROUP_ORDER más abajo. */
-  group: string;
   roles?: UserRole[]; // sin esto, visible para cualquier rol autenticado
+}
+
+export interface DashboardNavLeaf extends DashboardNavLeafBase {
+  href: string;
+}
+
+type DashboardNavGroupItem = DashboardNavLeafBase & {
+  group: string;
+  /** Ítems relacionados agrupados bajo un submenú colapsable — ver
+   * plan-history de la reorganización del sidebar para el criterio de
+   * agrupación (por qué estos y no otros quedaron juntos). */
+  children: DashboardNavLeaf[];
+};
+
+/** Un ítem del sidebar: o un enlace directo (`href`), o un submenú
+ * colapsable que agrupa varios enlaces relacionados (`children`). */
+export type DashboardNavItem = (DashboardNavLeaf & { group: string }) | DashboardNavGroupItem;
+
+function hasChildren(item: DashboardNavItem): item is DashboardNavGroupItem {
+  return "children" in item;
+}
+
+/** Aplana los submenús a una lista de enlaces — para resolver el item
+ * activo (resaltado + título del header) sin importar si está anidado. */
+function flattenLeaves(items: DashboardNavItem[]): DashboardNavLeaf[] {
+  return items.flatMap((item) => (hasChildren(item) ? item.children : [item]));
 }
 
 const ROLE_LABEL: Record<UserRole, string> = {
@@ -68,16 +96,155 @@ function findActiveNavItem<T extends { href: string }>(
     .sort((a, b) => b.href.length - a.href.length)[0];
 }
 
+function canSeeRoles(roles: UserRole[] | undefined, user: { role: UserRole } | null): boolean {
+  return !roles || (!!user && roles.includes(user.role));
+}
+
+// Filtra por rol tanto los ítems directos como, dentro de cada submenú, sus
+// hijos — un submenú que se queda sin ningún hijo visible para el rol
+// actual no se renderiza (igual que un grupo vacío).
+function filterNavItemsByRole(
+  items: DashboardNavItem[],
+  user: { role: UserRole } | null,
+): DashboardNavItem[] {
+  return items.reduce<DashboardNavItem[]>((visible, item) => {
+    if (hasChildren(item)) {
+      const children = item.children.filter((child) => canSeeRoles(child.roles, user));
+      if (children.length > 0) {
+        visible.push({ ...item, children });
+      }
+      return visible;
+    }
+    if (canSeeRoles(item.roles, user)) {
+      visible.push(item);
+    }
+    return visible;
+  }, []);
+}
+
+function NavLeafRow({
+  item,
+  isActive,
+  index,
+  shouldReduceMotion,
+}: {
+  item: DashboardNavLeaf;
+  isActive: boolean;
+  index: number;
+  shouldReduceMotion: boolean | null;
+}) {
+  const Icon = item.icon;
+
+  return (
+    <motion.div
+      initial={shouldReduceMotion ? false : { opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.2, delay: index * 0.03, ease: "easeOut" }}
+    >
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          isActive={isActive}
+          tooltip={item.label}
+          render={<Link href={item.href} />}
+          className="h-11 gap-3 rounded-xl px-3 text-[15px] [&_svg]:size-[18px] data-active:shadow-xs"
+        >
+          <Icon />
+          <span>{item.label}</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </motion.div>
+  );
+}
+
+function NavSubLeafRow({ item, isActive }: { item: DashboardNavLeaf; isActive: boolean }) {
+  const Icon = item.icon;
+
+  return (
+    <SidebarMenuSubItem>
+      <SidebarMenuSubButton
+        isActive={isActive}
+        render={<Link href={item.href} />}
+        className="gap-2.5 text-[14px] [&_svg]:size-4"
+      >
+        <Icon />
+        <span>{item.label}</span>
+      </SidebarMenuSubButton>
+    </SidebarMenuSubItem>
+  );
+}
+
+function NavGroupRow({
+  item,
+  activeHref,
+  index,
+  shouldReduceMotion,
+}: {
+  item: DashboardNavGroupItem;
+  activeHref: string | undefined;
+  index: number;
+  shouldReduceMotion: boolean | null;
+}) {
+  const Icon = item.icon;
+  const hasActiveChild = item.children.some((child) => child.href === activeHref);
+
+  // Abierto de entrada si ya se cargó sobre una ruta hija. Después, solo se
+  // vuelve a abrir automáticamente cuando la navegación ENTRA a este
+  // submenú (transición false -> true) — no se fuerza a mantenerlo abierto
+  // mientras el usuario sigue en esa ruta, para no pelear con un cierre
+  // manual del propio submenú activo.
+  const [open, setOpen] = useState(hasActiveChild);
+  const wasActiveChild = useRef(hasActiveChild);
+  useEffect(() => {
+    if (hasActiveChild && !wasActiveChild.current) {
+      setOpen(true);
+    }
+    wasActiveChild.current = hasActiveChild;
+  }, [hasActiveChild]);
+
+  return (
+    <motion.div
+      initial={shouldReduceMotion ? false : { opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.2, delay: index * 0.03, ease: "easeOut" }}
+    >
+      <SidebarMenuItem>
+        <Collapsible.Root open={open} onOpenChange={setOpen}>
+          <Collapsible.Trigger
+            render={
+              <SidebarMenuButton
+                tooltip={item.label}
+                className="h-11 gap-3 rounded-xl px-3 text-[15px] [&_svg]:size-[18px]"
+              />
+            }
+          >
+            <Icon />
+            <span>{item.label}</span>
+            <ChevronDown className="ml-auto size-4! shrink-0 text-muted-foreground transition-transform duration-200 group-data-[panel-open]/menu-button:rotate-180" />
+          </Collapsible.Trigger>
+          <Collapsible.Panel>
+            <SidebarMenuSub>
+              {item.children.map((child) => (
+                <NavSubLeafRow key={child.href} item={child} isActive={child.href === activeHref} />
+              ))}
+            </SidebarMenuSub>
+          </Collapsible.Panel>
+        </Collapsible.Root>
+      </SidebarMenuItem>
+    </motion.div>
+  );
+}
+
 // Mismo sidebar de shadcn/ui que usa ecoguide-app (components/ui/sidebar.tsx):
 // en móvil se renderiza como <Sheet> (drawer deslizable), en escritorio
 // como panel fijo colapsable a modo ícono. El estado lo maneja el propio
 // SidebarProvider. El estilo (panel gris + pill blanco/teal para el activo,
-// secciones agrupadas) sigue una referencia visual que pidió el usuario —
+// secciones agrupadas, submenús colapsables dentro de "Reportes") sigue una
+// referencia visual + feedback de reorganización que pidió el usuario —
 // ver plan-history.
 function NavList({ navItems }: { navItems: DashboardNavItem[] }) {
   const pathname = usePathname();
   const shouldReduceMotion = useReducedMotion();
-  const activeHref = findActiveNavItem(navItems, pathname)?.href;
+  const activeHref = findActiveNavItem(flattenLeaves(navItems), pathname)?.href;
 
   const groups = GROUP_ORDER.map((group) => ({
     group,
@@ -93,32 +260,25 @@ function NavList({ navItems }: { navItems: DashboardNavItem[] }) {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => {
-                const Icon = item.icon;
-                const isActive = item.href === activeHref;
-                const globalIndex = navItems.indexOf(item);
-
-                return (
-                  <motion.div
+              {items.map((item, index) =>
+                hasChildren(item) ? (
+                  <NavGroupRow
+                    key={item.label}
+                    item={item}
+                    activeHref={activeHref}
+                    index={index}
+                    shouldReduceMotion={shouldReduceMotion}
+                  />
+                ) : (
+                  <NavLeafRow
                     key={item.href}
-                    initial={shouldReduceMotion ? false : { opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.2, delay: globalIndex * 0.03, ease: "easeOut" }}
-                  >
-                    <SidebarMenuItem>
-                      <SidebarMenuButton
-                        isActive={isActive}
-                        tooltip={item.label}
-                        render={<Link href={item.href} />}
-                        className="h-11 gap-3 rounded-xl px-3 text-[15px] [&_svg]:size-[18px] data-active:shadow-xs"
-                      >
-                        <Icon />
-                        <span>{item.label}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  </motion.div>
-                );
-              })}
+                    item={item}
+                    isActive={item.href === activeHref}
+                    index={index}
+                    shouldReduceMotion={shouldReduceMotion}
+                  />
+                ),
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -139,10 +299,8 @@ export function DashboardShell({ navItems, dashboardHref, children }: DashboardS
   const logout = useLogout();
   const pathname = usePathname();
 
-  const visibleNavItems = navItems.filter(
-    (item) => !item.roles || (user && item.roles.includes(user.role)),
-  );
-  const activeItem = findActiveNavItem(visibleNavItems, pathname);
+  const visibleNavItems = filterNavItemsByRole(navItems, user);
+  const activeItem = findActiveNavItem(flattenLeaves(visibleNavItems), pathname);
 
   // Evita que las páginas hijas disparen requests (React Query) antes de
   // que useSessionHydration termine de rehidratar el accessToken desde la
