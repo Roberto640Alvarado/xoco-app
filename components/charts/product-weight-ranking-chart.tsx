@@ -13,6 +13,7 @@ import {
 import { formatCurrency, formatKg } from "@/lib/format";
 import type { TopProductByWeight } from "@/features/sales/types/sales.types";
 import { ChartSkeleton } from "@/components/ui/chart-skeleton";
+import { ChartErrorState } from "@/components/ui/chart-error-state";
 
 function ProductWeightTooltip({
   active,
@@ -37,6 +38,8 @@ function ProductWeightTooltip({
 interface ProductWeightRankingChartProps {
   data: TopProductByWeight[];
   isLoading: boolean;
+  /** `message` del error de la query, si la petición falló (ver ChartErrorState). */
+  errorMessage?: string | null;
   title: string;
   subtitle: string;
   emptyLabel: string;
@@ -52,6 +55,7 @@ interface ProductWeightRankingChartProps {
 export function ProductWeightRankingChart({
   data,
   isLoading,
+  errorMessage,
   title,
   subtitle,
   emptyLabel,
@@ -72,6 +76,8 @@ export function ProductWeightRankingChart({
 
       {isLoading ? (
         <ChartSkeleton height={256} />
+      ) : errorMessage ? (
+        <ChartErrorState message={errorMessage} />
       ) : data.length === 0 ? (
         <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
           {emptyLabel}

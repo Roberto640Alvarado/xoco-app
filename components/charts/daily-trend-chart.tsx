@@ -20,10 +20,13 @@ import {
 import { formatLongDate, formatShortDate } from "@/lib/format";
 import type { DailySalesPoint } from "@/features/sales/types/sales.types";
 import { ChartSkeleton } from "@/components/ui/chart-skeleton";
+import { ChartErrorState } from "@/components/ui/chart-error-state";
 
 interface DailyTrendChartProps {
   data: DailySalesPoint[];
   isLoading: boolean;
+  /** `message` del error de la query, si la petición falló (ver ChartErrorState). */
+  errorMessage?: string | null;
   title: string;
   subtitle: string;
   metricKey: "totalRevenue" | "orderCount" | "totalTax";
@@ -67,6 +70,7 @@ function TrendTooltip({
 export function DailyTrendChart({
   data,
   isLoading,
+  errorMessage,
   title,
   subtitle,
   metricKey,
@@ -87,6 +91,8 @@ export function DailyTrendChart({
 
       {isLoading ? (
         <ChartSkeleton height={256} />
+      ) : errorMessage ? (
+        <ChartErrorState message={errorMessage} />
       ) : !hasData ? (
         <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
           {emptyLabel}

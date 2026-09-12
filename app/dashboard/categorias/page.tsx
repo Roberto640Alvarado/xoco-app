@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { SalesFiltersBar } from "@/features/sales/components/sales-filters";
 import { CategoryTopProductsChart } from "@/components/charts/category-top-products-chart";
+import { ChartErrorState } from "@/components/ui/chart-error-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useProductRankingByCategory } from "@/features/sales/hooks/use-product-ranking-by-category";
@@ -67,6 +68,10 @@ export default function CategoriasPage() {
           subtitle="Por ingresos"
           emptyLabel=""
         />
+      ) : categories.error ? (
+        <div className="rounded-xl border border-border bg-card">
+          <ChartErrorState message={categories.error.message} />
+        </div>
       ) : data.length === 0 ? (
         <div className="flex h-40 items-center justify-center rounded-xl border border-border bg-card text-sm text-muted-foreground">
           Sin ventas en el rango seleccionado

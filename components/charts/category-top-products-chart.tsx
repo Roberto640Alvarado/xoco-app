@@ -13,6 +13,7 @@ import {
 import { formatCurrency } from "@/lib/format";
 import type { CategoryProduct } from "@/features/sales/types/sales.types";
 import { ChartSkeleton } from "@/components/ui/chart-skeleton";
+import { ChartErrorState } from "@/components/ui/chart-error-state";
 
 function CategoryProductTooltip({
   active,
@@ -35,6 +36,8 @@ function CategoryProductTooltip({
 interface CategoryTopProductsChartProps {
   products: CategoryProduct[];
   isLoading: boolean;
+  /** `message` del error de la query, si la petición falló (ver ChartErrorState). */
+  errorMessage?: string | null;
   title: string;
   subtitle: string;
   emptyLabel: string;
@@ -51,6 +54,7 @@ interface CategoryTopProductsChartProps {
 export function CategoryTopProductsChart({
   products,
   isLoading,
+  errorMessage,
   title,
   subtitle,
   emptyLabel,
@@ -71,6 +75,8 @@ export function CategoryTopProductsChart({
 
       {isLoading ? (
         <ChartSkeleton height={256} />
+      ) : errorMessage ? (
+        <ChartErrorState message={errorMessage} />
       ) : products.length === 0 ? (
         <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
           {emptyLabel}

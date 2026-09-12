@@ -12,6 +12,7 @@ import {
 import { formatCurrency, formatInteger, formatMonthLabel } from "@/lib/format";
 import type { ProductMonthlyComparison } from "@/features/sales/types/sales.types";
 import { ChartSkeleton } from "@/components/ui/chart-skeleton";
+import { ChartErrorState } from "@/components/ui/chart-error-state";
 
 interface ChartRow {
   productId: number;
@@ -83,6 +84,8 @@ function MonthlyComparisonTooltip({
 interface ProductMonthlyComparisonChartProps {
   data: ProductMonthlyComparison[];
   isLoading: boolean;
+  /** `message` del error de la query, si la petición falló (ver ChartErrorState). */
+  errorMessage?: string | null;
   title: string;
   emptyLabel: string;
 }
@@ -98,6 +101,7 @@ interface ProductMonthlyComparisonChartProps {
 export function ProductMonthlyComparisonChart({
   data,
   isLoading,
+  errorMessage,
   title,
   emptyLabel,
 }: ProductMonthlyComparisonChartProps) {
@@ -124,6 +128,8 @@ export function ProductMonthlyComparisonChart({
 
       {isLoading ? (
         <ChartSkeleton height={256} />
+      ) : errorMessage ? (
+        <ChartErrorState message={errorMessage} />
       ) : data.length === 0 ? (
         <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">{emptyLabel}</div>
       ) : (

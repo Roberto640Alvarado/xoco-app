@@ -71,6 +71,7 @@ export default function ProductosPage() {
       <ProductMonthlyComparisonChart
         data={monthlyComparison.data ?? []}
         isLoading={monthlyComparison.isLoading}
+        errorMessage={monthlyComparison.error?.message}
         title="Comparación mensual por producto"
         emptyLabel="Sin ventas en el mes en curso"
       />
@@ -81,6 +82,7 @@ export default function ProductosPage() {
       <ProductRankingChart
         data={topProducts.data ?? []}
         isLoading={topProducts.isLoading}
+        errorMessage={topProducts.error?.message}
         title="Productos más vendidos"
         subtitle="Por unidades vendidas"
         emptyLabel="Sin productos vendidos en el rango seleccionado"
@@ -90,6 +92,7 @@ export default function ProductosPage() {
       <ProductRankingChart
         data={bottomProducts.data ?? []}
         isLoading={bottomProducts.isLoading}
+        errorMessage={bottomProducts.error?.message}
         title="Productos menos vendidos"
         subtitle="Por unidades vendidas"
         emptyLabel="Sin productos vendidos en el rango seleccionado"
@@ -99,6 +102,7 @@ export default function ProductosPage() {
       <ProductWeightRankingChart
         data={weightTopProducts.data ?? []}
         isLoading={weightTopProducts.isLoading}
+        errorMessage={weightTopProducts.error?.message}
         title="Productos a granel más vendidos"
         subtitle="Por Kg vendidos (ej. Crocks) — no compiten con el ranking por unidades"
         emptyLabel="Sin productos a granel vendidos en el rango seleccionado"
@@ -108,6 +112,7 @@ export default function ProductosPage() {
       <ProductWeightRankingChart
         data={weightBottomProducts.data ?? []}
         isLoading={weightBottomProducts.isLoading}
+        errorMessage={weightBottomProducts.error?.message}
         title="Productos a granel menos vendidos"
         subtitle="Por Kg vendidos"
         emptyLabel="Sin productos a granel vendidos en el rango seleccionado"

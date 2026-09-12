@@ -50,20 +50,27 @@ export default function EfectivoOtrosMediosPage() {
           label="Efectivo"
           value={formatCurrency(summary.data?.cash.amountTotal ?? 0)}
           isLoading={summary.isLoading}
+          isError={summary.isError}
         />
         <StatTile
           label="Otros medios"
           value={formatCurrency(summary.data?.other.amountTotal ?? 0)}
           isLoading={summary.isLoading}
+          isError={summary.isError}
         />
         <StatTile
           label="Total"
           value={formatCurrency(summary.data?.total.amountTotal ?? 0)}
           isLoading={summary.isLoading}
+          isError={summary.isError}
         />
       </div>
 
-      <PaymentMethodsChart methods={methods} isLoading={summary.isLoading} />
+      <PaymentMethodsChart
+        methods={methods}
+        isLoading={summary.isLoading}
+        errorMessage={summary.error?.message}
+      />
 
       <div className="rounded-xl border border-border bg-card p-4">
         <h2 className="mb-3 text-sm font-medium text-foreground">Detalle por método de pago</h2>

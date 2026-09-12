@@ -36,27 +36,32 @@ export default function DashboardPage() {
           label="Ingresos totales"
           value={formatCurrency(totals.totalRevenue)}
           isLoading={dailySummary.isLoading}
+          isError={dailySummary.isError}
         />
         <StatTile
           label="Impuestos (IVA)"
           value={formatCurrency(totals.totalTax)}
           isLoading={dailySummary.isLoading}
+          isError={dailySummary.isError}
         />
         <StatTile
           label="Ingresos netos"
           value={formatCurrency(totals.netRevenue)}
           isLoading={dailySummary.isLoading}
+          isError={dailySummary.isError}
         />
         <StatTile
           label="Venta promedio"
           value={formatCurrency(totals.averageSale)}
           isLoading={dailySummary.isLoading}
+          isError={dailySummary.isError}
         />
       </div>
 
       <DailyTrendChart
         data={data}
         isLoading={dailySummary.isLoading}
+        errorMessage={dailySummary.error?.message}
         title="Ventas por día"
         subtitle="Ingresos brutos"
         metricKey="totalRevenue"

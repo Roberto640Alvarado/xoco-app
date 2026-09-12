@@ -37,17 +37,20 @@ export default function VisitasPage() {
           label="Visitas totales"
           value={formatInteger(totals.totalOrders)}
           isLoading={dailySummary.isLoading}
+          isError={dailySummary.isError}
         />
         <StatTile
           label="Órdenes promedio por día"
           value={formatInteger(totals.averageOrders)}
           isLoading={dailySummary.isLoading}
+          isError={dailySummary.isError}
         />
       </div>
 
       <DailyTrendChart
         data={data}
         isLoading={dailySummary.isLoading}
+        errorMessage={dailySummary.error?.message}
         title="Visitas por día"
         subtitle="Cantidad de órdenes"
         metricKey="orderCount"

@@ -5,6 +5,7 @@ import { formatCurrency } from "@/lib/format";
 import type { PaymentMethodTotals } from "@/features/sales/types/sales.types";
 import { paymentMethodTypeMeta } from "@/features/sales/utils/payment-method-type";
 import { ChartSkeleton } from "@/components/ui/chart-skeleton";
+import { ChartErrorState } from "@/components/ui/chart-error-state";
 
 function PaymentMethodTooltip({
   active,
@@ -28,6 +29,8 @@ function PaymentMethodTooltip({
 interface PaymentMethodsChartProps {
   methods: PaymentMethodTotals[];
   isLoading: boolean;
+  /** `message` del error de la query, si la petición falló (ver ChartErrorState). */
+  errorMessage?: string | null;
 }
 
 // Gráfica de barras horizontal, un método de pago por fila — a
@@ -38,7 +41,7 @@ interface PaymentMethodsChartProps {
 // cuánto transferencia/apps y cuánto cuenta de cliente — pedido
 // explícito del negocio tras ver que la tabla colapsaba todo eso a un
 // "Otro medio" genérico.
-export function PaymentMethodsChart({ methods, isLoading }: PaymentMethodsChartProps) {
+export function PaymentMethodsChart({ methods, isLoading, errorMessage }: PaymentMethodsChartProps) {
   const chartData = [...methods].reverse(); // recharts dibuja de abajo hacia arriba
   const rowHeight = 32;
   const typesPresent = [...new Set(methods.map((method) => method.type))];
@@ -66,6 +69,8 @@ export function PaymentMethodsChart({ methods, isLoading }: PaymentMethodsChartP
 
       {isLoading ? (
         <ChartSkeleton height={256} />
+      ) : errorMessage ? (
+        <ChartErrorState message={errorMessage} />
       ) : methods.length === 0 ? (
         <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
           Sin ventas en el rango seleccionado
