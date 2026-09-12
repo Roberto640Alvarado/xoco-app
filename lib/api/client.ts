@@ -31,8 +31,19 @@ export interface ApiError {
 // del navegador (ver app/providers.tsx).
 let unauthorizedHandler: (() => void) | null = null;
 
+// Un 401 que llega mientras no hay handler registrado (antes de que monte
+// `Providers`, o entre el cleanup y el re-registro de su efecto) no se
+// pierde ni se resuelve con una navegación dura: queda pendiente y se
+// despacha en cuanto el handler vuelve a estar disponible.
+let hasPendingUnauthorized = false;
+
 export function setUnauthorizedHandler(handler: (() => void) | null) {
   unauthorizedHandler = handler;
+
+  if (handler && hasPendingUnauthorized) {
+    hasPendingUnauthorized = false;
+    handler();
+  }
 }
 
 function extractMessage(data: ApiErrorResponse | undefined): string {
@@ -68,8 +79,8 @@ apiClient.interceptors.response.use(
 
       if (unauthorizedHandler) {
         unauthorizedHandler();
-      } else if (typeof window !== "undefined") {
-        window.location.href = "/login";
+      } else {
+        hasPendingUnauthorized = true;
       }
     }
 

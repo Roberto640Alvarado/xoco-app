@@ -16,9 +16,10 @@ function AuthHydrator() {
 
 /**
  * Registra, al montar la app, la navegación que el interceptor de axios usa
- * cuando un request autenticado responde 401 (sesión vencida) — un
- * router.push de cliente en vez de window.location.href, para que nunca
- * provoque un refresh completo del navegador (ver lib/api/client.ts).
+ * cuando un request autenticado responde 401 (sesión vencida) — siempre un
+ * router.push de cliente, para que nunca provoque un refresh completo del
+ * navegador. Si el 401 llegó antes de este registro, el cliente lo dejó
+ * pendiente y se despacha aquí mismo (ver lib/api/client.ts).
  */
 function UnauthorizedRedirector() {
   const router = useRouter();

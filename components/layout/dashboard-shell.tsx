@@ -75,8 +75,9 @@ const ROLE_LABEL: Record<UserRole, string> = {
 // vengan los items en NAV_ITEMS. Un grupo sin ítems visibles (ej.
 // "Sistema" para un usuario FINANZAS, que no tiene ningún item con ese
 // group) simplemente no se renderiza — nunca aparece un título de sección
-// vacío.
-const GROUP_ORDER = ["General", "Reportes", "Sistema"];
+// vacío. El grupo "" es el bloque principal de reportes: se renderiza sin
+// encabezado (el usuario pidió quitar los títulos "General"/"Reportes").
+const GROUP_ORDER = ["", "Sistema"];
 
 // Con más de una ruta bajo /dashboard/*, un match por prefijo simple puede
 // activar "Ventas" (href "/dashboard") en /dashboard/visitas, porque esa
@@ -255,9 +256,11 @@ function NavList({ navItems }: { navItems: DashboardNavItem[] }) {
     <>
       {groups.map(({ group, items }) => (
         <SidebarGroup key={group}>
-          <SidebarGroupLabel className="uppercase tracking-wide text-[11px]">
-            {group}
-          </SidebarGroupLabel>
+          {group && (
+            <SidebarGroupLabel className="uppercase tracking-wide text-[11px]">
+              {group}
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item, index) =>
