@@ -58,3 +58,17 @@ export function isoDateDaysAgo(days: number): string {
 export function todayIsoDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
+
+const kgFormatter = new Intl.NumberFormat("es-SV", { maximumFractionDigits: 2 });
+
+/** 0.75 -> "0.75 kg" — para productos a granel (ver "Productos a granel (Kg)"). */
+export function formatKg(value: number): string {
+  return `${kgFormatter.format(value)} kg`;
+}
+
+/** "2026-09-01" -> "Septiembre 2026" (para la comparación mes en curso / mes anterior). */
+export function formatMonthLabel(isoDate: string): string {
+  const date = new Date(`${isoDate}T00:00:00`);
+  const label = new Intl.DateTimeFormat("es-SV", { month: "long", year: "numeric" }).format(date);
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}

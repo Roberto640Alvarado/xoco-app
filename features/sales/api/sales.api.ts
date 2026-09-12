@@ -5,10 +5,12 @@ import type {
   CustomerSearchResult,
   DailySalesPoint,
   PaymentMethodsSummary,
+  ProductMonthlyComparison,
   ProductRankOrder,
   SalesFilters,
   Store,
   TopProduct,
+  TopProductByWeight,
 } from "../types/sales.types";
 
 function toQueryString(
@@ -33,6 +35,16 @@ export function fetchProductRanking(filters: SalesFilters, limit = 10, order: Pr
   return apiGet<TopProduct[]>(`/sales/top-products?${toQueryString({ ...filters, limit, order })}`);
 }
 
+export function fetchProductRankingByWeight(
+  filters: SalesFilters,
+  limit = 10,
+  order: ProductRankOrder = "desc",
+) {
+  return apiGet<TopProductByWeight[]>(
+    `/sales/top-products-by-weight?${toQueryString({ ...filters, limit, order })}`,
+  );
+}
+
 export function fetchProductRankingByCategory(
   filters: SalesFilters,
   limit = 10,
@@ -52,4 +64,14 @@ export function fetchCustomerSearch(filters: CustomerSearchFilters) {
   if (filters.dateTo) params.set("dateTo", filters.dateTo);
   if (filters.limit) params.set("limit", String(filters.limit));
   return apiGet<CustomerSearchResult[]>(`/sales/customers/search?${params.toString()}`);
+}
+
+// No toma rango de fechas: el backend siempre compara el mes en curso
+// (día 1 a hoy) contra el mes anterior completo — ver
+// SalesService.findProductMonthlyComparison.
+export function fetchProductMonthlyComparison(params: { posConfigId?: number; limit?: number } = {}) {
+  const query = new URLSearchParams();
+  if (params.posConfigId) query.set("posConfigId", String(params.posConfigId));
+  if (params.limit) query.set("limit", String(params.limit));
+  return apiGet<ProductMonthlyComparison[]>(`/sales/product-monthly-comparison?${query.toString()}`);
 }

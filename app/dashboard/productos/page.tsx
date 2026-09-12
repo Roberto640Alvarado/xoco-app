@@ -3,9 +3,13 @@
 import { useState } from "react";
 import { SalesFiltersBar } from "@/features/sales/components/sales-filters";
 import { ProductRankingChart } from "@/components/charts/product-ranking-chart";
+import { ProductWeightRankingChart } from "@/components/charts/product-weight-ranking-chart";
+import { ProductMonthlyComparisonChart } from "@/components/charts/product-monthly-comparison-chart";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useProductRanking } from "@/features/sales/hooks/use-product-ranking";
+import { useProductRankingByWeight } from "@/features/sales/hooks/use-product-ranking-by-weight";
+import { useProductMonthlyComparison } from "@/features/sales/hooks/use-product-monthly-comparison";
 import { isoDateDaysAgo, todayIsoDate } from "@/lib/format";
 import type { SalesFilters } from "@/features/sales/types/sales.types";
 
@@ -50,13 +54,29 @@ export default function ProductosPage() {
   });
   const [topLimit, setTopLimit] = useState(DEFAULT_LIMIT);
   const [bottomLimit, setBottomLimit] = useState(DEFAULT_LIMIT);
+  const [weightTopLimit, setWeightTopLimit] = useState(DEFAULT_LIMIT);
+  const [weightBottomLimit, setWeightBottomLimit] = useState(DEFAULT_LIMIT);
+  const [monthlyLimit, setMonthlyLimit] = useState(DEFAULT_LIMIT);
 
   const topProducts = useProductRanking(filters, topLimit, "desc");
   const bottomProducts = useProductRanking(filters, bottomLimit, "asc");
+  const weightTopProducts = useProductRankingByWeight(filters, weightTopLimit, "desc");
+  const weightBottomProducts = useProductRankingByWeight(filters, weightBottomLimit, "asc");
+  const monthlyComparison = useProductMonthlyComparison(filters.posConfigId, monthlyLimit);
 
   return (
     <div className="flex flex-col gap-6">
       <SalesFiltersBar filters={filters} onChange={setFilters} />
+
+      <ProductMonthlyComparisonChart
+        data={monthlyComparison.data ?? []}
+        isLoading={monthlyComparison.isLoading}
+        title="Comparación mensual por producto"
+        emptyLabel="Sin ventas en el mes en curso"
+      />
+      <div className="flex justify-end -mt-4">
+        <LimitInput id="monthlyLimit" value={monthlyLimit} onChange={setMonthlyLimit} />
+      </div>
 
       <ProductRankingChart
         data={topProducts.data ?? []}
@@ -74,6 +94,24 @@ export default function ProductosPage() {
         subtitle="Por unidades vendidas"
         emptyLabel="Sin productos vendidos en el rango seleccionado"
         headerExtra={<LimitInput id="bottomLimit" value={bottomLimit} onChange={setBottomLimit} />}
+      />
+
+      <ProductWeightRankingChart
+        data={weightTopProducts.data ?? []}
+        isLoading={weightTopProducts.isLoading}
+        title="Productos a granel más vendidos"
+        subtitle="Por Kg vendidos (ej. Crocks) — no compiten con el ranking por unidades"
+        emptyLabel="Sin productos a granel vendidos en el rango seleccionado"
+        headerExtra={<LimitInput id="weightTopLimit" value={weightTopLimit} onChange={setWeightTopLimit} />}
+      />
+
+      <ProductWeightRankingChart
+        data={weightBottomProducts.data ?? []}
+        isLoading={weightBottomProducts.isLoading}
+        title="Productos a granel menos vendidos"
+        subtitle="Por Kg vendidos"
+        emptyLabel="Sin productos a granel vendidos en el rango seleccionado"
+        headerExtra={<LimitInput id="weightBottomLimit" value={weightBottomLimit} onChange={setWeightBottomLimit} />}
       />
     </div>
   );

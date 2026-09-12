@@ -19,6 +19,29 @@ export interface TopProduct {
   totalRevenue: number;
 }
 
+// Ranking aparte para productos a granel (ej. "Crocks") — su cantidad ya
+// viene convertida a kilogramos, nunca en la UoM cruda de Odoo.
+export interface TopProductByWeight {
+  productId: number;
+  productName: string;
+  totalKg: number;
+  totalRevenue: number;
+}
+
+export interface ProductMonthPeriod {
+  dateFrom: string;
+  dateTo: string;
+  quantity: number;
+  revenue: number;
+}
+
+export interface ProductMonthlyComparison {
+  productId: number;
+  productName: string;
+  currentMonth: ProductMonthPeriod;
+  previousMonth: ProductMonthPeriod;
+}
+
 // Un producto dentro del top de su categoría — ver
 // /sales/top-products-by-category. Ordenado por ingresos ($), no por
 // unidades: a diferencia de TopProduct, acá SÍ conviven productos por
