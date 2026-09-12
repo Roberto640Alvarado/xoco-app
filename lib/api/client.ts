@@ -22,6 +22,7 @@ apiClient.interceptors.request.use((config) => {
 export interface ApiError {
   message: string;
   status: number;
+  code?: string;
 }
 
 // El interceptor de abajo no es un componente/hook — no puede usar
@@ -42,6 +43,23 @@ export function setUnauthorizedHandler(handler: (() => void) | null) {
 
   if (handler && hasPendingUnauthorized) {
     hasPendingUnauthorized = false;
+    handler();
+  }
+}
+
+// Mismo patrón que unauthorizedHandler arriba, pero para el 403 que
+// ModuleAccessGuard devuelve (code: "MODULE_DISABLED") cuando un
+// SUPER_ADMIN apagó ese módulo para el rol del usuario actual (panel
+// "Permisos", Fase 3 de RBAC) — a diferencia de un 401, la sesión sigue
+// siendo válida, solo hay que sacar al usuario de esa pantalla.
+let moduleDisabledHandler: (() => void) | null = null;
+let hasPendingModuleDisabled = false;
+
+export function setModuleDisabledHandler(handler: (() => void) | null) {
+  moduleDisabledHandler = handler;
+
+  if (handler && hasPendingModuleDisabled) {
+    hasPendingModuleDisabled = false;
     handler();
   }
 }
@@ -84,7 +102,22 @@ apiClient.interceptors.response.use(
       }
     }
 
-    const apiError: ApiError = { message, status };
+    const code = error.response?.data?.code;
+
+    // 403 con code MODULE_DISABLED: el rol sigue siendo válido (no es un
+    // 401), pero el módulo que respalda esta pantalla fue apagado desde
+    // el panel de Permisos — se saca al usuario de la pantalla en vez de
+    // dejarlo ver un error crudo. Un 403 "no soy este rol" (sin ese code,
+    // ej. FINANZAS pegándole a /users) sigue sin manejo especial acá.
+    if (status === 403 && code === "MODULE_DISABLED") {
+      if (moduleDisabledHandler) {
+        moduleDisabledHandler();
+      } else {
+        hasPendingModuleDisabled = true;
+      }
+    }
+
+    const apiError: ApiError = { message, status, code };
     return Promise.reject(apiError);
   },
 );

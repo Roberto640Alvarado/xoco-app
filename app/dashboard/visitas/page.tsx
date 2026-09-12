@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { SalesFiltersBar } from "@/features/sales/components/sales-filters";
+import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { StatTile } from "@/components/ui/stat-tile";
 import { DailyTrendChart } from "@/components/charts/daily-trend-chart";
 import { useDailySummary } from "@/features/sales/hooks/use-daily-summary";
@@ -30,7 +31,25 @@ export default function VisitasPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <SalesFiltersBar filters={filters} onChange={setFilters} />
+      <SalesFiltersBar
+        filters={filters}
+        onChange={setFilters}
+        actions={
+          <ExportExcelButton
+            filename="visitas"
+            disabled={dailySummary.isLoading || data.length === 0}
+            sheets={() => [
+              {
+                name: "Visitas por día",
+                rows: data.map((point) => ({
+                  Fecha: point.date,
+                  Visitas: point.orderCount,
+                })),
+              },
+            ]}
+          />
+        }
+      />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <StatTile

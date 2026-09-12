@@ -33,6 +33,7 @@ import type { ApiError } from "@/lib/api/client";
 const ROLE_LABEL: Record<UserRole, string> = {
   SUPER_ADMIN: "Super admin",
   FINANZAS: "Finanzas",
+  VENDEDOR: "Vendedor",
 };
 
 // Rol como pill — SUPER_ADMIN se distingue con el color de marca (tiene

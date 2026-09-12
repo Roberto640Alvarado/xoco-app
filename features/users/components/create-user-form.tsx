@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { StoreSelect } from "@/components/filters/store-select";
+import { useStores } from "@/features/sales/hooks/use-stores";
 import { useCreateUser } from "../hooks/use-create-user";
 import { createUserSchema, type CreateUserFormValues } from "../schemas/create-user.schema";
 import type { ApiError } from "@/lib/api/client";
@@ -15,12 +17,14 @@ import type { ApiError } from "@/lib/api/client";
 const ROLE_OPTIONS: Array<{ value: CreateUserFormValues["role"]; label: string }> = [
   { value: "FINANZAS", label: "Finanzas" },
   { value: "SUPER_ADMIN", label: "Super admin" },
+  { value: "VENDEDOR", label: "Vendedor" },
 ];
 
 const DEFAULT_VALUES: CreateUserFormValues = {
   email: "",
   name: "",
   role: "FINANZAS",
+  posConfigId: undefined,
   password: "",
   confirmPassword: "",
 };
@@ -37,11 +41,15 @@ export function CreateUserForm() {
     control,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<CreateUserFormValues>({
     resolver: zodResolver(createUserSchema),
     defaultValues: DEFAULT_VALUES,
   });
+
+  const { data: stores, isLoading: storesLoading } = useStores();
+  const role = watch("role");
 
   function onSubmit(values: CreateUserFormValues) {
     createUser.mutate(
@@ -125,6 +133,26 @@ export function CreateUserForm() {
           />
           {errors.role && <p className="text-xs text-destructive">{errors.role.message}</p>}
         </div>
+
+        {role === "VENDEDOR" && (
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="posConfigId">Tienda</Label>
+            <Controller
+              control={control}
+              name="posConfigId"
+              render={({ field }) => (
+                <StoreSelect
+                  stores={stores}
+                  isLoading={storesLoading}
+                  value={field.value}
+                  onChange={field.onChange}
+                  className="sm:w-56"
+                />
+              )}
+            />
+            {errors.posConfigId && <p className="text-xs text-destructive">{errors.posConfigId.message}</p>}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">

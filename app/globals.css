@@ -73,18 +73,17 @@
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
-  /* Panel gris suave (distinto del fondo blanco del contenido) con acento
-     teal para el ítem activo — mismo patrón "pill blanco + texto teal
-     sobre panel gris" que el diseño de referencia del sidebar. Teal en hex
-     (no oklch) a propósito, mismo criterio que --chart-1: es un acento de
-     marca puntual, no parte de la escala neutra del resto de los tokens. */
-  --sidebar: oklch(0.966 0.003 247);
-  --sidebar-foreground: oklch(0.32 0.02 255);
-  --sidebar-primary: #0f6e64;
+  /* Colores neutros originales (sin acento de marca) — el rediseño del
+     sidebar con acento teal (#0f6e64/#34d0b8) quedó revertido a pedido
+     del usuario, el patrón visual (panel agrupado, pill activo, etc.) se
+     mantuvo, solo cambian estos tokens de color. */
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(1 0 0);
-  --sidebar-accent-foreground: #0f6e64;
-  --sidebar-border: oklch(0.906 0.004 247);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 }
 
@@ -112,15 +111,13 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  /* Mismo par panel/acento que en claro, ajustado de luminosidad para
-     seguir pasando contraste AA sobre el panel oscuro (ver dataviz skill:
-     "dark mode es SELECCIONADO, no un flip automático"). */
-  --sidebar: oklch(0.205 0.006 255);
-  --sidebar-foreground: oklch(0.75 0.01 255);
-  --sidebar-primary: #34d0b8;
-  --sidebar-primary-foreground: oklch(0.145 0 0);
-  --sidebar-accent: oklch(0.269 0.006 255);
-  --sidebar-accent-foreground: #34d0b8;
+  /* Mismos neutros originales que en claro, versión oscura. */
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 }

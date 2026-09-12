@@ -15,6 +15,8 @@ export interface GoalSummaryItem {
   daysInMonth: number;
   projectedOrders: number;
   projectedReachPercent: number | null;
+  updatedAt: string | null;
+  updatedByEmail: string | null;
 }
 
 export interface StoreGoal {

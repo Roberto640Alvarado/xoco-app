@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SalesFiltersBar } from "@/features/sales/components/sales-filters";
+import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { CategoryTopProductsChart } from "@/components/charts/category-top-products-chart";
 import { ChartErrorState } from "@/components/ui/chart-error-state";
 import { Input } from "@/components/ui/input";
@@ -34,7 +35,25 @@ export default function CategoriasPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <SalesFiltersBar filters={filters} onChange={setFilters} />
+      <SalesFiltersBar
+        filters={filters}
+        onChange={setFilters}
+        actions={
+          <ExportExcelButton
+            filename="top-productos-por-categoria"
+            disabled={categories.isLoading || data.length === 0}
+            sheets={() =>
+              data.map((category) => ({
+                name: category.categoryName,
+                rows: category.products.map((product) => ({
+                  Producto: product.productName,
+                  Ingresos: product.revenue,
+                })),
+              }))
+            }
+          />
+        }
+      />
 
       <div className="flex items-center justify-between">
         <div>

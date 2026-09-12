@@ -7,12 +7,15 @@ export interface AppUser {
   role: UserRole;
   isActive: boolean;
   createdAt: string;
+  // Tienda asignada — solo presente (no null) para role="VENDEDOR".
+  posConfigId: number | null;
 }
 
 export interface CreateUserPayload {
   email: string;
   name?: string;
   role: UserRole;
+  posConfigId?: number;
   password: string;
   confirmPassword: string;
 }
@@ -26,4 +29,5 @@ export interface UpdateUserPayload {
   email: string;
   name?: string;
   role: UserRole;
+  posConfigId?: number;
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SalesFiltersBar } from "@/features/sales/components/sales-filters";
+import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { StatTile } from "@/components/ui/stat-tile";
 import { PaymentMethodsChart } from "@/components/charts/payment-methods-chart";
 import {
@@ -36,10 +37,30 @@ export default function EfectivoOtrosMediosPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <SalesFiltersBar filters={filters} onChange={setFilters} />
+      <SalesFiltersBar
+        filters={filters}
+        onChange={setFilters}
+        actions={
+          <ExportExcelButton
+            filename="formas-de-pago"
+            disabled={summary.isLoading || methods.length === 0}
+            sheets={() => [
+              {
+                name: "Métodos de pago",
+                rows: methods.map((method) => ({
+                  Método: method.paymentMethodName,
+                  Tipo: paymentMethodTypeMeta(method.type).label,
+                  Pagos: method.paymentCount,
+                  Total: method.amountTotal,
+                })),
+              },
+            ]}
+          />
+        }
+      />
 
       <div>
-        <h1 className="text-sm font-medium text-foreground">Efectivo y otros medios</h1>
+        <h1 className="text-sm font-medium text-foreground">Formas de pago</h1>
         <p className="text-xs text-muted-foreground">
           Venta por método de pago, filtrable por tienda y rango de fechas.
         </p>

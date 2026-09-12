@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { FilterToolbar } from "@/components/filters/filter-toolbar";
+import { MonthNavigator } from "@/components/filters/month-navigator";
+import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import {
   currentMonthRef,
   monthLabel as formatMonthLabel,
@@ -17,6 +18,7 @@ import { useTicketGoalsSummary } from "@/features/ticket-goals/hooks/use-ticket-
 import { formatCurrency, formatInteger } from "@/lib/format";
 import { averageOrNull, buildSection, sumOrNull } from "../lib/aggregate";
 import { MonthCloseSectionTable } from "./month-close-section";
+import type { MonthCloseSection } from "../lib/aggregate";
 
 // Vista principal de "Cierre del mes": para el mes seleccionado ("ancla"
 // = Cierre), muestra 3 secciones apiladas (Tráfico / Venta / Ticket
@@ -89,32 +91,41 @@ export function MonthCloseView() {
   const closeMonthLabel = `Cierre ${monthName(anchor)}`;
   const growthColumnLabel = `Crecimiento o decrecimiento vs ${previousMonthLabel}`;
 
+  function sectionRow(label: string, section: MonthCloseSection) {
+    return {
+      Sección: label,
+      [previousMonthLabel]: section.previousTotal,
+      [closeMonthLabel]: section.closeTotal,
+      [growthColumnLabel]: section.growthPercent,
+      Meta: section.target,
+      Alcance: section.reachPercent,
+    };
+  }
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted-foreground">
-          Cierre del mes seleccionado contra el mes anterior, con la meta y el alcance de Tráfico de tiendas, Venta
-          Mensual y Ticket Promedio.
-        </p>
-        <div className="flex items-center gap-1 self-start sm:self-auto">
-          <Button type="button" variant="ghost" size="icon-sm" onClick={goToPreviousMonth} aria-label="Mes anterior">
-            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-          </Button>
-          <span className="w-32 text-center text-sm font-medium capitalize text-foreground">
-            {formatMonthLabel(anchor)}
-          </span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            onClick={goToNextMonth}
-            disabled={isNextMonthDisabled}
-            aria-label="Mes siguiente"
-          >
-            <ChevronRight className="h-4 w-4" aria-hidden="true" />
-          </Button>
-        </div>
-      </div>
+      <FilterToolbar description="Cierre del mes seleccionado contra el mes anterior, con la meta y el alcance de Tráfico de tiendas, Venta Mensual y Ticket Promedio.">
+        <MonthNavigator
+          label={formatMonthLabel(anchor)}
+          onPrevious={goToPreviousMonth}
+          onNext={goToNextMonth}
+          nextDisabled={isNextMonthDisabled}
+        />
+        <ExportExcelButton
+          filename="cierre-de-mes"
+          disabled={goalsAnchor.isLoading || salesAnchor.isLoading || ticketAnchor.isLoading}
+          sheets={() => [
+            {
+              name: "Cierre de mes",
+              rows: [
+                sectionRow("Tráfico", trafficSection),
+                sectionRow("Venta", salesSection),
+                sectionRow("Ticket Promedio", ticketSection),
+              ],
+            },
+          ]}
+        />
+      </FilterToolbar>
 
       <MonthCloseSectionTable
         title="Tráfico"

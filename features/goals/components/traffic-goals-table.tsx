@@ -1,9 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Settings2 } from "lucide-react";
+import { Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatTile } from "@/components/ui/stat-tile";
+import { FilterToolbar } from "@/components/filters/filter-toolbar";
+import { MonthNavigator } from "@/components/filters/month-navigator";
+import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { useGoalsSummary } from "../hooks/use-goals-summary";
 import { GrowthPercentModal } from "./growth-percent-modal";
 import { StoreReachChart } from "./store-reach-chart";
@@ -122,33 +125,49 @@ export function TrafficGoalsTable() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted-foreground">
-          Meta mensual (sobre el mes anterior real), avance y proyección de cierre por tienda.
-        </p>
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <div className="flex items-center gap-1">
-            <Button type="button" variant="ghost" size="icon-sm" onClick={goToPreviousMonth} aria-label="Mes anterior">
-              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-            </Button>
-            <span className="w-32 text-center text-sm font-medium text-foreground capitalize">{monthLabel}</span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              onClick={goToNextMonth}
-              disabled={isNextMonthDisabled}
-              aria-label="Mes siguiente"
-            >
-              <ChevronRight className="h-4 w-4" aria-hidden="true" />
-            </Button>
-          </div>
-          <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(true)}>
-            <Settings2 className="h-4 w-4" aria-hidden="true" />
-            Configurar %
-          </Button>
-        </div>
-      </div>
+      <FilterToolbar description="Meta de tráfico del mes, calculada sobre el total real del mes anterior — avance y proyección de cierre por tienda.">
+        <MonthNavigator
+          label={monthLabel}
+          onPrevious={goToPreviousMonth}
+          onNext={goToNextMonth}
+          nextDisabled={isNextMonthDisabled}
+        />
+        <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(true)}>
+          <Settings2 className="h-4 w-4" aria-hidden="true" />
+          Configurar %
+        </Button>
+        <ExportExcelButton
+          filename="trafico-de-tiendas"
+          disabled={summary.isLoading || items.length === 0}
+          sheets={() => [
+            {
+              name: "Tráfico de tiendas",
+              rows: [
+                ...items.map((item) => ({
+                  Tienda: item.storeName,
+                  "Visitas a la fecha": item.actualOrders,
+                  "Meta del mes": item.targetOrders,
+                  Alcance: item.reachPercent,
+                  "Visitas faltantes": item.missingOrders,
+                  "Visitas diarias necesarias": item.dailyNeededOrders,
+                  "Proyección cierre de mes": item.projectedOrders,
+                  "% proyectado": item.projectedReachPercent,
+                })),
+                {
+                  Tienda: "Total mensual",
+                  "Visitas a la fecha": totals.actualOrders,
+                  "Meta del mes": totals.targetOrders,
+                  Alcance: totals.reachPercent,
+                  "Visitas faltantes": totals.missingOrders,
+                  "Visitas diarias necesarias": totals.dailyNeededOrders,
+                  "Proyección cierre de mes": totals.projectedOrders,
+                  "% proyectado": totals.projectedReachPercent,
+                },
+              ],
+            },
+          ]}
+        />
+      </FilterToolbar>
 
       <div className="rounded-xl border border-border bg-card p-4">
         <div className="overflow-x-auto">

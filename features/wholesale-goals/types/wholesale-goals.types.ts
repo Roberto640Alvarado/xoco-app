@@ -14,6 +14,8 @@ export interface WholesaleGoalSummaryItem {
   reachPercent: number | null;
   pendingValue: number | null;
   isCurrentMonth: boolean;
+  updatedAt: string | null;
+  updatedByEmail: string | null;
 }
 
 export interface WholesaleClientGoal {

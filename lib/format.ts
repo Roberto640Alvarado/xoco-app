@@ -48,6 +48,19 @@ export function formatLongDate(isoDate: string): string {
   return new Intl.DateTimeFormat("es-SV", { day: "numeric", month: "long", year: "numeric" }).format(date);
 }
 
+const dateTimeFormatter = new Intl.DateTimeFormat("es-SV", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
+
+/** Timestamp ISO completo (ej. "updatedAt" de Prisma) -> "9 sep 2026, 8:27 p.m." */
+export function formatDateTime(isoTimestamp: string): string {
+  return dateTimeFormatter.format(new Date(isoTimestamp));
+}
+
 /** YYYY-MM-DD de "hace N días" en la zona horaria local. */
 export function isoDateDaysAgo(days: number): string {
   const date = new Date();

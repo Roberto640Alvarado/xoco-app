@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, KeyRound, Users, type LucideIcon } from "lucide-react";
+import { ArrowRight, KeyRound, ShieldCheck, Users, type LucideIcon } from "lucide-react";
 
 interface AdminSection {
   href: string;
@@ -21,6 +21,12 @@ const ADMIN_SECTIONS: AdminSection[] = [
     icon: Users,
     title: "Usuarios",
     description: "Crea cuentas, asigna su rol y activa o desactiva su acceso.",
+  },
+  {
+    href: "/dashboard/admin/permisos",
+    icon: ShieldCheck,
+    title: "Permisos",
+    description: "Habilita o deshabilita, por rol, qué módulos del dashboard puede ver cada quien.",
   },
 ];
 

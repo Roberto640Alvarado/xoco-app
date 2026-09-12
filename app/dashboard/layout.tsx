@@ -19,8 +19,8 @@ const NAV_ITEMS: DashboardNavItem[] = [
     icon: Package,
     group: "",
     children: [
-      { label: "Mejores productos", href: "/dashboard/productos", icon: Package },
-      { label: "Categorías", href: "/dashboard/categorias", icon: Tags },
+      { label: "Mejores productos", href: "/dashboard/productos", icon: Package, moduleKey: "dashboard.productos" },
+      { label: "Categorías", href: "/dashboard/categorias", icon: Tags, moduleKey: "dashboard.categorias" },
     ],
   },
   {
@@ -28,9 +28,9 @@ const NAV_ITEMS: DashboardNavItem[] = [
     icon: Users,
     group: "",
     children: [
-      { label: "Visitas", href: "/dashboard/visitas", icon: Users },
-      { label: "Tráfico de tiendas", href: "/dashboard/trafico-tiendas", icon: Store },
-      { label: "Tráfico diario", href: "/dashboard/trafico-diario", icon: TrendingUp },
+      { label: "Visitas", href: "/dashboard/visitas", icon: Users, moduleKey: "dashboard.visitas" },
+      { label: "Tráfico de tiendas", href: "/dashboard/trafico-tiendas", icon: Store, roles: ["SUPER_ADMIN", "FINANZAS"], moduleKey: "dashboard.trafico-tiendas" },
+      { label: "Tráfico diario", href: "/dashboard/trafico-diario", icon: TrendingUp, moduleKey: "dashboard.trafico-diario" },
     ],
   },
   {
@@ -38,10 +38,10 @@ const NAV_ITEMS: DashboardNavItem[] = [
     icon: DollarSign,
     group: "",
     children: [
-      { label: "Resumen", href: "/dashboard", icon: LayoutDashboard },
-      { label: "Venta mensual", href: "/dashboard/venta-mensual", icon: DollarSign },
-      { label: "Venta diaria", href: "/dashboard/venta-diaria", icon: CalendarClock },
-      { label: "Efectivo y otros medios", href: "/dashboard/efectivo-otros-medios", icon: Wallet },
+      { label: "Resumen", href: "/dashboard", icon: LayoutDashboard, moduleKey: "dashboard.resumen" },
+      { label: "Venta mensual", href: "/dashboard/venta-mensual", icon: DollarSign, roles: ["SUPER_ADMIN", "FINANZAS"], moduleKey: "dashboard.venta-mensual" },
+      { label: "Venta diaria", href: "/dashboard/venta-diaria", icon: CalendarClock, moduleKey: "dashboard.venta-diaria" },
+      { label: "Formas de pago", href: "/dashboard/efectivo-otros-medios", icon: Wallet, moduleKey: "dashboard.efectivo-otros-medios" },
     ],
   },
   {
@@ -49,8 +49,8 @@ const NAV_ITEMS: DashboardNavItem[] = [
     icon: Building2,
     group: "",
     children: [
-      { label: "Ventas mayoreo", href: "/dashboard/ventas-mayoreo", icon: Building2 },
-      { label: "Buscar compradores", href: "/dashboard/buscar-compradores", icon: Search },
+      { label: "Ventas mayoreo", href: "/dashboard/ventas-mayoreo", icon: Building2, roles: ["SUPER_ADMIN", "FINANZAS"], moduleKey: "dashboard.ventas-mayoreo" },
+      { label: "Buscar compradores", href: "/dashboard/buscar-compradores", icon: Search, roles: ["SUPER_ADMIN", "FINANZAS"], moduleKey: "dashboard.buscar-compradores" },
     ],
   },
   {
@@ -58,11 +58,11 @@ const NAV_ITEMS: DashboardNavItem[] = [
     icon: Receipt,
     group: "",
     children: [
-      { label: "Ticket promedio", href: "/dashboard/ticket-promedio", icon: Receipt },
-      { label: "Ticket detallado", href: "/dashboard/ticket-detallado", icon: ListOrdered },
+      { label: "Ticket promedio", href: "/dashboard/ticket-promedio", icon: Receipt, roles: ["SUPER_ADMIN", "FINANZAS"], moduleKey: "dashboard.ticket-promedio" },
+      { label: "Ticket detallado", href: "/dashboard/ticket-detallado", icon: ListOrdered, moduleKey: "dashboard.ticket-detallado" },
     ],
   },
-  { label: "Cierre del mes", href: "/dashboard/cierre-mes", icon: CalendarCheck2, group: "" },
+  { label: "Cierre del mes", href: "/dashboard/cierre-mes", icon: CalendarCheck2, group: "", roles: ["SUPER_ADMIN", "FINANZAS"], moduleKey: "dashboard.cierre-mes" },
 
   { label: "Administración", href: "/dashboard/admin", icon: Settings, group: "Sistema", roles: ["SUPER_ADMIN"] },
 ];

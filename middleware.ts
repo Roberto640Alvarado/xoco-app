@@ -3,6 +3,29 @@ import { AUTH_COOKIE_NAME, decodeToken } from "@/lib/auth/decode-token";
 
 const AUTH_ROUTES = ["/login"];
 
+// Módulos permitidos para VENDEDOR — exactamente los 8 que tienen
+// selector de tienda (ver StoreSelect / sales-filters.tsx y los 3
+// daily-*-view.tsx), la misma lista que ya filtra el sidebar en
+// dashboard-shell.tsx (filterNavItemsByRole). Esto es refuerzo de
+// UX/seguridad-en-profundidad a nivel de RUTA (no solo ocultar el link) —
+// el backend igual rechaza los datos con 403 si alguien fuerza la URL.
+const VENDEDOR_ALLOWED_PATHS = [
+  "/dashboard",
+  "/dashboard/productos",
+  "/dashboard/categorias",
+  "/dashboard/visitas",
+  "/dashboard/efectivo-otros-medios",
+  "/dashboard/venta-diaria",
+  "/dashboard/trafico-diario",
+  "/dashboard/ticket-detallado",
+];
+
+function isVendedorAllowedRoute(pathname: string): boolean {
+  return VENDEDOR_ALLOWED_PATHS.some(
+    (allowed) => pathname === allowed || pathname.startsWith(`${allowed}/`),
+  );
+}
+
 // Rutas reales de la app (fuera de /dashboard, que ya se cubre por
 // prefijo). Cualquier otra ruta que no matchee ni esto ni /dashboard/* se
 // considera "URL errónea" para efectos de a dónde mandar al usuario: sin
@@ -50,6 +73,13 @@ export function middleware(request: NextRequest) {
     // FINANZAS con sesión válida pero intentando entrar a una zona de
     // administración exclusiva de SUPER_ADMIN: lo regresamos a su panel.
     if (isAdminRoute && decoded.role !== "SUPER_ADMIN") {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+
+    // VENDEDOR solo puede entrar a sus 8 módulos con selector de tienda —
+    // cualquier otra ruta de /dashboard/* (incluida /dashboard/admin, ya
+    // cubierta arriba) lo regresa a su panel.
+    if (decoded.role === "VENDEDOR" && !isVendedorAllowedRoute(pathname)) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
   }

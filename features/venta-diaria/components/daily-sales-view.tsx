@@ -1,16 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { StatTile } from "@/components/ui/stat-tile";
+import { FilterToolbar } from "@/components/filters/filter-toolbar";
+import { MonthNavigator } from "@/components/filters/month-navigator";
+import { StoreSelect } from "@/components/filters/store-select";
+import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { useStores } from "@/features/sales/hooks/use-stores";
+import { useAuthStore } from "@/store/auth-store";
+import { useSalesGoalsSummary } from "@/features/sales-goals/hooks/use-sales-goals-summary";
+import { formatCurrency, formatPercent } from "@/lib/format";
 import {
   currentMonthRef,
   isSameMonth,
@@ -25,7 +24,18 @@ import { DailySalesComparisonChart } from "./daily-sales-comparison-chart";
 import { DailySalesTable } from "./daily-sales-table";
 import { StoreDailySalesChart } from "./store-daily-sales-chart";
 
-const ALL_STORES = "all";
+// Mismo criterio que DailyTrafficView (features/trafico-diario/): si falta
+// el dato de CUALQUIER tienda, el total no se puede sumar con confianza —
+// mejor "—" que un número que parece completo y no lo es.
+function sumOrNull(values: Array<number | null>): number | null {
+  if (values.some((v) => v == null)) return null;
+  return values.reduce<number>((sum, v) => sum + (v ?? 0), 0);
+}
+
+function divideOrNull(numerator: number | null, denominator: number | null): number | null {
+  if (numerator == null || !denominator) return null;
+  return numerator / denominator;
+}
 
 // Módulo "Venta Diaria": mismo diseño que Tráfico Diario
 // (features/trafico-diario/daily-traffic-view.tsx), pero en dólares
@@ -40,16 +50,30 @@ export function DailySalesView() {
   const [posConfigId, setPosConfigId] = useState<number | undefined>(undefined);
 
   const { data: stores, isLoading: storesLoading } = useStores();
-  const storeValue = posConfigId ? String(posConfigId) : ALL_STORES;
-
-  function storeLabel(value: string): string {
-    if (value === ALL_STORES) return "Todas las tiendas";
-    const store = stores?.find((s) => String(s.id) === value);
-    return store?.name ?? value;
-  }
+  const isVendedor = useAuthStore((state) => state.user?.role === "VENDEDOR");
 
   const sales = useDailySales(anchor, posConfigId);
   const byStore = useDailySalesByStore(anchor);
+
+  // Meta de venta del mes ancla (mismo dato que alimenta "Venta Mensual" —
+  // ver features/sales-goals) — filtrada a la tienda seleccionada, o
+  // sumada entre todas si el filtro está en "Todas las tiendas". Mismo
+  // criterio que el bloque de metas que ya tenía Tráfico Diario, para no
+  // tener que saltar a otra página a ver el avance del mes mientras se
+  // revisa la venta día a día.
+  const salesGoals = useSalesGoalsSummary(anchor.year, anchor.month);
+  const monthGoal = useMemo(() => {
+    const goalItems = salesGoals.data ?? [];
+    if (posConfigId) {
+      const item = goalItems.find((g) => g.posConfigId === posConfigId);
+      if (!item) return null;
+      return { actualRevenue: item.actualRevenue, targetRevenue: item.targetRevenue, reachPercent: item.reachPercent };
+    }
+    if (goalItems.length === 0) return null;
+    const actualRevenue = goalItems.reduce((sum, item) => sum + item.actualRevenue, 0);
+    const targetRevenue = sumOrNull(goalItems.map((item) => item.targetRevenue));
+    return { actualRevenue, targetRevenue, reachPercent: divideOrNull(actualRevenue, targetRevenue) };
+  }, [salesGoals.data, posConfigId]);
 
   const isNextDisabled = isSameMonth(anchor, currentMonth);
 
@@ -66,49 +90,56 @@ export function DailySalesView() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted-foreground">
-          Venta ($) por día — mes seleccionado y los dos meses anteriores.
-        </p>
-        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-          <div className="flex items-center gap-1">
-            <Button type="button" variant="ghost" size="icon-sm" onClick={goToPreviousMonth} aria-label="Mes anterior">
-              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-            </Button>
-            <span className="w-32 text-center text-sm font-medium capitalize text-foreground">
-              {formatMonthLabel(anchor)}
-            </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              onClick={goToNextMonth}
-              disabled={isNextDisabled}
-              aria-label="Mes siguiente"
-            >
-              <ChevronRight className="h-4 w-4" aria-hidden="true" />
-            </Button>
-          </div>
+      <FilterToolbar description="Venta ($) por día — mes seleccionado y los dos meses anteriores.">
+        <MonthNavigator
+          label={formatMonthLabel(anchor)}
+          onPrevious={goToPreviousMonth}
+          onNext={goToNextMonth}
+          nextDisabled={isNextDisabled}
+        />
+        <StoreSelect
+          stores={stores}
+          isLoading={storesLoading}
+          value={posConfigId}
+          onChange={setPosConfigId}
+          lockedToSingleStore={isVendedor}
+        />
+        <ExportExcelButton
+          filename="venta-diaria-por-mes"
+          disabled={sales.anchor.isLoading}
+          sheets={() => [
+            {
+              name: sales.anchor.label,
+              rows: (sales.anchor.data ?? []).map((p) => ({ Fecha: p.date, Venta: p.totalRevenue })),
+            },
+            {
+              name: sales.prev1.label,
+              rows: (sales.prev1.data ?? []).map((p) => ({ Fecha: p.date, Venta: p.totalRevenue })),
+            },
+            {
+              name: sales.prev2.label,
+              rows: (sales.prev2.data ?? []).map((p) => ({ Fecha: p.date, Venta: p.totalRevenue })),
+            },
+          ]}
+        />
+      </FilterToolbar>
 
-          <Select
-            value={storeValue}
-            onValueChange={(value) => setPosConfigId(value === ALL_STORES ? undefined : Number(value))}
-          >
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder={storesLoading ? "Cargando..." : "Todas las tiendas"}>
-                {(value: string) => (storesLoading ? "Cargando..." : storeLabel(value))}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_STORES}>Todas las tiendas</SelectItem>
-              {stores?.map((store) => (
-                <SelectItem key={store.id} value={String(store.id)}>
-                  {store.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatTile
+          label="Venta a la fecha (mes ancla)"
+          value={formatCurrency(monthGoal?.actualRevenue ?? 0)}
+          isLoading={salesGoals.isLoading}
+        />
+        <StatTile
+          label="Meta del mes"
+          value={monthGoal?.targetRevenue != null ? formatCurrency(monthGoal.targetRevenue) : "—"}
+          isLoading={salesGoals.isLoading}
+        />
+        <StatTile
+          label="Alcance de meta"
+          value={formatPercent(monthGoal?.reachPercent ?? null)}
+          isLoading={salesGoals.isLoading}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">

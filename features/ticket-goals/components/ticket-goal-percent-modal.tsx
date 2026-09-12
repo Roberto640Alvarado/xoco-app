@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CheckCircle2, Loader2, Receipt } from "lucide-react";
 import { cn } from "cn";
 import {
@@ -17,6 +17,8 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useUpsertTicketGoalsBulk } from "../hooks/use-upsert-ticket-goals-bulk";
 import type { TicketGoalSummaryItem } from "../types/ticket-goals.types";
+
+import { LastModifiedNote } from "@/components/ui/last-modified-note";
 
 type Mode = "same" | "per-store";
 
@@ -107,6 +109,17 @@ export function TicketGoalPercentModal({
   } else if (!open && wasOpen) {
     setWasOpen(false);
   }
+
+  const mostRecentAudit = useMemo(() => {
+    let best: { updatedAt: string; updatedByEmail: string | null } | null = null;
+    for (const item of items) {
+      if (!item.updatedAt) continue;
+      if (!best || new Date(item.updatedAt) > new Date(best.updatedAt)) {
+        best = { updatedAt: item.updatedAt, updatedByEmail: item.updatedByEmail };
+      }
+    }
+    return best;
+  }, [items]);
 
   function handleSubmit() {
     const entries =
@@ -203,27 +216,36 @@ export function TicketGoalPercentModal({
 
             <div className="rounded-xl border border-border bg-muted/30 p-3">
               {mode === "same" ? (
-                <div className="flex items-center justify-between gap-3">
-                  <Label htmlFor="same-ticket-growth" className="text-sm font-medium text-foreground">
-                    Crecimiento
-                  </Label>
-                  <PercentInput id="same-ticket-growth" value={sameValue} onChange={setSameValue} className="w-28" />
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <Label htmlFor="same-ticket-growth" className="text-sm font-medium text-foreground">
+                      Crecimiento
+                    </Label>
+                    <PercentInput id="same-ticket-growth" value={sameValue} onChange={setSameValue} className="w-28" />
+                  </div>
+                  <LastModifiedNote
+                    email={mostRecentAudit?.updatedByEmail ?? null}
+                    date={mostRecentAudit?.updatedAt ?? null}
+                  />
                 </div>
               ) : (
                 <div className="flex flex-col divide-y divide-border">
                   {items.map((item) => (
-                    <div key={item.posConfigId} className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
-                      <Label htmlFor={`ticket-growth-${item.posConfigId}`} className="text-sm font-normal text-foreground">
-                        {item.storeName}
-                      </Label>
-                      <PercentInput
-                        id={`ticket-growth-${item.posConfigId}`}
-                        value={perStoreValues[item.posConfigId] ?? ""}
-                        onChange={(value) =>
-                          setPerStoreValues((prev) => ({ ...prev, [item.posConfigId]: value }))
-                        }
-                        className="w-24"
-                      />
+                    <div key={item.posConfigId} className="flex flex-col gap-1 py-2.5 first:pt-0 last:pb-0">
+                      <div className="flex items-center justify-between gap-3">
+                        <Label htmlFor={`ticket-growth-${item.posConfigId}`} className="text-sm font-normal text-foreground">
+                          {item.storeName}
+                        </Label>
+                        <PercentInput
+                          id={`ticket-growth-${item.posConfigId}`}
+                          value={perStoreValues[item.posConfigId] ?? ""}
+                          onChange={(value) =>
+                            setPerStoreValues((prev) => ({ ...prev, [item.posConfigId]: value }))
+                          }
+                          className="w-24"
+                        />
+                      </div>
+                      <LastModifiedNote email={item.updatedByEmail} date={item.updatedAt} />
                     </div>
                   ))}
                 </div>

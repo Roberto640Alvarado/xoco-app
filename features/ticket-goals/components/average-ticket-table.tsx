@@ -1,10 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Settings2 } from "lucide-react";
+import { Settings2 } from "lucide-react";
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";
 import { StatTile } from "@/components/ui/stat-tile";
+import { FilterToolbar } from "@/components/filters/filter-toolbar";
+import { MonthNavigator } from "@/components/filters/month-navigator";
+import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { currentMonthRef, monthLabel as formatMonthLabel, monthName, nextMonthOf, previousMonthOf, isSameMonth } from "@/lib/month";
 import { useTicketGoalsSummary } from "../hooks/use-ticket-goals-summary";
 import { TicketGoalPercentModal } from "./ticket-goal-percent-modal";
@@ -87,35 +90,41 @@ export function AverageTicketTable() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted-foreground">
-          Meta de ticket promedio (encadenada sobre el mes anterior), real y diferencia por tienda.
-        </p>
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <div className="flex items-center gap-1">
-            <Button type="button" variant="ghost" size="icon-sm" onClick={goToPreviousMonth} aria-label="Mes anterior">
-              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-            </Button>
-            <span className="w-32 text-center text-sm font-medium capitalize text-foreground">
-              {formatMonthLabel(anchor)}
-            </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              onClick={goToNextMonth}
-              disabled={isNextMonthDisabled}
-              aria-label="Mes siguiente"
-            >
-              <ChevronRight className="h-4 w-4" aria-hidden="true" />
-            </Button>
-          </div>
-          <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(true)}>
-            <Settings2 className="h-4 w-4" aria-hidden="true" />
-            Configurar %
-          </Button>
-        </div>
-      </div>
+      <FilterToolbar description="Meta de ticket promedio del mes, encadenada sobre el mes anterior — real y diferencia por tienda.">
+        <MonthNavigator
+          label={formatMonthLabel(anchor)}
+          onPrevious={goToPreviousMonth}
+          onNext={goToNextMonth}
+          nextDisabled={isNextMonthDisabled}
+        />
+        <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(true)}>
+          <Settings2 className="h-4 w-4" aria-hidden="true" />
+          Configurar %
+        </Button>
+        <ExportExcelButton
+          filename="ticket-promedio"
+          disabled={summary.isLoading || items.length === 0}
+          sheets={() => [
+            {
+              name: "Ticket promedio",
+              rows: [
+                ...items.map((item) => ({
+                  Tienda: item.storeName,
+                  [monthColumnLabel]: item.actualAverageTicket,
+                  Meta: item.targetAverageTicket,
+                  Diferencia: item.difference,
+                })),
+                {
+                  Tienda: "Promedio",
+                  [monthColumnLabel]: totals.actualAverageTicket,
+                  Meta: totals.targetAverageTicket,
+                  Diferencia: totals.difference,
+                },
+              ],
+            },
+          ]}
+        />
+      </FilterToolbar>
 
       <div className="rounded-xl border border-border bg-card p-4">
         <div className="overflow-x-auto">

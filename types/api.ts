@@ -4,6 +4,10 @@
 // en el cliente axios (ver lib/api/client.ts).
 export interface ApiErrorResponse {
   message: string | string[];
+  // Presente en el 403 de ModuleAccessGuard (panel "Permisos", Fase 3 de
+  // RBAC) para distinguirlo de un 403 "no soy este rol" — ver
+  // lib/api/client.ts.
+  code?: string;
 }
 
 export interface PaginationMeta {

@@ -1,17 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { StatTile } from "@/components/ui/stat-tile";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { FilterToolbar } from "@/components/filters/filter-toolbar";
+import { MonthNavigator } from "@/components/filters/month-navigator";
+import { StoreSelect } from "@/components/filters/store-select";
+import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { useStores } from "@/features/sales/hooks/use-stores";
+import { useAuthStore } from "@/store/auth-store";
 import { useGoalsSummary } from "@/features/goals/hooks/use-goals-summary";
 import { formatInteger, formatPercent } from "@/lib/format";
 import {
@@ -28,7 +24,6 @@ import { DailyTrafficComparisonChart } from "./daily-traffic-comparison-chart";
 import { DailyTrafficTable } from "./daily-traffic-table";
 import { StoreDailyTrafficChart } from "./store-daily-traffic-chart";
 
-const ALL_STORES = "all";
 
 // Mismo criterio que TrafficGoalsTable (features/goals/): si falta el dato
 // de CUALQUIER tienda, el total no se puede sumar con confianza — mejor
@@ -56,17 +51,7 @@ export function DailyTrafficView() {
   const [posConfigId, setPosConfigId] = useState<number | undefined>(undefined);
 
   const { data: stores, isLoading: storesLoading } = useStores();
-  const storeValue = posConfigId ? String(posConfigId) : ALL_STORES;
-
-  // Mismo patrón de resolución de label que SalesFiltersBar: el <Select>
-  // de base-ui solo resuelve el label de la opción seleccionada contra un
-  // mapa pasado al Root, y la lista de tiendas es dinámica — más simple
-  // resolverlo acá con un children-función en <SelectValue />.
-  function storeLabel(value: string): string {
-    if (value === ALL_STORES) return "Todas las tiendas";
-    const store = stores?.find((s) => String(s.id) === value);
-    return store?.name ?? value;
-  }
+  const isVendedor = useAuthStore((state) => state.user?.role === "VENDEDOR");
 
   const traffic = useDailyTraffic(anchor, posConfigId);
   const byStore = useDailyTrafficByStore(anchor);
@@ -105,50 +90,39 @@ export function DailyTrafficView() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted-foreground">
-          Tráfico de órdenes por día — mes seleccionado y los dos meses anteriores.
-        </p>
-        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-          <div className="flex items-center gap-1">
-            <Button type="button" variant="ghost" size="icon-sm" onClick={goToPreviousMonth} aria-label="Mes anterior">
-              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-            </Button>
-            <span className="w-32 text-center text-sm font-medium capitalize text-foreground">
-              {formatMonthLabel(anchor)}
-            </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              onClick={goToNextMonth}
-              disabled={isNextDisabled}
-              aria-label="Mes siguiente"
-            >
-              <ChevronRight className="h-4 w-4" aria-hidden="true" />
-            </Button>
-          </div>
-
-          <Select
-            value={storeValue}
-            onValueChange={(value) => setPosConfigId(value === ALL_STORES ? undefined : Number(value))}
-          >
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder={storesLoading ? "Cargando..." : "Todas las tiendas"}>
-                {(value: string) => (storesLoading ? "Cargando..." : storeLabel(value))}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_STORES}>Todas las tiendas</SelectItem>
-              {stores?.map((store) => (
-                <SelectItem key={store.id} value={String(store.id)}>
-                  {store.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      <FilterToolbar description="Tráfico de órdenes por día — mes seleccionado y los dos meses anteriores.">
+        <MonthNavigator
+          label={formatMonthLabel(anchor)}
+          onPrevious={goToPreviousMonth}
+          onNext={goToNextMonth}
+          nextDisabled={isNextDisabled}
+        />
+        <StoreSelect
+          stores={stores}
+          isLoading={storesLoading}
+          value={posConfigId}
+          onChange={setPosConfigId}
+          lockedToSingleStore={isVendedor}
+        />
+        <ExportExcelButton
+          filename="trafico-diario"
+          disabled={traffic.anchor.isLoading}
+          sheets={() => [
+            {
+              name: traffic.anchor.label,
+              rows: (traffic.anchor.data ?? []).map((p) => ({ Fecha: p.date, Órdenes: p.orderCount })),
+            },
+            {
+              name: traffic.prev1.label,
+              rows: (traffic.prev1.data ?? []).map((p) => ({ Fecha: p.date, Órdenes: p.orderCount })),
+            },
+            {
+              name: traffic.prev2.label,
+              rows: (traffic.prev2.data ?? []).map((p) => ({ Fecha: p.date, Órdenes: p.orderCount })),
+            },
+          ]}
+        />
+      </FilterToolbar>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatTile

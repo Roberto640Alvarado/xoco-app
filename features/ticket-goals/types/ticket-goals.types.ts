@@ -9,6 +9,8 @@ export interface TicketGoalSummaryItem {
   difference: number | null;
   reachPercent: number | null;
   isCurrentMonth: boolean;
+  updatedAt: string | null;
+  updatedByEmail: string | null;
 }
 
 export interface StoreTicketGoal {

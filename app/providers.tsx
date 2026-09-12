@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useSessionHydration } from "@/features/auth/hooks/use-session-hydration";
-import { setUnauthorizedHandler } from "@/lib/api/client";
+import { setModuleDisabledHandler, setUnauthorizedHandler } from "@/lib/api/client";
 
 function AuthHydrator() {
   useSessionHydration();
@@ -27,6 +27,23 @@ function UnauthorizedRedirector() {
   useEffect(() => {
     setUnauthorizedHandler(() => router.push("/login"));
     return () => setUnauthorizedHandler(null);
+  }, [router]);
+
+  return null;
+}
+
+/**
+ * Igual que UnauthorizedRedirector, pero para el 403 MODULE_DISABLED
+ * (panel "Permisos", Fase 3 de RBAC) — la sesión sigue siendo válida, solo
+ * se saca al usuario de la pantalla cuyo módulo fue apagado, de vuelta al
+ * dashboard (no a /login).
+ */
+function ModuleDisabledRedirector() {
+  const router = useRouter();
+
+  useEffect(() => {
+    setModuleDisabledHandler(() => router.push("/dashboard"));
+    return () => setModuleDisabledHandler(null);
   }, [router]);
 
   return null;
@@ -52,6 +69,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <TooltipProvider>
             <AuthHydrator />
             <UnauthorizedRedirector />
+            <ModuleDisabledRedirector />
             {children}
           </TooltipProvider>
         </ThemeProvider>

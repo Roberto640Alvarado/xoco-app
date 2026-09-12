@@ -32,12 +32,18 @@ import {
   SidebarSeparator,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import type { UserRole } from "@/features/auth/types/auth.types";
+import type { AuthUser, UserRole } from "@/features/auth/types/auth.types";
 
 interface DashboardNavLeafBase {
   label: string;
   icon: LucideIcon;
   roles?: UserRole[]; // sin esto, visible para cualquier rol autenticado
+  /** Llave del panel "Permisos" (Fase 3 de RBAC) — sin esto (ej.
+   * Administración), el módulo no es configurable desde ese panel y solo
+   * se filtra por `roles`. Con esto, además se oculta si
+   * user.permissions[moduleKey] === false explícitamente (ausente o
+   * true => visible, default-allow). */
+  moduleKey?: string;
 }
 
 export interface DashboardNavLeaf extends DashboardNavLeafBase {
@@ -69,6 +75,7 @@ function flattenLeaves(items: DashboardNavItem[]): DashboardNavLeaf[] {
 const ROLE_LABEL: Record<UserRole, string> = {
   SUPER_ADMIN: "Super admin",
   FINANZAS: "Finanzas",
+  VENDEDOR: "Vendedor",
 };
 
 // Orden fijo de las secciones del sidebar, independiente del orden en que
@@ -97,26 +104,35 @@ function findActiveNavItem<T extends { href: string }>(
     .sort((a, b) => b.href.length - a.href.length)[0];
 }
 
-function canSeeRoles(roles: UserRole[] | undefined, user: { role: UserRole } | null): boolean {
-  return !roles || (!!user && roles.includes(user.role));
+function canSeeItem(item: DashboardNavLeafBase, user: AuthUser | null): boolean {
+  const roleAllowed = !item.roles || (!!user && item.roles.includes(user.role));
+  if (!roleAllowed) return false;
+
+  // Sin moduleKey (ej. Administración), no pasa por el panel de Permisos.
+  if (!item.moduleKey) return true;
+
+  // Ausente o true => permitido (default-allow, mismo criterio que
+  // ModuleAccessGuard en el backend) — solo `false` explícito oculta.
+  return user?.permissions?.[item.moduleKey] !== false;
 }
 
-// Filtra por rol tanto los ítems directos como, dentro de cada submenú, sus
-// hijos — un submenú que se queda sin ningún hijo visible para el rol
-// actual no se renderiza (igual que un grupo vacío).
+// Filtra por rol y por permisos (panel "Permisos", Fase 3 de RBAC) tanto
+// los ítems directos como, dentro de cada submenú, sus hijos — un submenú
+// que se queda sin ningún hijo visible para el usuario actual no se
+// renderiza (igual que un grupo vacío).
 function filterNavItemsByRole(
   items: DashboardNavItem[],
-  user: { role: UserRole } | null,
+  user: AuthUser | null,
 ): DashboardNavItem[] {
   return items.reduce<DashboardNavItem[]>((visible, item) => {
     if (hasChildren(item)) {
-      const children = item.children.filter((child) => canSeeRoles(child.roles, user));
+      const children = item.children.filter((child) => canSeeItem(child, user));
       if (children.length > 0) {
         visible.push({ ...item, children });
       }
       return visible;
     }
-    if (canSeeRoles(item.roles, user)) {
+    if (canSeeItem(item, user)) {
       visible.push(item);
     }
     return visible;
@@ -140,6 +156,8 @@ function NavLeafRow({
     <motion.div
       initial={shouldReduceMotion ? false : { opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
+      whileHover={shouldReduceMotion ? undefined : { x: 3 }}
+      whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
       transition={{ duration: 0.2, delay: index * 0.03, ease: "easeOut" }}
     >
       <SidebarMenuItem>
@@ -147,7 +165,7 @@ function NavLeafRow({
           isActive={isActive}
           tooltip={item.label}
           render={<Link href={item.href} />}
-          className="h-11 gap-3 rounded-xl px-3 text-[15px] [&_svg]:size-[18px] data-active:shadow-xs"
+          className="h-11 gap-3 rounded-xl px-3 text-[15px] [&_svg]:size-[18px]"
         >
           <Icon />
           <span>{item.label}</span>
@@ -206,6 +224,8 @@ function NavGroupRow({
     <motion.div
       initial={shouldReduceMotion ? false : { opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
+      whileHover={shouldReduceMotion ? undefined : { x: 3 }}
+      whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
       transition={{ duration: 0.2, delay: index * 0.03, ease: "easeOut" }}
     >
       <SidebarMenuItem>
@@ -220,9 +240,13 @@ function NavGroupRow({
           >
             <Icon />
             <span>{item.label}</span>
-            <ChevronDown className="ml-auto size-4! shrink-0 text-muted-foreground transition-transform duration-200 group-data-[panel-open]/menu-button:rotate-180" />
+            <ChevronDown className="ml-auto size-4! shrink-0 text-muted-foreground transition-transform duration-200 ease-out group-data-[panel-open]/menu-button:rotate-180" />
           </Collapsible.Trigger>
-          <Collapsible.Panel>
+          {/* Base UI expone la altura medida del panel en la variable CSS
+              --collapsible-panel-height — sin animar `height` a partir de
+              ahí (y sin el overflow-hidden), el submenú aparecía/
+              desaparecía de golpe en vez de deslizarse. */}
+          <Collapsible.Panel className="h-(--collapsible-panel-height) overflow-hidden transition-[height,opacity] duration-200 ease-out data-[ending-style]:h-0 data-[ending-style]:opacity-0 data-[starting-style]:h-0 data-[starting-style]:opacity-0">
             <SidebarMenuSub>
               {item.children.map((child) => (
                 <NavSubLeafRow key={child.href} item={child} isActive={child.href === activeHref} />
@@ -238,7 +262,7 @@ function NavGroupRow({
 // Mismo sidebar de shadcn/ui que usa ecoguide-app (components/ui/sidebar.tsx):
 // en móvil se renderiza como <Sheet> (drawer deslizable), en escritorio
 // como panel fijo colapsable a modo ícono. El estado lo maneja el propio
-// SidebarProvider. El estilo (panel gris + pill blanco/teal para el activo,
+// SidebarProvider. El estilo (panel gris + pill blanco para el activo,
 // secciones agrupadas, submenús colapsables dentro de "Reportes") sigue una
 // referencia visual + feedback de reorganización que pidió el usuario —
 // ver plan-history.
@@ -357,13 +381,13 @@ export function DashboardShell({ navItems, dashboardHref, children }: DashboardS
         <SidebarFooter className="gap-2">
           <div className="flex flex-col gap-1">
             <ThemeToggle
-              className="h-9 w-full justify-start gap-3 rounded-lg px-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+              className="h-9 w-full justify-start gap-3 rounded-lg px-2 text-sidebar-foreground transition-colors duration-150 ease-out hover:bg-sidebar-primary/8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
               labelClassName="group-data-[collapsible=icon]:hidden"
             />
             <Button
               variant="ghost"
               size="sm"
-              className="h-9 w-full justify-start gap-3 rounded-lg px-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+              className="h-9 w-full justify-start gap-3 rounded-lg px-2 text-sidebar-foreground transition-colors duration-150 ease-out hover:bg-sidebar-primary/8 hover:text-sidebar-foreground group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
               onClick={() => void logout()}
               aria-label="Cerrar sesión"
             >

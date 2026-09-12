@@ -1,9 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Settings2 } from "lucide-react";
+import { Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatTile } from "@/components/ui/stat-tile";
+import { FilterToolbar } from "@/components/filters/filter-toolbar";
+import { MonthNavigator } from "@/components/filters/month-navigator";
+import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import {
   currentMonthRef,
   daysInMonthOf,
@@ -120,35 +123,54 @@ export function WholesaleMonthlyTable() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted-foreground">
-          Meta de venta mensual (encadenada sobre el mes anterior), avance y valor pendiente por cliente de mayoreo.
-        </p>
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <div className="flex items-center gap-1">
-            <Button type="button" variant="ghost" size="icon-sm" onClick={goToPreviousMonth} aria-label="Mes anterior">
-              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-            </Button>
-            <span className="w-32 text-center text-sm font-medium capitalize text-foreground">
-              {formatMonthLabel(anchor)}
-            </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              onClick={goToNextMonth}
-              disabled={isNextMonthDisabled}
-              aria-label="Mes siguiente"
-            >
-              <ChevronRight className="h-4 w-4" aria-hidden="true" />
-            </Button>
-          </div>
-          <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(true)}>
-            <Settings2 className="h-4 w-4" aria-hidden="true" />
-            Configurar %
-          </Button>
-        </div>
-      </div>
+      <FilterToolbar description="Meta de venta mensual por cliente de mayoreo, encadenada sobre el total real del mes anterior — avance y valor pendiente.">
+        <MonthNavigator
+          label={formatMonthLabel(anchor)}
+          onPrevious={goToPreviousMonth}
+          onNext={goToNextMonth}
+          nextDisabled={isNextMonthDisabled}
+        />
+        <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(true)}>
+          <Settings2 className="h-4 w-4" aria-hidden="true" />
+          Configurar %
+        </Button>
+        <ExportExcelButton
+          filename="ventas-mayoreo"
+          disabled={summary.isLoading || items.length === 0}
+          sheets={() => [
+            {
+              name: "Ventas mayoreo",
+              rows: [
+                ...items.map((item) => ({
+                  Cliente: item.clientLabel,
+                  [monthColumnLabel]: item.actualRevenue,
+                  Meta: item.targetRevenue,
+                  Alcance: item.reachPercent,
+                  "Valor pendiente": item.pendingValue,
+                })),
+                {
+                  Cliente: "Total mayoreo",
+                  [monthColumnLabel]: totals.actualRevenue,
+                  Meta: totals.targetRevenue,
+                  Alcance: totals.reachPercent,
+                  "Valor pendiente": totals.pendingValue,
+                },
+              ],
+            },
+            {
+              name: "Por comprador",
+              rows: buyerItems.flatMap((client) =>
+                client.buyers.map((buyer) => ({
+                  Cliente: client.clientLabel,
+                  Comprador: buyer.partnerName,
+                  Visitas: buyer.visits,
+                  Ingresos: buyer.amountTotal,
+                }))
+              ),
+            },
+          ]}
+        />
+      </FilterToolbar>
 
       <div className="rounded-xl border border-border bg-card p-4">
         <div className="overflow-x-auto">

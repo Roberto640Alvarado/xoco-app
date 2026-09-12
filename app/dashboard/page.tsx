@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { SalesFiltersBar } from "@/features/sales/components/sales-filters";
+import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { StatTile } from "@/components/ui/stat-tile";
 import { DailyTrendChart } from "@/components/charts/daily-trend-chart";
 import { useDailySummary } from "@/features/sales/hooks/use-daily-summary";
@@ -29,7 +30,28 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <SalesFiltersBar filters={filters} onChange={setFilters} />
+      <SalesFiltersBar
+        filters={filters}
+        onChange={setFilters}
+        actions={
+          <ExportExcelButton
+            filename="venta-diaria"
+            disabled={dailySummary.isLoading || data.length === 0}
+            sheets={() => [
+              {
+                name: "Venta diaria",
+                rows: data.map((point) => ({
+                  Fecha: point.date,
+                  Órdenes: point.orderCount,
+                  "Ingresos brutos": point.totalRevenue,
+                  Impuestos: point.totalTax,
+                  "Ingresos netos": point.totalRevenue - point.totalTax,
+                })),
+              },
+            ]}
+          />
+        }
+      />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile

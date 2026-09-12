@@ -9,6 +9,8 @@ export interface SalesGoalSummaryItem {
   reachPercent: number | null;
   pendingValue: number | null;
   isCurrentMonth: boolean;
+  updatedAt: string | null;
+  updatedByEmail: string | null;
 }
 
 export interface StoreSalesGoal {

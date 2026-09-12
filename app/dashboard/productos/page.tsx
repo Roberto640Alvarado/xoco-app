@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SalesFiltersBar } from "@/features/sales/components/sales-filters";
+import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { ProductRankingChart } from "@/components/charts/product-ranking-chart";
 import { ProductWeightRankingChart } from "@/components/charts/product-weight-ranking-chart";
 import { ProductMonthlyComparisonChart } from "@/components/charts/product-monthly-comparison-chart";
@@ -66,7 +67,59 @@ export default function ProductosPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <SalesFiltersBar filters={filters} onChange={setFilters} />
+      <SalesFiltersBar
+        filters={filters}
+        onChange={setFilters}
+        actions={
+          <ExportExcelButton
+            filename="mejores-productos"
+            sheets={() => [
+              {
+                name: "Más vendidos",
+                rows: (topProducts.data ?? []).map((p) => ({
+                  Producto: p.productName,
+                  Unidades: p.totalQuantity,
+                  Ingresos: p.totalRevenue,
+                })),
+              },
+              {
+                name: "Menos vendidos",
+                rows: (bottomProducts.data ?? []).map((p) => ({
+                  Producto: p.productName,
+                  Unidades: p.totalQuantity,
+                  Ingresos: p.totalRevenue,
+                })),
+              },
+              {
+                name: "Granel más vendido",
+                rows: (weightTopProducts.data ?? []).map((p) => ({
+                  Producto: p.productName,
+                  Kg: p.totalKg,
+                  Ingresos: p.totalRevenue,
+                })),
+              },
+              {
+                name: "Granel menos vendido",
+                rows: (weightBottomProducts.data ?? []).map((p) => ({
+                  Producto: p.productName,
+                  Kg: p.totalKg,
+                  Ingresos: p.totalRevenue,
+                })),
+              },
+              {
+                name: "Comparación mensual",
+                rows: (monthlyComparison.data ?? []).map((p) => ({
+                  Producto: p.productName,
+                  "Unidades mes actual": p.currentMonth.quantity,
+                  "Ingresos mes actual": p.currentMonth.revenue,
+                  "Unidades mes anterior": p.previousMonth.quantity,
+                  "Ingresos mes anterior": p.previousMonth.revenue,
+                })),
+              },
+            ]}
+          />
+        }
+      />
 
       <ProductMonthlyComparisonChart
         data={monthlyComparison.data ?? []}

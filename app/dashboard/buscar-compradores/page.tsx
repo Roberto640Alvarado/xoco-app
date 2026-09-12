@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { Search } from "lucide-react";
+import { FilterBar } from "@/components/filters/filter-bar";
+import { DateRangeFilter } from "@/components/filters/date-range-filter";
+import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -36,11 +39,11 @@ export default function BuscarCompradoresPage() {
       <div>
         <h1 className="text-sm font-medium text-foreground">Buscar compradores</h1>
         <p className="text-xs text-muted-foreground">
-          Cualquier cliente con facturas en el rango de fechas, por nombre.
+          Encuentra cualquier cliente con facturas en el rango de fechas, por nombre — no solo los de mayoreo fijos.
         </p>
       </div>
 
-      <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:flex-wrap sm:items-end">
+      <FilterBar>
         <div className="flex min-w-[220px] flex-1 flex-col gap-1">
           <Label htmlFor="customerQuery" className="text-xs text-muted-foreground">
             Nombre del cliente
@@ -61,35 +64,34 @@ export default function BuscarCompradoresPage() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="customerDateFrom" className="text-xs text-muted-foreground">
-            Desde
-          </Label>
-          <Input
-            id="customerDateFrom"
-            type="date"
-            value={dateFrom}
-            max={dateTo}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="w-full sm:w-[150px]"
-          />
-        </div>
+        <DateRangeFilter
+          value={{ dateFrom, dateTo }}
+          onChange={(next) => {
+            setDateFrom(next.dateFrom);
+            setDateTo(next.dateTo);
+          }}
+          maxDate={todayIsoDate()}
+        />
 
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="customerDateTo" className="text-xs text-muted-foreground">
-            Hasta
-          </Label>
-          <Input
-            id="customerDateTo"
-            type="date"
-            value={dateTo}
-            min={dateFrom}
-            max={todayIsoDate()}
-            onChange={(e) => setDateTo(e.target.value)}
-            className="w-full sm:w-[150px]"
+        <div className="sm:ml-auto">
+          <ExportExcelButton
+            filename="buscar-compradores"
+            disabled={showHint || search.isLoading || results.length === 0}
+            sheets={() => [
+              {
+                name: "Compradores",
+                rows: results.map((result) => ({
+                  Comprador: result.partnerName,
+                  "Cliente (empresa matriz)":
+                    result.commercialPartnerId === result.partnerId ? "" : result.commercialPartnerName,
+                  Facturas: result.visits,
+                  Ingresos: result.amountTotal,
+                })),
+              },
+            ]}
           />
         </div>
-      </div>
+      </FilterBar>
 
       <div className="rounded-xl border border-border bg-card p-4">
         {showHint ? (
