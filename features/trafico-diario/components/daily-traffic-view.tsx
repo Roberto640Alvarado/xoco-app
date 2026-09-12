@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { StatTile } from "@/components/ui/stat-tile";
 import {
   Select,
   SelectContent,
@@ -11,6 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useStores } from "@/features/sales/hooks/use-stores";
+import { useGoalsSummary } from "@/features/goals/hooks/use-goals-summary";
+import { formatInteger, formatPercent } from "@/lib/format";
 import {
   currentMonthRef,
   isSameMonth,
@@ -26,6 +29,19 @@ import { DailyTrafficTable } from "./daily-traffic-table";
 import { StoreDailyTrafficChart } from "./store-daily-traffic-chart";
 
 const ALL_STORES = "all";
+
+// Mismo criterio que TrafficGoalsTable (features/goals/): si falta el dato
+// de CUALQUIER tienda, el total no se puede sumar con confianza — mejor
+// "—" que un número que parece completo y no lo es.
+function sumOrNull(values: Array<number | null>): number | null {
+  if (values.some((v) => v == null)) return null;
+  return values.reduce<number>((sum, v) => sum + (v ?? 0), 0);
+}
+
+function divideOrNull(numerator: number | null, denominator: number | null): number | null {
+  if (numerator == null || !denominator) return null;
+  return numerator / denominator;
+}
 
 // Módulo "Tráfico Diario": tráfico de órdenes día por día. El filtro de mes
 // es un solo "mes ancla" (default: mes actual) que mueve las 3 tablas
@@ -54,6 +70,25 @@ export function DailyTrafficView() {
 
   const traffic = useDailyTraffic(anchor, posConfigId);
   const byStore = useDailyTrafficByStore(anchor);
+
+  // Meta del mes ancla (mismo dato que alimenta "Tráfico de tiendas" —
+  // ver features/goals) — filtrada a la tienda seleccionada, o sumada
+  // entre todas si el filtro está en "Todas las tiendas". Se pidió
+  // agregarla aquí para no tener que saltar a otra página a ver el avance
+  // del mes mientras se revisa el tráfico día a día.
+  const goals = useGoalsSummary(anchor.year, anchor.month);
+  const monthGoal = useMemo(() => {
+    const goalItems = goals.data ?? [];
+    if (posConfigId) {
+      const item = goalItems.find((g) => g.posConfigId === posConfigId);
+      if (!item) return null;
+      return { actualOrders: item.actualOrders, targetOrders: item.targetOrders, reachPercent: item.reachPercent };
+    }
+    if (goalItems.length === 0) return null;
+    const actualOrders = goalItems.reduce((sum, item) => sum + item.actualOrders, 0);
+    const targetOrders = sumOrNull(goalItems.map((item) => item.targetOrders));
+    return { actualOrders, targetOrders, reachPercent: divideOrNull(actualOrders, targetOrders) };
+  }, [goals.data, posConfigId]);
 
   const isNextDisabled = isSameMonth(anchor, currentMonth);
 
@@ -113,6 +148,24 @@ export function DailyTrafficView() {
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatTile
+          label="Visitas a la fecha (mes ancla)"
+          value={formatInteger(monthGoal?.actualOrders ?? 0)}
+          isLoading={goals.isLoading}
+        />
+        <StatTile
+          label="Meta del mes"
+          value={monthGoal?.targetOrders != null ? formatInteger(monthGoal.targetOrders) : "—"}
+          isLoading={goals.isLoading}
+        />
+        <StatTile
+          label="Alcance de meta"
+          value={formatPercent(monthGoal?.reachPercent ?? null)}
+          isLoading={goals.isLoading}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
