@@ -12,6 +12,7 @@ import { useProductRanking } from "@/features/sales/hooks/use-product-ranking";
 import { useProductRankingByWeight } from "@/features/sales/hooks/use-product-ranking-by-weight";
 import { useProductMonthlyComparison } from "@/features/sales/hooks/use-product-monthly-comparison";
 import { isoDateDaysAgo, todayIsoDate } from "@/lib/format";
+import { useVendedorStoreFilter } from "@/features/sales/hooks/use-vendedor-store-filter";
 import type { SalesFilters } from "@/features/sales/types/sales.types";
 
 const DEFAULT_LIMIT = 10;
@@ -49,9 +50,11 @@ function LimitInput({ id, value, onChange }: LimitInputProps) {
 }
 
 export default function ProductosPage() {
+  const { defaultPosConfigId } = useVendedorStoreFilter();
   const [filters, setFilters] = useState<SalesFilters>({
     dateFrom: isoDateDaysAgo(29),
     dateTo: todayIsoDate(),
+    posConfigId: defaultPosConfigId,
   });
   const [topLimit, setTopLimit] = useState(DEFAULT_LIMIT);
   const [bottomLimit, setBottomLimit] = useState(DEFAULT_LIMIT);

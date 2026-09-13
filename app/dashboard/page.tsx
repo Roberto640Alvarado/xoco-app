@@ -7,12 +7,15 @@ import { StatTile } from "@/components/ui/stat-tile";
 import { DailyTrendChart } from "@/components/charts/daily-trend-chart";
 import { useDailySummary } from "@/features/sales/hooks/use-daily-summary";
 import { formatCurrency, isoDateDaysAgo, todayIsoDate } from "@/lib/format";
+import { useVendedorStoreFilter } from "@/features/sales/hooks/use-vendedor-store-filter";
 import type { SalesFilters } from "@/features/sales/types/sales.types";
 
 export default function DashboardPage() {
+  const { defaultPosConfigId } = useVendedorStoreFilter();
   const [filters, setFilters] = useState<SalesFilters>({
     dateFrom: isoDateDaysAgo(29),
     dateTo: todayIsoDate(),
+    posConfigId: defaultPosConfigId,
   });
 
   const dailySummary = useDailySummary(filters);

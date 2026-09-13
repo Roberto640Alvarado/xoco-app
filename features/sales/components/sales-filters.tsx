@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 import { FilterBar } from "@/components/filters/filter-bar";
 import { DateRangeFilter } from "@/components/filters/date-range-filter";
 import { StoreSelect } from "@/components/filters/store-select";
-import { useAuthStore } from "@/store/auth-store";
 import { useStores } from "../hooks/use-stores";
+import { useVendedorStoreFilter } from "../hooks/use-vendedor-store-filter";
 import { todayIsoDate } from "@/lib/format";
 import type { SalesFilters } from "../types/sales.types";
 
@@ -19,7 +19,7 @@ interface SalesFiltersBarProps {
 
 export function SalesFiltersBar({ filters, onChange, actions }: SalesFiltersBarProps) {
   const { data: stores, isLoading: storesLoading } = useStores();
-  const isVendedor = useAuthStore((state) => state.user?.role === "VENDEDOR");
+  const { isVendedor } = useVendedorStoreFilter();
 
   return (
     <FilterBar>

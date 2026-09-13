@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useProductRankingByCategory } from "@/features/sales/hooks/use-product-ranking-by-category";
 import { isoDateDaysAgo, todayIsoDate } from "@/lib/format";
+import { useVendedorStoreFilter } from "@/features/sales/hooks/use-vendedor-store-filter";
 import type { SalesFilters } from "@/features/sales/types/sales.types";
 
 const DEFAULT_LIMIT = 10;
@@ -24,9 +25,11 @@ function clampLimit(value: number): number {
 // pidió "el top 10 por categoría" como su propio módulo — ver
 // plan-history/2026-09-12-top-productos-por-categoria.md.
 export default function CategoriasPage() {
+  const { defaultPosConfigId } = useVendedorStoreFilter();
   const [filters, setFilters] = useState<SalesFilters>({
     dateFrom: isoDateDaysAgo(29),
     dateTo: todayIsoDate(),
+    posConfigId: defaultPosConfigId,
   });
   const [limit, setLimit] = useState(DEFAULT_LIMIT);
 

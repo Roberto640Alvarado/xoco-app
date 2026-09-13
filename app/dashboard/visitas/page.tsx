@@ -7,15 +7,18 @@ import { StatTile } from "@/components/ui/stat-tile";
 import { DailyTrendChart } from "@/components/charts/daily-trend-chart";
 import { useDailySummary } from "@/features/sales/hooks/use-daily-summary";
 import { formatInteger, isoDateDaysAgo, todayIsoDate } from "@/lib/format";
+import { useVendedorStoreFilter } from "@/features/sales/hooks/use-vendedor-store-filter";
 import type { SalesFilters } from "@/features/sales/types/sales.types";
 
 // Visitas se mide por la cantidad de órdenes de la tienda (ver plan-history) —
 // reutiliza la misma serie de /sales/daily-summary que Ventas, cambiando solo
 // el metricKey a orderCount.
 export default function VisitasPage() {
+  const { defaultPosConfigId } = useVendedorStoreFilter();
   const [filters, setFilters] = useState<SalesFilters>({
     dateFrom: isoDateDaysAgo(29),
     dateTo: todayIsoDate(),
+    posConfigId: defaultPosConfigId,
   });
 
   const dailySummary = useDailySummary(filters);

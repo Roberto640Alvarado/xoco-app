@@ -17,6 +17,7 @@ import { TableSkeletonRows } from "@/components/ui/table-skeleton";
 import { usePaymentMethodsSummary } from "@/features/sales/hooks/use-payment-methods-summary";
 import { paymentMethodTypeMeta } from "@/features/sales/utils/payment-method-type";
 import { formatCurrency, formatInteger, isoDateDaysAgo, todayIsoDate } from "@/lib/format";
+import { useVendedorStoreFilter } from "@/features/sales/hooks/use-vendedor-store-filter";
 import type { SalesFilters } from "@/features/sales/types/sales.types";
 
 // Método de pago en 2 categorías (Efectivo vs. otros medios) más el
@@ -27,9 +28,11 @@ import type { SalesFilters } from "@/features/sales/types/sales.types";
 // features/sales/utils/payment-method-type.ts y plan-history
 // "buscador-compradores-efectivo-otros-medios".
 export default function EfectivoOtrosMediosPage() {
+  const { defaultPosConfigId } = useVendedorStoreFilter();
   const [filters, setFilters] = useState<SalesFilters>({
     dateFrom: isoDateDaysAgo(29),
     dateTo: todayIsoDate(),
+    posConfigId: defaultPosConfigId,
   });
 
   const summary = usePaymentMethodsSummary(filters);

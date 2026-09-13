@@ -7,7 +7,7 @@ import { MonthNavigator } from "@/components/filters/month-navigator";
 import { StoreSelect } from "@/components/filters/store-select";
 import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { useStores } from "@/features/sales/hooks/use-stores";
-import { useAuthStore } from "@/store/auth-store";
+import { useVendedorStoreFilter } from "@/features/sales/hooks/use-vendedor-store-filter";
 import { useTicketGoalsSummary } from "@/features/ticket-goals/hooks/use-ticket-goals-summary";
 import { formatCurrency, formatPercent } from "@/lib/format";
 import {
@@ -44,10 +44,10 @@ export function DailyTicketView() {
   const now = useMemo(() => new Date(), []);
   const currentMonth = useMemo(() => currentMonthRef(now), [now]);
   const [anchor, setAnchor] = useState(currentMonth);
-  const [posConfigId, setPosConfigId] = useState<number | undefined>(undefined);
+  const { isVendedor, defaultPosConfigId } = useVendedorStoreFilter();
+  const [posConfigId, setPosConfigId] = useState<number | undefined>(defaultPosConfigId);
 
   const { data: stores, isLoading: storesLoading } = useStores();
-  const isVendedor = useAuthStore((state) => state.user?.role === "VENDEDOR");
 
   const ticket = useDailyTicket(anchor, posConfigId);
   const byStore = useDailyTicketByStore(anchor);
