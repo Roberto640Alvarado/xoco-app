@@ -1,4 +1,3 @@
-import { CreateUserForm } from "@/features/users/components/create-user-form";
 import { UsersTable } from "@/features/users/components/users-table";
 
 export default function AdminUsersPage() {
@@ -12,9 +11,6 @@ export default function AdminUsersPage() {
         </p>
       </div>
 
-      <div className="max-w-2xl">
-        <CreateUserForm />
-      </div>
       <UsersTable />
     </div>
   );
