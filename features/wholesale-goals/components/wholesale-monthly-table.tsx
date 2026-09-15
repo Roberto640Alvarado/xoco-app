@@ -21,6 +21,7 @@ import { useWholesaleGoalsSummary } from "../hooks/use-wholesale-goals-summary";
 import { useWholesaleClientTotals } from "../hooks/use-wholesale-client-totals";
 import { WholesaleGoalPercentModal } from "./wholesale-goal-percent-modal";
 import { WholesaleReachChart } from "./wholesale-reach-chart";
+import { WholesaleMonthComparisonChart } from "./wholesale-month-comparison-chart";
 import { WholesaleBuyersTable } from "./wholesale-buyers-table";
 import { formatCurrency, formatPercent } from "@/lib/format";
 import type { WholesaleGoalSummaryItem } from "../types/wholesale-goals.types";
@@ -93,6 +94,10 @@ export function WholesaleMonthlyTable() {
   const summary = useWholesaleGoalsSummary(anchor.year, anchor.month);
   const items = summary.data ?? EMPTY_ITEMS;
   const monthColumnLabel = monthName(anchor);
+
+  const previousMonth = useMemo(() => previousMonthOf(anchor), [anchor]);
+  const previousSummary = useWholesaleGoalsSummary(previousMonth.year, previousMonth.month);
+  const previousItems = previousSummary.data ?? EMPTY_ITEMS;
 
   const buyersRange = useMemo(() => actualRevenueDateRange(anchor, now), [anchor, now]);
   const buyerTotals = useWholesaleClientTotals(buyersRange?.dateFrom ?? null, buyersRange?.dateTo ?? null);
@@ -227,6 +232,16 @@ export function WholesaleMonthlyTable() {
       </div>
 
       <WholesaleReachChart items={items} isLoading={summary.isLoading} emptyLabel="Sin clientes de mayoreo configurados." />
+
+      <WholesaleMonthComparisonChart
+        currentItems={items}
+        previousItems={previousItems}
+        currentLabel={monthName(anchor)}
+        previousLabel={monthName(previousMonth)}
+        isLoading={summary.isLoading || previousSummary.isLoading}
+        errorMessage={summary.error?.message ?? previousSummary.error?.message ?? null}
+        emptyLabel="Sin clientes de mayoreo configurados."
+      />
 
       <div className="flex flex-col gap-2">
         <div>
