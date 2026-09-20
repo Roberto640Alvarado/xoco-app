@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, CalendarCheck2, CalendarClock, DollarSign, LayoutDashboard, ListOrdered, Package, Receipt, Search, Settings, Store, Tags, TrendingUp, Users, Wallet } from "lucide-react";
+import { Building2, CalendarCheck2, CalendarClock, DollarSign, LayoutDashboard, ListOrdered, Package, Receipt, Search, Settings, Store, Tags, TrendingUp, Users, Wallet, Warehouse } from "lucide-react";
 import { DashboardShell, type DashboardNavItem } from "@/components/layout/dashboard-shell";
 
 // Todos los reportes viven en un solo bloque sin título (el usuario pidió
@@ -63,6 +63,13 @@ const NAV_ITEMS: DashboardNavItem[] = [
     ],
   },
   { label: "Cierre del mes", href: "/dashboard/cierre-mes", icon: CalendarCheck2, group: "", roles: ["SUPER_ADMIN", "FINANZAS"], moduleKey: "dashboard.cierre-mes" },
+
+  // Todavía sin moduleKey: el módulo está "en desarrollo" (ver
+  // app/dashboard/inventario/page.tsx) y no expone ningún dato propio
+  // que el panel de Permisos tenga que gatear todavía — se agrega acá
+  // igual que Administración (sin moduleKey), visible para cualquier
+  // rol autenticado mientras tanto.
+  { label: "Inventario", href: "/dashboard/inventario", icon: Warehouse, group: "" },
 
   { label: "Administración", href: "/dashboard/admin", icon: Settings, group: "Sistema", roles: ["SUPER_ADMIN"] },
 ];
