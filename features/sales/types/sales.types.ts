@@ -42,14 +42,30 @@ export interface ProductMonthlyComparison {
   previousMonth: ProductMonthPeriod;
 }
 
+// "kg" para productos a granel (ej. Crocks); "unidad" para el resto — ver
+// SalesService.findTopProductsByCategory en xoco-api. `quantity` viene en
+// esa unidad, así que NO es comparable entre un producto con `unit`
+// distinto (0.5 kg vs. 2 unidades no se pueden sumar/comparar).
+export type CategoryProductUnit = "unidad" | "kg";
+
+// Qué campo usa /sales/top-products-by-category para ordenar los
+// PRODUCTOS dentro de cada categoría — "revenue" (default) es comparable
+// entre pieza y granel; "quantity" no mezcla ambos tipos pero tampoco los
+// compara entre sí (ver CategoryProductUnit). Las categorías siempre se
+// ordenan por ingresos, sin importar este valor.
+export type CategoryProductMetric = "revenue" | "quantity";
+
 // Un producto dentro del top de su categoría — ver
-// /sales/top-products-by-category. Ordenado por ingresos ($), no por
-// unidades: a diferencia de TopProduct, acá SÍ conviven productos por
-// pieza y a granel (ej. "Crocks") en el mismo ranking.
+// /sales/top-products-by-category. A diferencia de TopProduct, acá SÍ
+// conviven productos por pieza y a granel (ej. "Crocks") en el mismo
+// ranking, porque además de `quantity` (en su propia unidad) siempre trae
+// `revenue` ($), que es comparable entre ambos tipos.
 export interface CategoryProduct {
   productId: number;
   productName: string;
   revenue: number;
+  quantity: number;
+  unit: CategoryProductUnit;
 }
 
 export interface CategoryTopProducts {

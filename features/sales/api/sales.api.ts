@@ -1,5 +1,6 @@
 import { apiGet } from "@/lib/api/client";
 import type {
+  CategoryProductMetric,
   CategoryTopProducts,
   CustomerSearchFilters,
   CustomerSearchResult,
@@ -14,12 +15,13 @@ import type {
 } from "../types/sales.types";
 
 function toQueryString(
-  filters: SalesFilters & { limit?: number; order?: ProductRankOrder },
+  filters: SalesFilters & { limit?: number; order?: ProductRankOrder; metric?: CategoryProductMetric },
 ): string {
   const params = new URLSearchParams({ dateFrom: filters.dateFrom, dateTo: filters.dateTo });
   if (filters.posConfigId) params.set("posConfigId", String(filters.posConfigId));
   if (filters.limit) params.set("limit", String(filters.limit));
   if (filters.order) params.set("order", filters.order);
+  if (filters.metric) params.set("metric", filters.metric);
   return params.toString();
 }
 
@@ -49,9 +51,10 @@ export function fetchProductRankingByCategory(
   filters: SalesFilters,
   limit = 10,
   order: ProductRankOrder = "desc",
+  metric: CategoryProductMetric = "revenue",
 ) {
   return apiGet<CategoryTopProducts[]>(
-    `/sales/top-products-by-category?${toQueryString({ ...filters, limit, order })}`,
+    `/sales/top-products-by-category?${toQueryString({ ...filters, limit, order, metric })}`,
   );
 }
 

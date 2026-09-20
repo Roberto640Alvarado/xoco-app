@@ -10,10 +10,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatCurrency } from "@/lib/format";
-import type { CategoryProduct } from "@/features/sales/types/sales.types";
+import { formatCurrency, formatInteger, formatKg } from "@/lib/format";
+import type { CategoryProduct, CategoryProductMetric } from "@/features/sales/types/sales.types";
 import { ChartSkeleton } from "@/components/ui/chart-skeleton";
 import { ChartErrorState } from "@/components/ui/chart-error-state";
+
+// "0.5" + "kg" -> "0.5 kg"; "12" + "unidad" -> "12 u". Los dos únicos
+// `unit` que puede traer un CategoryProduct (ver sales.types.ts).
+function formatQuantity(quantity: number, unit: CategoryProduct["unit"]): string {
+  return unit === "kg" ? formatKg(quantity) : `${formatInteger(quantity)} u`;
+}
 
 function CategoryProductTooltip({
   active,
@@ -28,9 +34,18 @@ function CategoryProductTooltip({
   return (
     <div className="rounded-lg border border-border bg-card px-3 py-2 text-sm shadow-md">
       <p className="font-medium text-foreground">{product.productName}</p>
-      <p className="mt-0.5 text-muted-foreground">{formatCurrency(product.revenue)}</p>
+      <p className="mt-0.5 text-muted-foreground">Ingresos: {formatCurrency(product.revenue)}</p>
+      <p className="text-muted-foreground">Cantidad: {formatQuantity(product.quantity, product.unit)}</p>
     </div>
   );
+}
+
+interface BarValueLabelProps {
+  x?: string | number;
+  y?: string | number;
+  width?: string | number;
+  height?: string | number;
+  index?: number;
 }
 
 interface CategoryTopProductsChartProps {
@@ -41,16 +56,20 @@ interface CategoryTopProductsChartProps {
   title: string;
   subtitle: string;
   emptyLabel: string;
+  /** Qué campo dibuja la barra y ordena la columna de valor de "Ver tabla" — el orden de los productos ya lo decide el backend (ver `metric` en useProductRankingByCategory); esto solo cambia qué se muestra. */
+  metric: CategoryProductMetric;
   /** Control adicional en el header (ej. input de "mostrar N"), a la derecha del subtitle. */
   headerExtra?: ReactNode;
 }
 
 // Un bloque por categoría (ver app/dashboard/categorias/page.tsx, que
-// renderiza uno de estos por cada categoría que devuelve el backend).
-// Ranking por INGRESOS, no por unidades — a diferencia de
-// ProductRankingChart, acá conviven productos por pieza y a granel (ej.
-// "Crocks") en el mismo ranking, porque el ingreso ($) es la única unidad
-// comparable entre ambos (ver SalesService.findTopProductsByCategory).
+// renderiza uno de estos por cada categoría que devuelve el backend). A
+// diferencia de ProductRankingChart, acá conviven productos por pieza y a
+// granel (ej. "Crocks") en el mismo ranking: por ingresos ($) porque es
+// comparable entre ambos tipos, por cantidad porque cada producto lleva
+// su propia unidad (`unit`) — ver SalesService.findTopProductsByCategory.
+// El tooltip y "Ver tabla" siempre muestran las 2 columnas; solo la barra
+// y su label cambian según `metric`.
 export function CategoryTopProductsChart({
   products,
   isLoading,
@@ -58,10 +77,26 @@ export function CategoryTopProductsChart({
   title,
   subtitle,
   emptyLabel,
+  metric,
   headerExtra,
 }: CategoryTopProductsChartProps) {
   const chartData = [...products].reverse(); // recharts dibuja de abajo hacia arriba
   const rowHeight = 32;
+
+  function renderValueLabel(props: BarValueLabelProps) {
+    const x = Number(props.x ?? 0);
+    const y = Number(props.y ?? 0);
+    const width = Number(props.width ?? 0);
+    const height = Number(props.height ?? 0);
+    const row = chartData[props.index ?? 0];
+    if (!row) return null;
+    const text = metric === "revenue" ? formatCurrency(row.revenue) : formatQuantity(row.quantity, row.unit);
+    return (
+      <text x={x + width + 6} y={y + height / 2} dy={4} fontSize={12} fill="var(--muted-foreground)">
+        {text}
+      </text>
+    );
+  }
 
   return (
     <div className="rounded-xl border border-border bg-card p-4">
@@ -103,16 +138,11 @@ export function CategoryTopProductsChart({
             />
             <Tooltip content={<CategoryProductTooltip />} cursor={{ fill: "var(--muted)" }} />
             <Bar
-              dataKey="revenue"
+              dataKey={metric}
               fill="var(--color-chart-1)"
               radius={[0, 4, 4, 0]}
               maxBarSize={24}
-              label={{
-                position: "right",
-                fill: "var(--muted-foreground)",
-                fontSize: 12,
-                formatter: (value: unknown) => (typeof value === "number" ? formatCurrency(value) : String(value ?? "")),
-              }}
+              label={renderValueLabel}
             />
           </BarChart>
         </ResponsiveContainer>
@@ -130,6 +160,7 @@ export function CategoryTopProductsChart({
                   <TableHead>#</TableHead>
                   <TableHead>Producto</TableHead>
                   <TableHead>Ingresos</TableHead>
+                  <TableHead>Cantidad</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -138,6 +169,7 @@ export function CategoryTopProductsChart({
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>{product.productName}</TableCell>
                     <TableCell>{formatCurrency(product.revenue)}</TableCell>
+                    <TableCell>{formatQuantity(product.quantity, product.unit)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
