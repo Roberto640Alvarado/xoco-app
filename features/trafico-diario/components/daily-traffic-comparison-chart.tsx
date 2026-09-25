@@ -68,10 +68,10 @@ interface DailyTrafficComparisonChartProps {
   isLoading: boolean;
 }
 
-// "Comportamiento del tráfico [mes ante-anterior] vrs [mes anterior]":
+// "Comportamiento del tráfico [mes anterior] vrs [mes seleccionado]":
 // compara, día a día (día 1..31 del mes, no fecha real — así se alinean
-// meses de distinta cantidad de días), los dos meses previos al mes ancla
-// seleccionado en el filtro de la página.
+// meses de distinta cantidad de días), el mes ancla seleccionado en el
+// filtro de la página contra el mes inmediatamente anterior.
 export function DailyTrafficComparisonChart({
   title,
   olderLabel,

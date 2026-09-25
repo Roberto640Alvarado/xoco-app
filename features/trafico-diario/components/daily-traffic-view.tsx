@@ -40,10 +40,10 @@ function divideOrNull(numerator: number | null, denominator: number | null): num
 
 // Módulo "Tráfico Diario": tráfico de órdenes día por día. El filtro de mes
 // es un solo "mes ancla" (default: mes actual) que mueve las 3 tablas
-// (ancla / ancla-1 / ancla-2) y la gráfica de comparación (ancla-1 vs
-// ancla-2) juntos. El filtro de tienda aplica a las tablas y a esa
-// comparación — la gráfica "por tienda" de abajo siempre muestra todas las
-// tiendas (ver plan-history).
+// (ancla / ancla-1 / ancla-2) y la gráfica de comparación (ancla vs
+// ancla-1, es decir mes seleccionado vs mes anterior) juntos. El filtro de
+// tienda aplica a las tablas y a esa comparación — la gráfica "por tienda"
+// de abajo siempre muestra todas las tiendas (ver plan-history).
 export function DailyTrafficView() {
   const now = useMemo(() => new Date(), []);
   const currentMonth = useMemo(() => currentMonthRef(now), [now]);
@@ -86,7 +86,7 @@ export function DailyTrafficView() {
     setAnchor((current) => nextMonthOf(current));
   }
 
-  const comparisonTitle = `Comportamiento del tráfico ${monthName(traffic.prev2.monthRef)} vrs ${monthName(traffic.prev1.monthRef)}`;
+  const comparisonTitle = `Comportamiento del tráfico ${monthName(traffic.prev1.monthRef)} vrs ${monthName(traffic.anchor.monthRef)}`;
 
   return (
     <div className="flex flex-col gap-4">
@@ -168,11 +168,11 @@ export function DailyTrafficView() {
 
       <DailyTrafficComparisonChart
         title={comparisonTitle}
-        olderLabel={monthName(traffic.prev2.monthRef)}
-        recentLabel={monthName(traffic.prev1.monthRef)}
-        olderPoints={traffic.prev2.data}
-        recentPoints={traffic.prev1.data}
-        isLoading={traffic.prev2.isLoading || traffic.prev1.isLoading}
+        olderLabel={monthName(traffic.prev1.monthRef)}
+        recentLabel={monthName(traffic.anchor.monthRef)}
+        olderPoints={traffic.prev1.data}
+        recentPoints={traffic.anchor.data}
+        isLoading={traffic.prev1.isLoading || traffic.anchor.isLoading}
       />
 
       <StoreDailyTrafficChart series={byStore.data} isLoading={byStore.isLoading} monthLabel={traffic.anchor.label} />
