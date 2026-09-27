@@ -27,3 +27,21 @@ Mismo contexto que el plan-history hermano en xoco-api: se reemplaza el placehol
 
 - Vendedor podrá entrar en un tramo futuro (recepción/confirmación de envíos) — por ahora la vista es exclusiva de Finanzas/Super admin.
 - Mermas, regalías, envíos planta→tienda y Kardex quedan para tramos posteriores.
+
+
+## Ajuste same-day: botón "Traer inventario" + confirmación antes de guardar
+
+Feedback del usuario tras revisar la primera versión (mismo día):
+
+1. La carga del catálogo NO debía ser automática al elegir tienda — se verificó con AskUserQuestion y se confirmó: Finanzas debe presionar un botón "Traer inventario" a propósito.
+2. Guardar cambios debe pasar siempre por un panel de confirmación antes de mandar el PUT.
+3. Se reconfirmó que Vendedor no debe ver esta vista todavía — ya estaba resuelto en la primera versión (roles + moduleKey en el nav, `@Roles(SUPER_ADMIN, FINANZAS)` en el backend) y es el MISMO mecanismo que usa el resto del dashboard para pantallas restringidas (ej. Venta mensual, Cierre del mes): no hay guard de ruta del lado del cliente en ningún módulo de este proyecto, solo se oculta el ítem del sidebar y el backend rechaza la petición — no se agregó nada nuevo porque ya es consistente con ese patrón.
+
+Cambios:
+- **`features/inventory/hooks/use-inventory-items.ts`**: nuevo parámetro `enabled` — la consulta ya no se dispara automáticamente al tener `posConfigId`, sino solo cuando `InventoryView` lo autoriza.
+- **`features/inventory/components/inventory-view.tsx`**: nuevo botón "Traer inventario" (icono `Download`) junto al `StoreSelect`. Antes de presionarlo se muestra un placeholder invitando a hacerlo. Cambiar de tienda reinicia el estado (`shouldFetch`) — hay que volver a traer el catálogo de la nueva tienda. Ya trayendo una vez, el mismo botón pasa a decir "Actualizar inventario" y permite refrescar (`refetch()`).
+- **`features/inventory/components/inventory-table.tsx`**: "Guardar cambios" ya no llama el PUT directo — abre un `ConfirmSaveDialog` (mismo patrón visual que `CreateUserModal`/`GrowthPercentModal`: éxito visible antes de auto-cerrarse, error inline sin cerrar para reintentar) con la lista de productos y su nueva cantidad, y el PUT solo se dispara al presionar "Confirmar guardado" ahí dentro.
+
+Sin cambios en xoco-api — los endpoints `GET/PUT /inventory/stores/:posConfigId/items` no cambiaron, solo cuándo/cómo el frontend los llama.
+
+`npx tsc --noEmit` y `npx eslint` sobre los archivos tocados: sin errores.

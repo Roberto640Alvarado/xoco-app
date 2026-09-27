@@ -14,10 +14,19 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { LastModifiedNote } from "@/components/ui/last-modified-note";
 import { ChartErrorState } from "@/components/ui/chart-error-state";
+import { formatInteger, formatKg } from "@/lib/format";
 import { useUpsertInventoryBulk } from "../hooks/use-upsert-inventory-bulk";
-import type { InventoryItem } from "../types/inventory.types";
+import type { InventoryItem, InventoryUnit } from "../types/inventory.types";
 
 // "12" (unidad) -> "12"; "0.5" (kg) -> "0.5". null (todavía no contado)
 // -> "" (input vacío, no "0" — un campo vacío se lee como "falta contar",
@@ -32,8 +41,103 @@ function isValidDraft(value: string): boolean {
   return !Number.isNaN(n) && n >= 0;
 }
 
+function formatQuantity(quantity: number, unit: InventoryUnit): string {
+  return unit === "kg" ? formatKg(quantity) : `${formatInteger(quantity)} u`;
+}
+
+interface DirtyEntry {
+  productId: number;
+  productName: string;
+  unit: InventoryUnit;
+  quantity: number;
+}
+
+interface ConfirmSaveDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  storeName?: string;
+  entries: DirtyEntry[];
+  upsert: ReturnType<typeof useUpsertInventoryBulk>;
+  onConfirm: () => void;
+}
+
+// Panel de confirmación antes de guardar — pedido explícito del usuario
+// ("las cosas de guardar siempre con un panel de confirmación"). Mismo
+// patrón visual que CreateUserModal/GrowthPercentModal: éxito visible
+// antes de cerrarse solo, error inline si falla, sin cerrar para poder
+// reintentar.
+function ConfirmSaveDialog({ open, onOpenChange, storeName, entries, upsert, onConfirm }: ConfirmSaveDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={(next) => !upsert.isPending && onOpenChange(next)}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-bold text-foreground">Confirmar guardado</DialogTitle>
+          <DialogDescription className="pt-1 leading-relaxed">
+            Vas a guardar {entries.length} {entries.length === 1 ? "cambio" : "cambios"} de inventario
+            {storeName ? (
+              <>
+                {" "}
+                en <span className="font-medium text-foreground">{storeName}</span>
+              </>
+            ) : null}
+            .
+          </DialogDescription>
+        </DialogHeader>
+
+        {upsert.isSuccess ? (
+          <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/10 px-4 py-4 text-sm font-medium text-primary">
+            <CheckCircle2 className="h-5 w-5 shrink-0" aria-hidden="true" />
+            Inventario guardado correctamente.
+          </div>
+        ) : (
+          <div className="max-h-64 overflow-y-auto rounded-lg border border-border">
+            <ul className="divide-y divide-border">
+              {entries.map((entry) => (
+                <li key={entry.productId} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                  <span className="text-foreground">{entry.productName}</span>
+                  <span className="shrink-0 font-medium tabular-nums text-foreground">
+                    {formatQuantity(entry.quantity, entry.unit)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {upsert.isError && (
+          <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+            {upsert.error.message}
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={upsert.isPending}>
+            Cancelar
+          </Button>
+          <Button type="button" onClick={onConfirm} disabled={upsert.isPending || upsert.isSuccess}>
+            {upsert.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                Guardando...
+              </>
+            ) : upsert.isSuccess ? (
+              <>
+                <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                Guardado
+              </>
+            ) : (
+              "Confirmar guardado"
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 interface InventoryTableProps {
   posConfigId: number;
+  storeName?: string;
   items: InventoryItem[];
   isLoading: boolean;
   isError: boolean;
@@ -43,13 +147,15 @@ interface InventoryTableProps {
 // Tabla editable del catálogo completo de Odoo por tienda — a diferencia
 // del resto de tablas del dashboard (que son de solo lectura), acá cada
 // fila es un input de captura. Se guarda en LOTE con un botón "Guardar
-// cambios" (no autosave por fila) para no disparar una petición por cada
-// tecla — mismo motivo que UpsertGoalsBulk. Buscador porque el catálogo
+// cambios" que abre un panel de confirmación antes de mandar el PUT
+// (pedido explícito del usuario) — no autosave por fila, para no
+// disparar una petición por cada tecla. Buscador porque el catálogo
 // completo puede ser largo (a diferencia del top 10 de Categorías).
-export function InventoryTable({ posConfigId, items, isLoading, isError, errorMessage }: InventoryTableProps) {
+export function InventoryTable({ posConfigId, storeName, items, isLoading, isError, errorMessage }: InventoryTableProps) {
   const upsert = useUpsertInventoryBulk();
   const [search, setSearch] = useState("");
   const [drafts, setDrafts] = useState<Record<number, string>>({});
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   // Si se cambia de tienda, los drafts de la tienda anterior ya no
   // aplican — mismo criterio de "ajustar estado durante el render" que
@@ -58,6 +164,7 @@ export function InventoryTable({ posConfigId, items, isLoading, isError, errorMe
   if (posConfigId !== lastPosConfigId) {
     setLastPosConfigId(posConfigId);
     setDrafts({});
+    setConfirmOpen(false);
     upsert.reset();
   }
 
@@ -70,26 +177,38 @@ export function InventoryTable({ posConfigId, items, isLoading, isError, errorMe
 
   function setDraft(productId: number, value: string) {
     setDrafts((prev) => ({ ...prev, [productId]: value }));
-    if (upsert.isSuccess) upsert.reset();
   }
 
-  const dirtyEntries = Object.entries(drafts)
+  const dirtyEntries: DirtyEntry[] = Object.entries(drafts)
     .map(([productIdRaw, value]) => {
       const productId = Number(productIdRaw);
       const item = items.find((i) => i.productId === productId);
       if (!item || value.trim() === "" || !isValidDraft(value)) return null;
       const quantity = Number(value);
       if (quantity === item.quantity) return null; // sin cambio real
-      return { productId, quantity };
+      return { productId, productName: item.productName, unit: item.unit, quantity };
     })
-    .filter((entry): entry is { productId: number; quantity: number } => entry !== null);
+    .filter((entry): entry is DirtyEntry => entry !== null);
 
   const hasInvalidDraft = Object.values(drafts).some((value) => !isValidDraft(value));
-  const canSave = dirtyEntries.length > 0 && !hasInvalidDraft && !upsert.isPending;
+  const canOpenConfirm = dirtyEntries.length > 0 && !hasInvalidDraft;
 
-  function handleSave() {
-    if (dirtyEntries.length === 0) return;
-    upsert.mutate({ posConfigId, entries: dirtyEntries }, { onSuccess: () => setDrafts({}) });
+  function handleOpenConfirm() {
+    if (!canOpenConfirm) return;
+    upsert.reset();
+    setConfirmOpen(true);
+  }
+
+  function handleConfirm() {
+    upsert.mutate(
+      { posConfigId, entries: dirtyEntries.map(({ productId, quantity }) => ({ productId, quantity })) },
+      {
+        onSuccess: () => {
+          setDrafts({});
+          setTimeout(() => setConfirmOpen(false), 1200);
+        },
+      },
+    );
   }
 
   function QuantityInput({ item }: { item: InventoryItem }) {
@@ -133,34 +252,16 @@ export function InventoryTable({ posConfigId, items, isLoading, isError, errorMe
         </div>
 
         <div className="flex items-center gap-2">
-          {dirtyEntries.length > 0 && !upsert.isPending && (
+          {dirtyEntries.length > 0 && (
             <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
               {dirtyEntries.length} sin guardar
             </span>
           )}
-          <Button type="button" onClick={handleSave} disabled={!canSave}>
-            {upsert.isPending ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                Guardando...
-              </>
-            ) : upsert.isSuccess && dirtyEntries.length === 0 ? (
-              <>
-                <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-                Guardado
-              </>
-            ) : (
-              "Guardar cambios"
-            )}
+          <Button type="button" onClick={handleOpenConfirm} disabled={!canOpenConfirm}>
+            Guardar cambios
           </Button>
         </div>
       </div>
-
-      {upsert.isError && (
-        <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
-          {upsert.error.message}
-        </div>
-      )}
 
       {isError ? (
         <ChartErrorState message={errorMessage} />
@@ -218,6 +319,15 @@ export function InventoryTable({ posConfigId, items, isLoading, isError, errorMe
           </ul>
         </div>
       )}
+
+      <ConfirmSaveDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        storeName={storeName}
+        entries={dirtyEntries}
+        upsert={upsert}
+        onConfirm={handleConfirm}
+      />
     </div>
   );
 }
