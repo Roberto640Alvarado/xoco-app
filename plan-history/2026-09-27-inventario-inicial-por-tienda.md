@@ -86,3 +86,19 @@ Sin cambios en xoco-api — mismos endpoints, mismos datos; solo cambia cómo se
 ## Resultado final
 
 `npx tsc --noEmit -p tsconfig.json` y `npx eslint features/inventory` sobre los tres archivos tocados: sin errores. **`odooQuantity` sigue sin verificarse contra el Odoo real del negocio** — esta sesión no tiene salida de red hacia `xocolatisimo.odoo.com`, así que falta que Finanzas confirme en producción que el número de "Índice inicial" coincide con lo que Odoo realmente reporta por tienda.
+
+
+## Ajuste same-day: aviso "en desarrollo" + hallazgo del índice de Odoo
+
+Se corrió `scripts/inspect-odoo-stock.mjs` contra el Odoo real del negocio y se confirmó por qué "Índice inicial (Odoo)" salía igual en varias tiendas: San Benito, Tienda Ramblas y Sucursal Escalon SÍ tienen su propia bodega (`stock.warehouse`) creada en Odoo, pero sus Puntos de Venta están mal configurados y apuntan los tres a la bodega "Plaza Centrika" en vez de a la suya — no es un bug de la app, es una configuración a corregir directo en Odoo (Punto de Venta → Configuración → cada tienda → campo Almacén). Los movimientos de venta (`stock.move.line`) sí descuentan de la ubicación correcta de cada tienda, así que la operación diaria no está afectada — solo el número de referencia que mostramos.
+
+Mientras se corrige eso en Odoo, se agregó un aviso visible en la vista para que quien la vea (Admin/Finanzas, ya restringido) sepa que el módulo sigue en desarrollo:
+
+- **`components/ui/in-development-banner.tsx`** (nuevo, reutilizable para futuros tramos): banner con ícono de construcción y mensaje configurable.
+- **`features/inventory/components/inventory-view.tsx`**: se agrega el banner arriba de todo, con un mensaje específico sobre el índice de Odoo mientras se corrige la configuración de bodegas.
+
+Sin cambios de permisos — Inventario ya estaba restringido a `SUPER_ADMIN`/`FINANZAS` desde la primera versión (nav + backend), se confirmó que sigue así.
+
+## Resultado final
+
+`npx tsc --noEmit -p tsconfig.json` y `npx eslint features/inventory components/ui/in-development-banner.tsx`: sin errores.

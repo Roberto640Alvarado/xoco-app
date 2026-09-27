@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2, RefreshCw } from "lucide-react";
 import { FilterToolbar } from "@/components/filters/filter-toolbar";
+import { InDevelopmentBanner } from "@/components/ui/in-development-banner";
 import { StoreSelect } from "@/components/filters/store-select";
 import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ export function InventoryView() {
 
   return (
     <div className="flex flex-col gap-4">
+      <InDevelopmentBanner message="Inventario está en desarrollo — el índice inicial de Odoo puede no coincidir todavía con cada tienda mientras se corrige la configuración de bodegas." />
       <FilterToolbar description="Inventario inicial por tienda — índice de Odoo a la par del nuevo conteo físico de cada producto.">
         <StoreSelect
           stores={stores}
