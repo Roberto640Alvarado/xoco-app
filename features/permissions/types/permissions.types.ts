@@ -21,6 +21,7 @@ export const MODULE_KEYS = [
   "dashboard.productos",
   "dashboard.categorias",
   "dashboard.cierre-mes",
+  "dashboard.inventario",
 ] as const;
 
 export type ModuleKey = (typeof MODULE_KEYS)[number];
@@ -42,6 +43,7 @@ export const MODULE_LABEL: Record<ModuleKey, string> = {
   "dashboard.productos": "Mejores productos",
   "dashboard.categorias": "Categorías",
   "dashboard.cierre-mes": "Cierre del mes",
+  "dashboard.inventario": "Inventario",
 };
 
 // Grupos de moduleKey que en el backend comparten un mismo endpoint —

@@ -13,6 +13,7 @@ import {
   TrendingUp,
   Users,
   Wallet,
+  Warehouse,
   type LucideIcon,
 } from "lucide-react";
 import type { ModuleKey } from "../types/permissions.types";
@@ -36,6 +37,7 @@ export const MODULE_ICON: Record<ModuleKey, LucideIcon> = {
   "dashboard.productos": Package,
   "dashboard.categorias": Tags,
   "dashboard.cierre-mes": CalendarCheck2,
+  "dashboard.inventario": Warehouse,
 };
 
 export interface ModuleGroup {
@@ -64,5 +66,5 @@ export const MODULE_GROUPS: ModuleGroup[] = [
   },
   { label: "Mayoreo", moduleKeys: ["dashboard.ventas-mayoreo", "dashboard.buscar-compradores"] },
   { label: "Tickets", moduleKeys: ["dashboard.ticket-promedio", "dashboard.ticket-detallado"] },
-  { label: "Otros", moduleKeys: ["dashboard.cierre-mes"] },
+  { label: "Otros", moduleKeys: ["dashboard.cierre-mes", "dashboard.inventario"] },
 ];
