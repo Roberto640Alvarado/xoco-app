@@ -63,3 +63,26 @@ Mismo cambio que el plan-history hermano en xoco-api. En el frontend:
 ## Resultado final
 
 `npx tsc --noEmit` y `npx eslint` sobre los archivos tocados: sin errores.
+
+
+## Ajuste same-day: 2 columnas (índice Odoo / inventario nuevo) + carga automática
+
+Feedback del usuario tras probar el flujo de "Traer inventario": pidió separar en dos inputs — "Índice inicial" (lo que reporta Odoo) al lado de "Inventario nuevo" (la captura real) — y que el catálogo ya salga cargado al entrar/elegir tienda, dejando el botón solo para actualizar/refrescar la lista.
+
+Esto revierte el gate de la ronda anterior ("Traer inventario" bloqueaba la carga hasta presionarlo) y reemplaza el precargado de `odooQuantity` dentro del mismo input (ronda anterior) por dos columnas separadas.
+
+Cambios:
+- **`features/inventory/hooks/use-inventory-items.ts`**: se quita el parámetro `enabled` — la consulta vuelve a dispararse automáticamente en cuanto hay `posConfigId` (mismo criterio que el resto del dashboard). El botón de `InventoryView` ya no gatea la carga inicial, solo dispara un `refetch()` manual.
+- **`features/inventory/components/inventory-view.tsx`**: se quita el estado `shouldFetch`/`lastPosConfigId` y el placeholder "presiona para traer". El botón cambia de "Traer inventario" (ícono `Download`) a "Actualizar inventario" (ícono `RefreshCw`), siempre habilitado con tienda seleccionada, y llama `inventory.refetch()`. El placeholder solo se muestra cuando no hay ninguna tienda seleccionada todavía. El Excel exportado ahora usa los encabezados "Índice inicial (Odoo)" e "Inventario nuevo" en vez de una sola columna "Existencia Odoo (referencia)".
+- **`features/inventory/components/inventory-table.tsx`**: se quita por completo el precargado de drafts con `odooQuantity` (y la nota "Sugerido por Odoo — verifica") de la ronda anterior. La celda de cantidad se separa en dos componentes: `OdooIndexBox` (input deshabilitado, de solo lectura, muestra `item.odooQuantity` o "—") y `NewQuantityInput` (el input editable de siempre, el que se guarda). La tabla de escritorio pasa de 4 a 5 columnas (se agrega "Índice inicial" junto a "Inventario nuevo", cada una con un subtítulo pequeño — "Odoo · referencia" / "se guarda esto"); en mobile las tarjetas muestran ambos valores lado a lado con etiquetas cortas.
+
+Sin cambios en xoco-api — mismos endpoints, mismos datos; solo cambia cómo se presentan y cuándo se cargan en el frontend.
+
+## Razones del cambio
+
+- Separar en dos columnas en vez de precargar el draft evita ambigüedad entre "lo que dice Odoo" y "lo que Finanzas realmente contó" — antes un número sin tocar podía confundirse con una captura real ya hecha.
+- Volver a la carga automática iguala el comportamiento de Inventario con el resto del dashboard (ninguna otra vista pide un clic extra solo para ver los datos) — el botón ahora sirve para su propósito más útil en la práctica: refrescar cuando Odoo cambió después de la primera carga.
+
+## Resultado final
+
+`npx tsc --noEmit -p tsconfig.json` y `npx eslint features/inventory` sobre los tres archivos tocados: sin errores. **`odooQuantity` sigue sin verificarse contra el Odoo real del negocio** — esta sesión no tiene salida de red hacia `xocolatisimo.odoo.com`, así que falta que Finanzas confirme en producción que el número de "Índice inicial" coincide con lo que Odoo realmente reporta por tienda.

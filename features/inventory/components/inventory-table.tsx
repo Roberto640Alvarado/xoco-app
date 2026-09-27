@@ -144,13 +144,14 @@ interface InventoryTableProps {
   errorMessage?: string;
 }
 
-// Tabla editable del catálogo completo de Odoo por tienda — a diferencia
-// del resto de tablas del dashboard (que son de solo lectura), acá cada
-// fila es un input de captura. Se guarda en LOTE con un botón "Guardar
-// cambios" que abre un panel de confirmación antes de mandar el PUT
-// (pedido explícito del usuario) — no autosave por fila, para no
-// disparar una petición por cada tecla. Buscador porque el catálogo
-// completo puede ser largo (a diferencia del top 10 de Categorías).
+// Tabla editable del catálogo completo de Odoo por tienda. Cada producto
+// muestra DOS campos a la par (pedido explícito del usuario): "Índice
+// inicial (Odoo)" — de solo lectura, la existencia que ya reporta Odoo
+// para esa tienda, como referencia — e "Inventario nuevo" — el input
+// editable donde Finanzas captura el conteo físico real, que es lo único
+// que se guarda. Se guarda en LOTE con un botón "Guardar cambios" que
+// abre un panel de confirmación antes de mandar el PUT — no autosave por
+// fila. Buscador porque el catálogo completo puede ser largo.
 export function InventoryTable({ posConfigId, storeName, items, isLoading, isError, errorMessage }: InventoryTableProps) {
   const upsert = useUpsertInventoryBulk();
   const [search, setSearch] = useState("");
@@ -166,29 +167,6 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
     setDrafts({});
     setConfirmOpen(false);
     upsert.reset();
-  }
-
-  // Cada vez que llega un lote nuevo de `items` (primer "Traer
-  // inventario", o un refetch), se precarga como draft la existencia de
-  // Odoo (odooQuantity) de los productos que TODAVÍA no se han contado
-  // (quantity === null) — así Finanzas parte de esa referencia en vez de
-  // un campo vacío, y solo la ajusta. No se pisa un draft que el usuario
-  // ya haya tocado (comparación por referencia de `items`, no un
-  // useEffect, mismo criterio del resto del archivo).
-  const [seededItems, setSeededItems] = useState<InventoryItem[] | null>(null);
-  if (items.length > 0 && seededItems !== items) {
-    setSeededItems(items);
-    setDrafts((prev) => {
-      let changed = false;
-      const next = { ...prev };
-      for (const item of items) {
-        if (item.quantity == null && item.odooQuantity != null && next[item.productId] === undefined) {
-          next[item.productId] = quantityToInput(item.odooQuantity);
-          changed = true;
-        }
-      }
-      return changed ? next : prev;
-    });
   }
 
   const query = search.trim().toLowerCase();
@@ -234,15 +212,26 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
     );
   }
 
-  function QuantityInput({ item }: { item: InventoryItem }) {
+  // Caja de solo lectura con el índice de Odoo — mismo ancho/alineación
+  // que el input editable de al lado, para que se lean como un par.
+  function OdooIndexBox({ item }: { item: InventoryItem }) {
+    return (
+      <div className="flex items-center gap-1.5">
+        <Input
+          type="text"
+          readOnly
+          disabled
+          value={item.odooQuantity != null ? String(item.odooQuantity) : "—"}
+          className="w-20 border-dashed bg-muted/40 text-right tabular-nums text-muted-foreground"
+        />
+        <span className="text-xs text-muted-foreground">{item.unit === "kg" ? "Kg" : "u"}</span>
+      </div>
+    );
+  }
+
+  function NewQuantityInput({ item }: { item: InventoryItem }) {
     const value = draftValue(item);
     const invalid = !isValidDraft(value);
-    // Todavía no se ha guardado ninguna captura para este producto en
-    // esta tienda, y el valor que se ve viene precargado de la
-    // existencia de Odoo (ver seedeo de drafts arriba) — se lo hace notar
-    // para que Finanzas lo verifique en vez de asumir que ya es un
-    // conteo confirmado.
-    const isOdooSuggestion = item.quantity == null && item.odooQuantity != null;
     return (
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-1.5">
@@ -254,15 +243,11 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
             value={value}
             onChange={(e) => setDraft(item.productId, e.target.value)}
             aria-invalid={invalid}
-            className={cn("w-28 text-right tabular-nums", invalid && "border-destructive")}
+            className={cn("w-24 text-right tabular-nums", invalid && "border-destructive")}
           />
           <span className="text-xs text-muted-foreground">{item.unit === "kg" ? "Kg" : "u"}</span>
         </div>
-        {isOdooSuggestion ? (
-          <p className="text-xs text-amber-600 dark:text-amber-400">Sugerido por Odoo — verifica</p>
-        ) : (
-          <LastModifiedNote email={item.updatedByEmail} date={item.updatedAt} />
-        )}
+        <LastModifiedNote email={item.updatedByEmail} date={item.updatedAt} />
       </div>
     );
   }
@@ -310,7 +295,7 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
         </div>
       ) : (
         <div className="max-h-[65vh] overflow-y-auto rounded-lg border border-border">
-          {/* Desktop / tablet: tabla completa */}
+          {/* Desktop / tablet: tabla completa, con las 2 columnas a la par */}
           <div className="hidden md:block">
             <Table>
               <TableHeader className="sticky top-0 z-10 bg-card">
@@ -318,7 +303,14 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
                   <TableHead className="w-10">#</TableHead>
                   <TableHead>Producto</TableHead>
                   <TableHead>Unidad</TableHead>
-                  <TableHead className="text-right">Cantidad</TableHead>
+                  <TableHead className="text-right">
+                    Índice inicial
+                    <span className="block text-[10px] font-normal text-muted-foreground">Odoo · referencia</span>
+                  </TableHead>
+                  <TableHead className="text-right">
+                    Inventario nuevo
+                    <span className="block text-[10px] font-normal text-muted-foreground">se guarda esto</span>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -329,7 +321,12 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
                     <TableCell className="text-muted-foreground">{item.unit === "kg" ? "Kg" : "Unidad"}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end">
-                        <QuantityInput item={item} />
+                        <OdooIndexBox item={item} />
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end">
+                        <NewQuantityInput item={item} />
                       </div>
                     </TableCell>
                   </TableRow>
@@ -338,7 +335,8 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
             </Table>
           </div>
 
-          {/* Mobile: lista de tarjetas — mismo criterio que UsersTable */}
+          {/* Mobile: lista de tarjetas — mismo criterio que UsersTable, con
+              los 2 campos a la par dentro de cada tarjeta. */}
           <ul className="divide-y divide-border md:hidden">
             {filteredItems.map((item) => (
               <li key={item.productId} className="flex flex-col gap-2 p-3">
@@ -346,7 +344,16 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
                   <p className="text-sm font-medium text-foreground">{item.productName}</p>
                   <span className="shrink-0 text-xs text-muted-foreground">{item.unit === "kg" ? "Kg" : "Unidad"}</span>
                 </div>
-                <QuantityInput item={item} />
+                <div className="flex items-start gap-4">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-medium text-muted-foreground">Índice Odoo</span>
+                    <OdooIndexBox item={item} />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-medium text-foreground">Inventario nuevo</span>
+                    <NewQuantityInput item={item} />
+                  </div>
+                </div>
               </li>
             ))}
           </ul>
