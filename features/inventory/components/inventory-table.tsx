@@ -168,6 +168,29 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
     upsert.reset();
   }
 
+  // Cada vez que llega un lote nuevo de `items` (primer "Traer
+  // inventario", o un refetch), se precarga como draft la existencia de
+  // Odoo (odooQuantity) de los productos que TODAVÍA no se han contado
+  // (quantity === null) — así Finanzas parte de esa referencia en vez de
+  // un campo vacío, y solo la ajusta. No se pisa un draft que el usuario
+  // ya haya tocado (comparación por referencia de `items`, no un
+  // useEffect, mismo criterio del resto del archivo).
+  const [seededItems, setSeededItems] = useState<InventoryItem[] | null>(null);
+  if (items.length > 0 && seededItems !== items) {
+    setSeededItems(items);
+    setDrafts((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const item of items) {
+        if (item.quantity == null && item.odooQuantity != null && next[item.productId] === undefined) {
+          next[item.productId] = quantityToInput(item.odooQuantity);
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }
+
   const query = search.trim().toLowerCase();
   const filteredItems = query ? items.filter((item) => item.productName.toLowerCase().includes(query)) : items;
 
@@ -214,6 +237,12 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
   function QuantityInput({ item }: { item: InventoryItem }) {
     const value = draftValue(item);
     const invalid = !isValidDraft(value);
+    // Todavía no se ha guardado ninguna captura para este producto en
+    // esta tienda, y el valor que se ve viene precargado de la
+    // existencia de Odoo (ver seedeo de drafts arriba) — se lo hace notar
+    // para que Finanzas lo verifique en vez de asumir que ya es un
+    // conteo confirmado.
+    const isOdooSuggestion = item.quantity == null && item.odooQuantity != null;
     return (
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-1.5">
@@ -229,7 +258,11 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
           />
           <span className="text-xs text-muted-foreground">{item.unit === "kg" ? "Kg" : "u"}</span>
         </div>
-        <LastModifiedNote email={item.updatedByEmail} date={item.updatedAt} />
+        {isOdooSuggestion ? (
+          <p className="text-xs text-amber-600 dark:text-amber-400">Sugerido por Odoo — verifica</p>
+        ) : (
+          <LastModifiedNote email={item.updatedByEmail} date={item.updatedAt} />
+        )}
       </div>
     );
   }

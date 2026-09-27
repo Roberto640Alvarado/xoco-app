@@ -82,6 +82,7 @@ export function InventoryView() {
                 Producto: item.productName,
                 Unidad: item.unit === "kg" ? "Kg" : "Unidad",
                 Cantidad: item.quantity ?? "Sin contar",
+                "Existencia Odoo (referencia)": item.odooQuantity ?? "",
                 "Última modificación": item.updatedAt ?? "",
                 "Modificado por": item.updatedByEmail ?? "",
               })),

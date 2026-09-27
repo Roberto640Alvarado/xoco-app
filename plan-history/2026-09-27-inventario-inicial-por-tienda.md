@@ -45,3 +45,21 @@ Cambios:
 Sin cambios en xoco-api — los endpoints `GET/PUT /inventory/stores/:posConfigId/items` no cambiaron, solo cuándo/cómo el frontend los llama.
 
 `npx tsc --noEmit` y `npx eslint` sobre los archivos tocados: sin errores.
+
+
+## Ajuste same-day: existencia de Odoo como referencia (odooQuantity)
+
+Mismo cambio que el plan-history hermano en xoco-api. En el frontend:
+
+- **`features/inventory/types/inventory.types.ts`**: `InventoryItem` gana `odooQuantity: number | null`.
+- **`features/inventory/components/inventory-table.tsx`**: cada vez que llega un lote nuevo de `items` (primer "Traer inventario" o un refetch), se precarga como draft el `odooQuantity` de los productos que todavía no tienen `quantity` guardada — Finanzas ve el número de Odoo ya puesto en el input, con la nota "Sugerido por Odoo — verifica" debajo, y lo ajusta o lo deja tal cual antes de guardar. No se pisa un draft que el usuario ya haya tocado.
+- **`features/inventory/components/inventory-view.tsx`**: el Excel exportado ahora incluye la columna "Existencia Odoo (referencia)".
+
+## Razones del cambio
+
+- La sugerencia se guarda como un draft "sucio" (no solo se muestra) para que quede incluida en el panel de confirmación y se guarde si Finanzas no la toca — "que solo la ajuste" implica que aceptar el número tal cual, sin escribir nada, también debe poder guardarse.
+- No se sobrescribe un producto que YA tiene `quantity` guardada (aunque Odoo reporte un número distinto) — la captura manual sigue siendo la fuente de verdad una vez que existe; `odooQuantity` solo sirve de arranque para lo que nunca se ha contado.
+
+## Resultado final
+
+`npx tsc --noEmit` y `npx eslint` sobre los archivos tocados: sin errores.
