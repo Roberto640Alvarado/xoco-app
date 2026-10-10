@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { SalesFiltersBar } from "@/features/sales/components/sales-filters";
 import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { StatTile } from "@/components/ui/stat-tile";
+import { DollarSign, Receipt, Wallet, Calculator } from "lucide-react";
 import { DailyTrendChart } from "@/components/charts/daily-trend-chart";
 import { useDailySummary } from "@/features/sales/hooks/use-daily-summary";
 import { formatCurrency, isoDateDaysAgo, todayIsoDate } from "@/lib/format";
@@ -58,24 +59,28 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile
+          icon={DollarSign}
           label="Ingresos totales"
           value={formatCurrency(totals.totalRevenue)}
           isLoading={dailySummary.isLoading}
           isError={dailySummary.isError}
         />
         <StatTile
+          icon={Receipt}
           label="Impuestos (IVA)"
           value={formatCurrency(totals.totalTax)}
           isLoading={dailySummary.isLoading}
           isError={dailySummary.isError}
         />
         <StatTile
+          icon={Wallet}
           label="Ingresos netos"
           value={formatCurrency(totals.netRevenue)}
           isLoading={dailySummary.isLoading}
           isError={dailySummary.isError}
         />
         <StatTile
+          icon={Calculator}
           label="Venta promedio"
           value={formatCurrency(totals.averageSale)}
           isLoading={dailySummary.isLoading}

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { SalesFiltersBar } from "@/features/sales/components/sales-filters";
 import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { StatTile } from "@/components/ui/stat-tile";
+import { Banknote, CreditCard, Wallet } from "lucide-react";
 import { PaymentMethodsChart } from "@/components/charts/payment-methods-chart";
 import {
   Table,
@@ -71,18 +72,21 @@ export default function EfectivoOtrosMediosPage() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatTile
+          icon={Banknote}
           label="Efectivo"
           value={formatCurrency(summary.data?.cash.amountTotal ?? 0)}
           isLoading={summary.isLoading}
           isError={summary.isError}
         />
         <StatTile
+          icon={CreditCard}
           label="Otros medios"
           value={formatCurrency(summary.data?.other.amountTotal ?? 0)}
           isLoading={summary.isLoading}
           isError={summary.isError}
         />
         <StatTile
+          icon={Wallet}
           label="Total"
           value={formatCurrency(summary.data?.total.amountTotal ?? 0)}
           isLoading={summary.isLoading}

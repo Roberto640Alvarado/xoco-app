@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { SalesFiltersBar } from "@/features/sales/components/sales-filters";
 import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { StatTile } from "@/components/ui/stat-tile";
+import { Users, CalendarClock } from "lucide-react";
 import { DailyTrendChart } from "@/components/charts/daily-trend-chart";
 import { useDailySummary } from "@/features/sales/hooks/use-daily-summary";
 import { formatInteger, isoDateDaysAgo, todayIsoDate } from "@/lib/format";
@@ -56,12 +57,14 @@ export default function VisitasPage() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <StatTile
+          icon={Users}
           label="Visitas totales"
           value={formatInteger(totals.totalOrders)}
           isLoading={dailySummary.isLoading}
           isError={dailySummary.isError}
         />
         <StatTile
+          icon={CalendarClock}
           label="Órdenes promedio por día"
           value={formatInteger(totals.averageOrders)}
           isLoading={dailySummary.isLoading}

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { StatTile } from "@/components/ui/stat-tile";
+import { Users, Target, CheckCircle2 } from "lucide-react";
 import { FilterToolbar } from "@/components/filters/filter-toolbar";
 import { MonthNavigator } from "@/components/filters/month-navigator";
 import { StoreSelect } from "@/components/filters/store-select";
@@ -126,16 +127,19 @@ export function DailyTrafficView() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatTile
+          icon={Users}
           label="Visitas a la fecha (mes ancla)"
           value={formatInteger(monthGoal?.actualOrders ?? 0)}
           isLoading={goals.isLoading}
         />
         <StatTile
+          icon={Target}
           label="Meta del mes"
           value={monthGoal?.targetOrders != null ? formatInteger(monthGoal.targetOrders) : "—"}
           isLoading={goals.isLoading}
         />
         <StatTile
+          icon={CheckCircle2}
           label="Alcance de meta"
           value={formatPercent(monthGoal?.reachPercent ?? null)}
           isLoading={goals.isLoading}

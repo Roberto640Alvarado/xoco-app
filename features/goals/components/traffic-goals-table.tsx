@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatTile } from "@/components/ui/stat-tile";
+import { Settings2, Target } from "lucide-react";
 import { FilterToolbar } from "@/components/filters/filter-toolbar";
 import { MonthNavigator } from "@/components/filters/month-navigator";
 import { ExportExcelButton } from "@/components/ui/export-excel-button";
@@ -218,6 +218,7 @@ export function TrafficGoalsTable() {
 
       <div className="max-w-xs">
         <StatTile
+          icon={Target}
           label="Cumplimiento de meta a la fecha"
           value={formatPercent(totals.reachPercent)}
           isLoading={summary.isLoading}
