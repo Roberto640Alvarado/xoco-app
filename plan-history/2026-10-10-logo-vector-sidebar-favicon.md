@@ -21,3 +21,16 @@ El usuario compartió el logo de Xocolatísimo como imagen (PNG) y pidió: (1) p
 ## Resultado final
 
 `npx tsc --noEmit -p tsconfig.json` y `npx eslint components/layout/dashboard-shell.tsx components/brand/xocolatisimo-mark.tsx`: sin errores. Se verificó visualmente el ícono renderizado a los tamaños reales de uso (28px sidebar, 32px/16px favicon) y el header completo simulado con los colores reales de `--sidebar-accent` en claro y oscuro — se ve nítido y con buen contraste en ambos casos.
+
+## Ajuste same-day: logo en el login + fondo de marca
+
+Mismo día, el usuario pidió además: (1) poner el mismo ícono vectorizado en la pantalla de login, y (2) usar `public/fondo.webp` (una foto de producto que el usuario agregó directamente a la carpeta) como fondo de esa pantalla.
+
+Cambios:
+
+- **`app/(auth)/login/page.tsx`**: el badge que mostraba el ícono genérico `LogIn` de `lucide-react` ahora usa `<XocolatisimoMark />` (el mismo componente del sidebar), en una caja más grande (`h-14 w-14`, ícono `h-9 w-9`) ya que acá hay más espacio que en el carril del sidebar. Mismo criterio de color que en el sidebar: `bg-muted` (gris neutro) + `text-[#45382E] dark:text-[#E8DCC8]`.
+- **`app/(auth)/layout.tsx`**: el fondo pasó de `bg-muted/40` (gris plano) a `fondo.webp` como `background-image` (`bg-cover bg-center`) detrás de la tarjeta. La tarjeta se dejó opaca (`bg-card`) y con `shadow-lg` (antes `shadow-sm`) para que se despegue bien de la foto de fondo, que tiene colores fuertes (verde, naranja).
+
+Razón: la tarjeta sigue siendo 100% opaca, así que la legibilidad del formulario no depende del fondo — solo cambia el ambiente visual alrededor de la tarjeta. No se agregó overlay oscuro porque la tarjeta ya tapa toda la zona donde hay texto; la foto de fondo se deja tal cual para que se note la marca.
+
+Verificado con `tsc --noEmit` y `eslint` (sin errores) y con una previsualización renderizada de la pantalla de login con los colores reales de light/dark — buen contraste en ambos modos.
