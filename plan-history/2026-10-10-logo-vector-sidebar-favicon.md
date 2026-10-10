@@ -35,10 +35,12 @@ Razón: la tarjeta sigue siendo 100% opaca, así que la legibilidad del formular
 
 Verificado con `tsc --noEmit` y `eslint` (sin errores) y con una previsualización renderizada de la pantalla de login con los colores reales de light/dark — buen contraste en ambos modos.
 
-## Ajuste same-day: quitar icono a las opciones que despliegan submenú
+## Ajuste same-day: quitar icono a las opciones DENTRO de un submenú desplegado
 
-El usuario pidió que las opciones del sidebar que se despliegan (los grupos con submenú, como "Productos", "Tráfico", "Ventas", "Mayoreo", "Tickets") ya no lleven icono — para diferenciarlas visualmente de las opciones que llevan directo a una página.
+El usuario pidió que las opciones del sidebar "que se despliegan" no lleven icono. En un primer intento se interpretó como el grupo principal (el que tiene la flecha y abre el submenú, ej. "Productos") — el usuario aclaró después que es al revés: el grupo principal SÍ debe conservar su icono; son las opciones que APARECEN al desplegarlo (el submenú — ej. "Mejores productos", "Categorías" dentro de "Productos") las que no deben llevar icono.
 
-Cambio: en `NavGroupRow` (`components/layout/dashboard-shell.tsx`), el ícono del trigger del Collapsible ahora lleva `className="hidden group-data-[collapsible=icon]:block"` en vez de mostrarse siempre. Así, en la vista normal del sidebar el grupo solo muestra el label y la flecha; pero cuando el sidebar está colapsado a modo ícono (el carril de 3rem), el ícono reaparece — ahí sigue siendo necesario como el único glifo visible (el botón se recorta a 32x32px en ese modo, así que sin icono se vería un pedazo cortado del texto en vez de algo reconocible). Las opciones sin submenú (los leaf items, tanto de primer nivel como los de dentro de un grupo ya abierto) no se tocaron — conservan su icono en todos los casos, porque esas sí llevan directo a una página y el pedido era solo para "las que se despliegan".
+Cambio final en `components/layout/dashboard-shell.tsx`:
+- `NavGroupRow` (el trigger del grupo, con la flecha): sin cambios respecto al original — mantiene su `<Icon />` siempre visible.
+- `NavSubLeafRow` (cada opción dentro del submenú ya desplegado): se quitó `<Icon />` por completo — ahora solo muestra el label. También se quitó la clase `[&_svg]:size-4` del botón, ya sin icono que dimensionar.
 
-Verificado con `tsc --noEmit` y `eslint` (sin errores) y con una previsualización del label sin icono junto a un leaf con icono, para confirmar que la diferencia se nota bien.
+Verificado con `tsc --noEmit` y `eslint` (sin errores).
