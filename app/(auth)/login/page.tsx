@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, LogIn } from "lucide-react";
+import { XocolatisimoMark } from "@/components/brand/xocolatisimo-mark";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,8 +37,8 @@ function LoginForm() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col items-center gap-3 text-center">
-        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-          <LogIn className="h-6 w-6" aria-hidden="true" />
+        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-[#45382E] dark:text-[#E8DCC8]">
+          <XocolatisimoMark className="h-9 w-9" />
         </span>
         <div>
           <h1 className="text-xl font-semibold text-foreground">Xocolatísimo</h1>
