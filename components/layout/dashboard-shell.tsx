@@ -351,25 +351,17 @@ export function DashboardShell({ navItems, dashboardHref, children }: DashboardS
               logo-badge se desborde del carril angosto (ver SidebarHeader
               -> p-2 en components/ui/sidebar.tsx, ya deja solo 32px de
               ancho útil). */}
-          <div className="flex items-center justify-between gap-2">
-            <Link
-              href={dashboardHref}
-              className="flex min-w-0 items-center gap-2 px-2 py-1 font-semibold text-lg text-sidebar-foreground focus:outline-hidden focus:opacity-80 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center"
-            >
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-sidebar-accent text-[#45382E] dark:text-[#E8DCC8]">
-                <XocolatisimoMark className="h-5 w-5" />
-              </span>
-              <span className="truncate text-sidebar-primary group-data-[collapsible=icon]:hidden">
-                Xocolatísimo
-              </span>
-            </Link>
-            {/* Colapsa a modo ícono desde dentro del propio sidebar (estilo
-                de la referencia). Solo en escritorio: en móvil el drawer se
-                cierra tocando el fondo, y este botón no cabría en modo
-                ícono (3rem de ancho) — para volver a expandir ahí está el
-                trigger del topbar, siempre visible. */}
-            <SidebarTrigger className="mr-1 hidden shrink-0 rounded-lg border border-sidebar-border bg-background shadow-xs hover:bg-sidebar-accent md:flex group-data-[collapsible=icon]:hidden" />
-          </div>
+          <Link
+            href={dashboardHref}
+            className="flex min-w-0 items-center gap-2 px-2 py-1 font-semibold text-lg text-sidebar-foreground focus:outline-hidden focus:opacity-80 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center"
+          >
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-sidebar-accent text-[#45382E] dark:text-[#E8DCC8]">
+              <XocolatisimoMark className="h-5 w-5" />
+            </span>
+            <span className="truncate text-sidebar-primary group-data-[collapsible=icon]:hidden">
+              Xocolatísimo
+            </span>
+          </Link>
         </SidebarHeader>
 
         <SidebarContent>
