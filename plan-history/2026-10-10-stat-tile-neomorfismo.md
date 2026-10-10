@@ -24,3 +24,13 @@ El componente de referencia incluía, además del estilo visual, un ícono circu
 ## Resultado final
 
 `npx tsc --noEmit` y `npx eslint` sobre los 11 archivos tocados: sin errores. Se verificó visualmente el diseño final (tarjeta + ícono) en claro y oscuro con los colores reales de `--muted` del proyecto — el efecto de sombra se nota bien en ambos modos.
+
+## Ajuste same-day: el truco neomórfico no se veía bien en tema claro
+
+El usuario reportó (con una captura de un ejemplo de tarjeta oscura con buen contraste) que en tema claro las tarjetas no se veían bien: el tono del borde no se notaba y el fondo necesitaba cambiar.
+
+Causa: la primera versión usaba el recurso neomórfico "de libro" — doble sombra (clara arriba-izquierda, oscura abajo-derecha), sin borde real — sobre `bg-muted`. En tema oscuro eso se nota porque `--muted` (oklch .269) es bastante más claro que `--background` (oklch .145). Pero en tema claro `--muted` (oklch .97) es casi idéntico a `--background` (oklch 1) — una diferencia de 3% de luz — así que la sombra clara, que debía marcar el borde superior, quedaba prácticamente invisible contra un fondo casi igual de claro. El resultado: tarjeta "plana", sin borde perceptible.
+
+Cambio en `components/ui/stat-tile.tsx`: se reemplazó el par `bg-muted` + sombra doble por `border border-border` + `bg-card` + una sola sombra de elevación (`shadow-[0_1px_2px_...,0_12px_28px_-10px_...]`, con su variante `dark:`). `border-border`/`bg-card` es el mismo par que ya usan las `Card` normales en el resto del proyecto, así que el contraste ya estaba resuelto y probado en ambos temas — no dependía de afinar manualmente una sombra contra un fondo específico. El círculo del ícono se simplificó de la misma forma: de sombra interior neomórfica a `border border-border bg-muted`.
+
+Verificado con `tsc --noEmit` y `eslint` (sin errores) y con una previsualización lado a lado en claro y oscuro — el borde y la tarjeta se notan claramente en ambos temas.
