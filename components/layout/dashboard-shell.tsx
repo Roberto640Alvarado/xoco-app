@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Collapsible } from "@base-ui/react/collapsible";
-import { ChevronDown, Loader2, LogOut, Store, type LucideIcon } from "lucide-react";
+import { ChevronDown, Loader2, LogOut, type LucideIcon } from "lucide-react";
+import { XocolatisimoMark } from "@/components/brand/xocolatisimo-mark";
 import { useAuthStore } from "@/store/auth-store";
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -358,8 +359,8 @@ export function DashboardShell({ navItems, dashboardHref, children }: DashboardS
               href={dashboardHref}
               className="flex min-w-0 items-center gap-2 px-2 py-1 font-semibold text-lg text-sidebar-foreground focus:outline-hidden focus:opacity-80 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center"
             >
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary/15 text-sidebar-primary">
-                <Store className="h-4 w-4" aria-hidden="true" />
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-sidebar-accent text-[#45382E] dark:text-[#E8DCC8]">
+                <XocolatisimoMark className="h-5 w-5" />
               </span>
               <span className="truncate text-sidebar-primary group-data-[collapsible=icon]:hidden">
                 Xocolatísimo
