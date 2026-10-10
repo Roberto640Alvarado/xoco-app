@@ -34,3 +34,11 @@ Cambios:
 Razón: la tarjeta sigue siendo 100% opaca, así que la legibilidad del formulario no depende del fondo — solo cambia el ambiente visual alrededor de la tarjeta. No se agregó overlay oscuro porque la tarjeta ya tapa toda la zona donde hay texto; la foto de fondo se deja tal cual para que se note la marca.
 
 Verificado con `tsc --noEmit` y `eslint` (sin errores) y con una previsualización renderizada de la pantalla de login con los colores reales de light/dark — buen contraste en ambos modos.
+
+## Ajuste same-day: quitar icono a las opciones que despliegan submenú
+
+El usuario pidió que las opciones del sidebar que se despliegan (los grupos con submenú, como "Productos", "Tráfico", "Ventas", "Mayoreo", "Tickets") ya no lleven icono — para diferenciarlas visualmente de las opciones que llevan directo a una página.
+
+Cambio: en `NavGroupRow` (`components/layout/dashboard-shell.tsx`), el ícono del trigger del Collapsible ahora lleva `className="hidden group-data-[collapsible=icon]:block"` en vez de mostrarse siempre. Así, en la vista normal del sidebar el grupo solo muestra el label y la flecha; pero cuando el sidebar está colapsado a modo ícono (el carril de 3rem), el ícono reaparece — ahí sigue siendo necesario como el único glifo visible (el botón se recorta a 32x32px en ese modo, así que sin icono se vería un pedazo cortado del texto en vez de algo reconocible). Las opciones sin submenú (los leaf items, tanto de primer nivel como los de dentro de un grupo ya abierto) no se tocaron — conservan su icono en todos los casos, porque esas sí llevan directo a una página y el pedido era solo para "las que se despliegan".
+
+Verificado con `tsc --noEmit` y `eslint` (sin errores) y con una previsualización del label sin icono junto a un leaf con icono, para confirmar que la diferencia se nota bien.
