@@ -177,16 +177,13 @@ function NavLeafRow({
 }
 
 function NavSubLeafRow({ item, isActive }: { item: DashboardNavLeaf; isActive: boolean }) {
-  const Icon = item.icon;
-
   return (
     <SidebarMenuSubItem>
       <SidebarMenuSubButton
         isActive={isActive}
         render={<Link href={item.href} />}
-        className="gap-2.5 text-[14px] [&_svg]:size-4"
+        className="gap-2.5 text-[14px]"
       >
-        <Icon />
         <span>{item.label}</span>
       </SidebarMenuSubButton>
     </SidebarMenuSubItem>
@@ -239,14 +236,7 @@ function NavGroupRow({
               />
             }
           >
-            {/* Sin icono en vista expandida — el usuario pidió que las
-                opciones que se despliegan (con submenú) no lleven icono,
-                solo el label y la flecha. En modo icono colapsado SÍ se
-                muestra (y oculta el label/flecha por el propio recorte del
-                botón a 32x32px, igual que antes): sin esto, el carril
-                colapsado mostraría un pedazo cortado del texto en vez de
-                un glifo reconocible. */}
-            <Icon className="hidden group-data-[collapsible=icon]:block" aria-hidden="true" />
+            <Icon aria-hidden="true" />
             <span>{item.label}</span>
             <ChevronDown className="ml-auto size-4! shrink-0 text-muted-foreground transition-transform duration-200 ease-out group-data-[panel-open]/menu-button:rotate-180" />
           </Collapsible.Trigger>
