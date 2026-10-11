@@ -3,14 +3,14 @@ import { AUTH_COOKIE_NAME, decodeToken } from "@/lib/auth/decode-token";
 
 const AUTH_ROUTES = ["/login"];
 
-// Módulos permitidos para VENDEDOR — exactamente los 8 que tienen
-// selector de tienda (ver StoreSelect / sales-filters.tsx y los 3
-// daily-*-view.tsx), la misma lista que ya filtra el sidebar en
-// dashboard-shell.tsx (filterNavItemsByRole). Esto es refuerzo de
-// UX/seguridad-en-profundidad a nivel de RUTA (no solo ocultar el link) —
-// el backend igual rechaza los datos con 403 si alguien fuerza la URL.
-const VENDEDOR_ALLOWED_PATHS = [
-  "/dashboard",
+// Rutas permitidas para VENDEDOR: sus pantallas con selector de tienda más
+// Inventario (que además exige que Admin habilite su tienda). Es la misma
+// lista que filtra el menú en dashboard-shell.tsx y refuerza a nivel de RUTA
+// lo que ya hace el backend (403 por rol y por permisos). "/dashboard" (el
+// Resumen) es SOLO esa ruta: antes se comparaba por prefijo y dejaba pasar
+// cualquier /dashboard/*.
+const VENDEDOR_EXACT_PATHS = ["/dashboard"];
+const VENDEDOR_PREFIX_PATHS = [
   "/dashboard/productos",
   "/dashboard/categorias",
   "/dashboard/visitas",
@@ -18,11 +18,14 @@ const VENDEDOR_ALLOWED_PATHS = [
   "/dashboard/venta-diaria",
   "/dashboard/trafico-diario",
   "/dashboard/ticket-detallado",
+  "/dashboard/inventario",
 ];
 
 function isVendedorAllowedRoute(pathname: string): boolean {
-  return VENDEDOR_ALLOWED_PATHS.some(
-    (allowed) => pathname === allowed || pathname.startsWith(`${allowed}/`),
+  const path = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+  return (
+    VENDEDOR_EXACT_PATHS.includes(path) ||
+    VENDEDOR_PREFIX_PATHS.some((allowed) => path === allowed || path.startsWith(`${allowed}/`))
   );
 }
 
@@ -76,7 +79,7 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
-    // VENDEDOR solo puede entrar a sus 8 módulos con selector de tienda —
+    // VENDEDOR solo puede entrar a sus pantallas (ver arriba) —
     // cualquier otra ruta de /dashboard/* (incluida /dashboard/admin, ya
     // cubierta arriba) lo regresa a su panel.
     if (decoded.role === "VENDEDOR" && !isVendedorAllowedRoute(pathname)) {

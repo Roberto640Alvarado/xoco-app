@@ -6,12 +6,13 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "cn";
 import { Collapsible } from "@base-ui/react/collapsible";
-import { ChevronDown, Loader2, LogOut, type LucideIcon } from "lucide-react";
+import { ChevronDown, Loader2, Lock, LogOut, type LucideIcon } from "lucide-react";
 import { XocolatisimoMark } from "@/components/brand/xocolatisimo-mark";
 import { useAuthStore } from "@/store/auth-store";
 import { useLogout } from "@/features/auth/hooks/use-logout";
+import { usePermissionsRefresh } from "@/features/auth/hooks/use-permissions-refresh";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import {
@@ -348,14 +349,38 @@ interface DashboardShellProps {
   children: React.ReactNode;
 }
 
+// Aviso cuando la pantalla pedida no está disponible para el rol del usuario.
+function RouteBlockedNotice({ href }: { href: string }) {
+  return (
+    <div className="mx-auto mt-6 flex max-w-lg flex-col items-center gap-3 rounded-2xl border border-border bg-card p-8 text-center shadow-xs">
+      <span className="flex size-11 items-center justify-center rounded-full bg-muted text-muted-foreground">
+        <Lock className="size-5" aria-hidden="true" />
+      </span>
+      <p className="font-semibold text-foreground">Esta sección no está disponible para tu rol</p>
+      <p className="text-sm text-muted-foreground">Si la necesitas, pídele al Admin que te dé acceso.</p>
+      <Link href={href} className={buttonVariants({ variant: "outline" })}>
+        Ir a una sección disponible
+      </Link>
+    </div>
+  );
+}
+
 export function DashboardShell({ navItems, dashboardHref, children }: DashboardShellProps) {
   const isHydrated = useAuthStore((state) => state.isHydrated);
   const user = useAuthStore((state) => state.user);
   const logout = useLogout();
   const pathname = usePathname();
 
+  usePermissionsRefresh();
+
   const visibleNavItems = filterNavItemsByRole(navItems, user);
-  const activeItem = findActiveNavItem(flattenLeaves(visibleNavItems), pathname);
+  const visibleLeaves = flattenLeaves(visibleNavItems);
+  const activeItem = findActiveNavItem(visibleLeaves, pathname);
+  // Pantalla pedida por URL que el rol no puede ver (por rol o porque el Admin
+  // la quitó en Permisos): se muestra un aviso en vez de la pantalla.
+  const requestedItem = findActiveNavItem(flattenLeaves(navItems), pathname);
+  const isBlocked = !!requestedItem && !canSeeItem(requestedItem, user);
+  const fallbackHref = visibleLeaves[0]?.href ?? dashboardHref;
 
   // Evita que las páginas hijas disparen requests (React Query) antes de
   // que useSessionHydration termine de rehidratar el accessToken desde la
@@ -447,7 +472,7 @@ export function DashboardShell({ navItems, dashboardHref, children }: DashboardS
           )}
         </header>
         <div className="px-4 pb-4 pt-2 sm:px-6 sm:pb-6 sm:pt-3 lg:px-10 lg:pb-10 lg:pt-4">
-          {children}
+          {isBlocked ? <RouteBlockedNotice href={fallbackHref} /> : children}
         </div>
       </SidebarInset>
     </SidebarProvider>

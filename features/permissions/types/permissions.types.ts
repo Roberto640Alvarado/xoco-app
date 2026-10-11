@@ -44,8 +44,8 @@ export const MODULE_LABEL: Record<ModuleKey, string> = {
   "dashboard.productos": "Mejores productos",
   "dashboard.categorias": "Categorías",
   "dashboard.cierre-mes": "Cierre del mes",
-  "dashboard.inventario": "Conteo y registro de inventario",
-  "dashboard.inventario-movimientos": "Movimientos y solicitudes de inventario",
+  "dashboard.inventario": "Conteo y Registro",
+  "dashboard.inventario-movimientos": "Solicitudes y Movimientos",
 };
 
 // Grupos de moduleKey que en el backend comparten un mismo endpoint —
@@ -75,6 +75,9 @@ export const SHARED_MODULE_GROUPS: ModuleKey[][] = [
   ["dashboard.venta-mensual", "dashboard.venta-diaria"],
   // GET /ticket-goals/summary
   ["dashboard.ticket-promedio", "dashboard.ticket-detallado"],
+  // GET /inventory/stores/:id/items — las pantallas de Solicitudes y Movimientos
+  // eligen el producto de la misma lista que usa el Conteo.
+  ["dashboard.inventario", "dashboard.inventario-movimientos"],
 ];
 
 // Unión de todos los "compañeros" de un moduleKey a través de TODOS los

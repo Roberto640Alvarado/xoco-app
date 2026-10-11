@@ -23,6 +23,8 @@ interface ModuleDetailProps {
   row: RoleModuleAccessRow;
   /** Todas las filas de este módulo, de todos los roles. */
   rowsByRole: Map<UserRole, RoleModuleAccessRow>;
+  /** Módulos que el rol tiene disponibles (para listar solo los que comparten dato de verdad). */
+  availableKeys: Set<ModuleKey>;
   isToggling: boolean;
   onToggle: (nextEnabled: boolean) => void;
 }
@@ -32,11 +34,11 @@ interface ModuleDetailProps {
  * qué verá el rol, dónde aparece, quién más la ve y el botón para darla o
  * quitarla. Así el Super admin sabe qué está dando o quitando antes de cambiar.
  */
-export function ModuleDetail({ moduleKey, role, row, rowsByRole, isToggling, onToggle }: ModuleDetailProps) {
+export function ModuleDetail({ moduleKey, role, row, rowsByRole, availableKeys, isToggling, onToggle }: ModuleDetailProps) {
   const info = MODULE_INFO[moduleKey];
   const label = MODULE_LABEL[moduleKey];
   const roleName = ROLE_NAME[role];
-  const peers = getSharedPeers(moduleKey);
+  const peers = getSharedPeers(moduleKey).filter((key) => availableKeys.has(key));
 
   return (
     <Panel
@@ -46,7 +48,7 @@ export function ModuleDetail({ moduleKey, role, row, rowsByRole, isToggling, onT
       description={`Menú › ${info.group}`}
       badge={
         <InfoBadge tone={row.enabled ? "success" : "neutral"} size="sm" dot>
-          {row.enabled ? `${roleName} la ve` : `Oculta para ${roleName}`}
+          {row.enabled ? "Con acceso" : `Oculta para ${roleName}`}
         </InfoBadge>
       }
     >
@@ -60,6 +62,21 @@ export function ModuleDetail({ moduleKey, role, row, rowsByRole, isToggling, onT
             Aparece en el menú: {info.group} › {label}
           </p>
         </div>
+
+        {info.includes && (
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Pantallas que incluye</p>
+            <div className="flex flex-wrap gap-1.5">
+              {info.includes.map((screen) => (
+                <InfoBadge key={screen} tone="info" size="sm">
+                  {screen}
+                </InfoBadge>
+              ))}
+            </div>
+            {info.note && <p className="text-xs text-muted-foreground">{info.note}</p>}
+            {role === "VENDEDOR" && info.vendedorNote && <p className="text-xs text-muted-foreground">{info.vendedorNote}</p>}
+          </div>
+        )}
 
         <div className="flex flex-col gap-2">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -76,7 +93,7 @@ export function ModuleDetail({ moduleKey, role, row, rowsByRole, isToggling, onT
         </div>
 
         <div className="flex flex-col gap-2">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Quién más la ve</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Acceso por rol</p>
           <div className="flex flex-wrap gap-1.5">
             {ALL_ROLES.map((other) => {
               const otherRow = rowsByRole.get(other);
@@ -89,7 +106,7 @@ export function ModuleDetail({ moduleKey, role, row, rowsByRole, isToggling, onT
                   dot
                   className={isCurrent ? "ring-1 ring-foreground/20" : undefined}
                 >
-                  {ROLE_NAME[other]}: {!otherRow ? "no aplica" : otherRow.enabled ? "la ve" : "oculta"}
+                  {ROLE_NAME[other]}: {!otherRow ? "no aplica" : otherRow.enabled ? "con acceso" : "oculta"}
                 </InfoBadge>
               );
             })}

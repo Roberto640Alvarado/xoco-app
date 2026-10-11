@@ -7,7 +7,7 @@
 //
 // Tres roles: Admin (SUPER_ADMIN), Finanzas y Vendedor. Admin y Finanzas
 // comparten casi todo; la diferencia es que solo el Admin habilita Inventario
-// por tienda (Administración → Inventario).
+// por tienda (Administración → Inventario por tienda).
 
 export type GuideRole = "admin" | "finanzas" | "vendedor";
 export type GuidePage = "conteo" | "solicitudes" | "movimientos" | "registro" | "habilitacion";
@@ -51,7 +51,7 @@ export const PERMISSIONS: Record<GuideRole, { can: string[]; cannot: string[] }>
       "Confirmar o rechazar mermas, regalías y degustaciones.",
       "Registrar movimientos directamente (quedan confirmados).",
       "Ver el Registro de todas las tiendas y exportar a Excel.",
-      "Habilitar Inventario para los Vendedores de cada tienda (Administración → Inventario).",
+      "Habilitar Inventario para los Vendedores de cada tienda (Administración → Inventario por tienda).",
     ],
     cannot: [],
   },
@@ -93,7 +93,7 @@ const ADMIN_FLOW: { intro: string; steps: GuideStep[] } = {
     },
     {
       title: "2. Habilita las tiendas",
-      body: "En Administración → Inventario activas cada tienda. Mientras una tienda no esté habilitada, sus Vendedores no ven la sección (tú sí).",
+      body: "En Administración → Inventario por tienda activas cada tienda. Mientras una tienda no esté habilitada, sus Vendedores no ven la sección (tú sí).",
     },
     {
       title: "3. Las ventas descuentan solas",
@@ -124,7 +124,7 @@ const FINANZAS_FLOW: { intro: string; steps: GuideStep[] } = {
     step.title.startsWith("2.")
       ? {
           title: "2. Pide habilitar las tiendas",
-          body: "Solo el Admin puede habilitar Inventario por tienda (Administración → Inventario). Cuando termines de cargar el stock de una tienda, avísale. Mientras no esté habilitada, sus Vendedores no ven la sección (tú sí).",
+          body: "Solo el Admin puede habilitar Inventario por tienda (Administración → Inventario por tienda). Cuando termines de cargar el stock de una tienda, avísale. Mientras no esté habilitada, sus Vendedores no ven la sección (tú sí).",
         }
       : step,
   ),

@@ -13,7 +13,7 @@ import { usePermissionsMatrix } from "../hooks/use-permissions-matrix";
 import { useSetRoleModuleAccess } from "../hooks/use-set-role-module-access";
 import { MODULE_GROUPS, MODULE_ICON } from "../constants/module-groups";
 import { MODULE_INFO } from "../constants/module-info";
-import { MODULE_LABEL, SHARED_MODULE_GROUPS, getSharedPeers, type ModuleKey, type RoleModuleAccessRow } from "../types/permissions.types";
+import { MODULE_LABEL, getSharedPeers, type ModuleKey, type RoleModuleAccessRow } from "../types/permissions.types";
 import { ModuleDetail, ROLE_NAME } from "./module-detail";
 import type { UserRole } from "@/features/auth/types/auth.types";
 import type { ApiError } from "@/lib/api/client";
@@ -29,10 +29,14 @@ interface ToggleTarget {
 
 type Filter = "all" | "enabled" | "disabled";
 
-const SHARED_SET = new Set<ModuleKey>(SHARED_MODULE_GROUPS.flat());
+// Pantallas que comparten dato con la elegida, solo entre las que el rol tiene
+// disponibles (a un Vendedor no se le nombran pantallas que nunca ve).
+function sharedPeersFor(moduleKey: ModuleKey, available: Set<ModuleKey>): ModuleKey[] {
+  return getSharedPeers(moduleKey).filter((key) => available.has(key));
+}
 
-function sharedPeerLabels(moduleKey: ModuleKey): string {
-  return getSharedPeers(moduleKey)
+function sharedPeerLabels(moduleKey: ModuleKey, available: Set<ModuleKey>): string {
+  return sharedPeersFor(moduleKey, available)
     .map((key) => MODULE_LABEL[key])
     .join(", ");
 }
@@ -68,6 +72,7 @@ export function PermissionsModuleList({ role }: PermissionsModuleListProps) {
   }, [matrix.data]);
 
   const allRows = useMemo(() => Array.from(rowByModuleKey.values()), [rowByModuleKey]);
+  const availableKeys = useMemo(() => new Set(rowByModuleKey.keys()), [rowByModuleKey]);
   const enabledCount = allRows.filter((row) => row.enabled).length;
   const total = allRows.length;
 
@@ -94,7 +99,7 @@ export function PermissionsModuleList({ role }: PermissionsModuleListProps) {
   const errorMessage = (setAccess.error as ApiError | null)?.message;
   const confirmErrorMessage =
     confirmTarget && setAccess.isError && setAccess.variables?.moduleKey === confirmTarget.moduleKey ? errorMessage : null;
-  const confirmTargetIsShared = confirmTarget ? SHARED_SET.has(confirmTarget.moduleKey) : false;
+  const confirmTargetIsShared = confirmTarget ? sharedPeersFor(confirmTarget.moduleKey, availableKeys).length > 0 : false;
 
   function handleSelect(moduleKey: ModuleKey) {
     setSelectedKey(moduleKey);
@@ -204,7 +209,7 @@ export function PermissionsModuleList({ role }: PermissionsModuleListProps) {
                   <ul className="divide-y divide-border">
                     {group.rows.map((row) => {
                       const Icon = MODULE_ICON[row.moduleKey];
-                      const isShared = SHARED_SET.has(row.moduleKey);
+                      const isShared = sharedPeersFor(row.moduleKey, availableKeys).length > 0;
                       const isSelected = row.moduleKey === activeKey;
                       const isTogglingThisRow = setAccess.isPending && setAccess.variables?.moduleKey === row.moduleKey;
 
@@ -246,11 +251,15 @@ export function PermissionsModuleList({ role }: PermissionsModuleListProps) {
                                       <Link2 className="size-3" aria-hidden="true" />
                                       <span className="sr-only">Comparte datos con otras pantallas</span>
                                     </TooltipTrigger>
-                                    <TooltipContent>Comparte datos con: {sharedPeerLabels(row.moduleKey)}</TooltipContent>
+                                    <TooltipContent>Comparte datos con: {sharedPeerLabels(row.moduleKey, availableKeys)}</TooltipContent>
                                   </Tooltip>
                                 )}
                               </span>
-                              <span className="block truncate text-xs text-muted-foreground">{MODULE_INFO[row.moduleKey].summary}</span>
+                              <span className="block truncate text-xs text-muted-foreground">
+                                {MODULE_INFO[row.moduleKey].includes
+                                  ? `Pantallas: ${MODULE_INFO[row.moduleKey].includes?.join(" y ")}`
+                                  : MODULE_INFO[row.moduleKey].summary}
+                              </span>
                             </span>
                           </button>
                           <InfoBadge tone={row.enabled ? "success" : "neutral"} size="sm" dot className="hidden sm:inline-flex">
@@ -283,6 +292,7 @@ export function PermissionsModuleList({ role }: PermissionsModuleListProps) {
               role={role}
               row={activeRow}
               rowsByRole={rowsByRoleFor.get(activeKey) ?? new Map()}
+              availableKeys={availableKeys}
               isToggling={setAccess.isPending && setAccess.variables?.moduleKey === activeKey}
               onToggle={(next) => askToggle(activeKey, next)}
             />
@@ -304,7 +314,7 @@ export function PermissionsModuleList({ role }: PermissionsModuleListProps) {
           confirmTarget?.nextEnabled
             ? `${roleName} volverá a ver "${confirmLabel}" en el menú (${confirmGroup}) de inmediato.`
             : confirmTargetIsShared
-              ? `${roleName} dejará de ver "${confirmLabel}" en el menú (${confirmGroup}). Como comparte datos con ${confirmTarget ? sharedPeerLabels(confirmTarget.moduleKey) : ""}, el dato solo queda bloqueado en el servidor si esas pantallas también quedan ocultas.`
+              ? `${roleName} dejará de ver "${confirmLabel}" en el menú (${confirmGroup}). Como comparte datos con ${confirmTarget ? sharedPeerLabels(confirmTarget.moduleKey, availableKeys) : ""}, el dato solo queda bloqueado en el servidor si esas pantallas también quedan ocultas.`
               : `${roleName} dejará de ver "${confirmLabel}" en el menú (${confirmGroup}) y su API empezará a rechazar sus peticiones.`
         }
         confirmLabel={confirmTarget?.nextEnabled ? "Dar acceso" : "Quitar acceso"}

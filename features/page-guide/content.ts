@@ -357,7 +357,7 @@ export const REPORT_GUIDES: Record<ReportPageKey, ReportGuide> = {
     },
     steps: {
       staff: [
-        headerStep("Escribe al menos 3 letras del nombre del cliente, elige el rango de fechas y exporta los resultados a Excel.").staff,
+        headerStep("Escribe al menos 2 letras del nombre del cliente, elige el rango de fechas y exporta los resultados a Excel.").staff,
         { target: FIRST, title: "Resultados", description: "Comprador, cliente (empresa matriz), cantidad de facturas e ingresos del rango.", side: "top" },
       ],
     },
@@ -573,7 +573,7 @@ export function permissionsFor(page: ReportPageKey, role: GuideRole): { can: str
   if (role === "vendedor") {
     return {
       can: ["Ver los datos de tu tienda.", ...extraCan, "Exportar lo que ves a Excel."],
-      cannot: ["Ver otras tiendas: tu tienda queda fija.", ...extraCannot],
+      cannot: ["Ver otras tiendas: tu tienda queda fija.", ...extraCannot, "Ver secciones que el Admin no te haya habilitado."],
     };
   }
   const storeCan =

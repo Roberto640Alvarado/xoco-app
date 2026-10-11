@@ -13,6 +13,12 @@ export interface ModuleInfo {
   contents: string[];
   /** Forma de la vista previa ilustrativa. */
   preview: PreviewKind;
+  /** Pantallas del menú que controla este interruptor, cuando son varias. */
+  includes?: string[];
+  /** Aclaración propia del módulo (por qué van juntas, requisitos). */
+  note?: string;
+  /** Aclaración solo para el Vendedor. */
+  vendedorNote?: string;
 }
 
 // Información de cada módulo para el panel de Permisos: sirve para que el
@@ -123,12 +129,18 @@ export const MODULE_INFO: Record<ModuleKey, ModuleInfo> = {
     summary: "El conteo de stock por producto y el registro de lo que pasó en la tienda.",
     contents: ["Stock estimado por producto.", "Conteo físico (solo Admin y Finanzas).", "Registro de ventas, mermas y entradas."],
     preview: "table",
+    includes: ["Conteo", "Registro"],
+    note: "Conteo y Registro van juntas: comparten los mismos datos y no se pueden separar.",
+    vendedorNote: "El Vendedor solo ve el stock y el Registro de su tienda, y además Admin debe habilitar su tienda en Inventario por tienda.",
   },
   "dashboard.inventario-movimientos": {
-    href: "/dashboard/inventario/movimientos",
+    href: "/dashboard/inventario/solicitudes",
     group: "Inventario",
     summary: "Mermas, regalías, degustaciones y solicitudes de stock.",
     contents: ["Registrar mermas, regalías y degustaciones.", "Pedir stock y seguir la solicitud.", "Confirmar o rechazar (solo Admin y Finanzas)."],
     preview: "table",
+    includes: ["Solicitudes", "Movimientos"],
+    note: "Solicitudes y Movimientos van juntas: comparten los mismos datos y no se pueden separar.",
+    vendedorNote: "El Vendedor registra y pide stock solo para su tienda, y además Admin debe habilitar su tienda en Inventario por tienda.",
   },
 };
