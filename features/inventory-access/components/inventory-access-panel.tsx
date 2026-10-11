@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Info, Store as StoreIcon, Warehouse } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
+import { Check, EyeOff, Info, Store as StoreIcon, Warehouse } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { NoticeCard } from "@/design-system/components/notice-card";
 import { Panel } from "@/design-system/components/panel";
 import { Switch } from "@/components/ui/switch";
@@ -12,6 +12,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ChartErrorState } from "@/components/ui/chart-error-state";
 import { useStores } from "@/features/sales/hooks/use-stores";
 import { useInventoryAccess } from "../hooks/use-inventory-access";
+import { useSetAllInventoryAccess } from "../hooks/use-set-all-inventory-access";
 import { useSetInventoryAccess } from "../hooks/use-set-inventory-access";
 import type { ApiError } from "@/lib/api/client";
 
@@ -29,10 +30,25 @@ export function InventoryAccessPanel() {
   const { data: stores, isLoading: storesLoading, isError: storesError, error: storesErrorValue } = useStores();
   const { data: access, isLoading: accessLoading } = useInventoryAccess();
   const setAccess = useSetInventoryAccess();
+  const setAll = useSetAllInventoryAccess();
   const [pending, setPending] = useState<PendingToggle | null>(null);
+  // Acción masiva pendiente de confirmar: true = habilitar todas, false = ocultar todas.
+  const [bulkNext, setBulkNext] = useState<boolean | null>(null);
 
   const enabledIds = new Set(access?.enabledPosConfigIds ?? []);
   const isLoading = storesLoading || accessLoading;
+
+  const allStores = stores ?? [];
+  const enabledCount = allStores.filter((store) => enabledIds.has(store.id)).length;
+  const allEnabled = allStores.length > 0 && enabledCount === allStores.length;
+  const noneEnabled = enabledCount === 0;
+
+  function handleConfirmBulk() {
+    if (bulkNext === null) return;
+    // Solo las tiendas que cambian de estado.
+    const posConfigIds = allStores.filter((store) => enabledIds.has(store.id) !== bulkNext).map((store) => store.id);
+    setAll.mutate({ posConfigIds, enabled: bulkNext }, { onSuccess: () => setBulkNext(null) });
+  }
 
   function handleConfirm() {
     if (!pending) return;
@@ -61,7 +77,38 @@ export function InventoryAccessPanel() {
       {storesError ? (
         <ChartErrorState message={storesErrorValue?.message} />
       ) : (
-        <Panel flush tourId="access-list" icon={StoreIcon} title="Tiendas" description="Activa el interruptor para mostrar Inventario a sus Vendedores.">
+        <Panel flush tourId="access-list" icon={StoreIcon} title="Tiendas" description="Activa el interruptor para mostrar Inventario a sus Vendedores."
+          action={
+            <div className="flex flex-wrap items-center gap-2" data-tour="access-bulk">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isLoading || allEnabled}
+                onClick={() => {
+                  setAll.reset();
+                  setBulkNext(true);
+                }}
+              >
+                <Check aria-hidden="true" />
+                Habilitar todas
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isLoading || noneEnabled}
+                onClick={() => {
+                  setAll.reset();
+                  setBulkNext(false);
+                }}
+              >
+                <EyeOff aria-hidden="true" />
+                Ocultar todas
+              </Button>
+            </div>
+          }
+        >
           {isLoading ? (
             <div className="flex flex-col gap-2 p-5" aria-hidden="true">
               {Array.from({ length: 3 }).map((_, index) => (
@@ -102,6 +149,22 @@ export function InventoryAccessPanel() {
           )}
         </Panel>
       )}
+
+      <ConfirmDialog
+        open={bulkNext !== null}
+        onOpenChange={(open) => !open && setBulkNext(null)}
+        title={bulkNext ? "¿Habilitar Inventario en todas las tiendas?" : "¿Ocultar Inventario en todas las tiendas?"}
+        description={
+          bulkNext
+            ? "Los Vendedores de todas las tiendas verán Inventario. Asegúrate de haber cargado primero el stock de cada una en Conteo."
+            : "Los Vendedores de todas las tiendas dejarán de ver Inventario. No se borra ningún dato y Admin y Finanzas siguen viéndolo."
+        }
+        confirmLabel={bulkNext ? "Habilitar todas" : "Ocultar todas"}
+        variant={bulkNext ? "default" : "destructive"}
+        onConfirm={handleConfirmBulk}
+        isLoading={setAll.isPending}
+        errorMessage={setAll.error?.message}
+      />
 
       <ConfirmDialog
         open={pending !== null}

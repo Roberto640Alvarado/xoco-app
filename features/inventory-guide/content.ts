@@ -457,6 +457,12 @@ ADMIN_STEPS.habilitacion = [
     side: "top",
   },
   {
+    target: '[data-tour="access-bulk"]',
+    title: "Todas a la vez",
+    description: "Habilita u oculta Inventario en todas las tiendas con un solo clic. Pide confirmación antes de aplicar.",
+    side: "bottom",
+  },
+  {
     target: '[data-tour="access-switch"]',
     title: "Habilitar u ocultar",
     description: "Usa el interruptor y confirma. El cambio es inmediato para los Vendedores de esa tienda.",
