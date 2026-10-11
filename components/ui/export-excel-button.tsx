@@ -16,6 +16,8 @@ interface ExportExcelButtonProps {
   className?: string
   size?: "sm" | "default"
   label?: string
+  /** Ancla para el tour guiado (data-tour). */
+  tourId?: string
 }
 
 /** Botón de exportar a Excel reutilizable en cualquier filter toolbar —
@@ -27,6 +29,7 @@ export function ExportExcelButton({
   className,
   size = "sm",
   label = "Exportar",
+  tourId,
 }: ExportExcelButtonProps) {
   const [isExporting, setIsExporting] = React.useState(false)
 
@@ -48,6 +51,7 @@ export function ExportExcelButton({
       size={size}
       onClick={handleClick}
       disabled={disabled || isExporting}
+      data-tour={tourId}
       className={cn("border-emerald-600/30 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-300", className)}
     >
       <ExcelIcon />

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { InfoHint } from "@/features/inventory-guide/components/info-hint";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -260,7 +261,7 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="relative min-w-[220px] flex-1 sm:max-w-xs">
+        <div className="relative min-w-[220px] flex-1 sm:max-w-xs" data-tour="inv-search">
           <Search
             className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
             aria-hidden="true"
@@ -281,7 +282,7 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
               {dirtyEntries.length} sin guardar
             </span>
           )}
-          <Button type="button" onClick={handleOpenConfirm} disabled={!canOpenConfirm}>
+          <Button type="button" onClick={handleOpenConfirm} disabled={!canOpenConfirm} data-tour="inv-save">
             Guardar cambios
           </Button>
         </div>
@@ -310,12 +311,15 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
                   <TableHead className="w-10">#</TableHead>
                   <TableHead>Producto</TableHead>
                   <TableHead>Unidad</TableHead>
-                  <TableHead className="text-right">
-                    Existencia estimada
+                  <TableHead className="text-right" data-tour="inv-estimated">
+                    <span className="inline-flex items-center justify-end gap-1">
+                      Existencia estimada
+                      <InfoHint topic="existencia-estimada" />
+                    </span>
                     <span className="block text-[10px] font-normal text-muted-foreground">conteo − ventas ± movimientos</span>
                   </TableHead>
                   {!readOnly && (
-                    <TableHead className="text-right">
+                    <TableHead className="text-right" data-tour="inv-count">
                       Inventario nuevo
                       <span className="block text-[10px] font-normal text-muted-foreground">se guarda esto</span>
                     </TableHead>

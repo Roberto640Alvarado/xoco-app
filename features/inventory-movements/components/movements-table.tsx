@@ -25,6 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { InfoHint, type InfoTopic } from "@/features/inventory-guide/components/info-hint";
 import { ChartErrorState } from "@/components/ui/chart-error-state";
 import { formatDateTime, formatKg, formatInteger } from "@/lib/format";
 import { useResolveInventoryMovement } from "../hooks/use-resolve-inventory-movement";
@@ -300,6 +301,8 @@ interface MovementsTableProps {
   /** Si viene, se agrega la columna "Tienda" (bandeja de todas las tiendas). */
   storeNames?: Map<number, string>;
   emptyMessage?: string;
+  /** Qué explica el ⓘ junto a "Estado" (solicitudes vs. movimientos). */
+  statusInfo?: InfoTopic;
 }
 
 export function MovementsTable({
@@ -310,6 +313,7 @@ export function MovementsTable({
   canResolve,
   storeNames,
   emptyMessage = "Todavía no hay movimientos registrados.",
+  statusInfo = "estados-movimiento",
 }: MovementsTableProps) {
   const resolve = useResolveInventoryMovement();
   const accept = useAcceptInventoryMovement();
@@ -334,7 +338,7 @@ export function MovementsTable({
 
   return (
     <>
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
+      <div className="overflow-hidden rounded-xl border border-border bg-card" data-tour="movements-table">
         <div className="max-h-[65vh] overflow-y-auto">
           <Table>
             <TableHeader className="sticky top-0 z-10 bg-card">
@@ -346,8 +350,15 @@ export function MovementsTable({
                 <TableHead className="text-right">Cantidad</TableHead>
                 <TableHead>Nota</TableHead>
                 <TableHead>Registrado por</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
+                <TableHead data-tour="status">
+                  <span className="inline-flex items-center gap-1">
+                    Estado
+                    <InfoHint topic={statusInfo} />
+                  </span>
+                </TableHead>
+                <TableHead className="text-right" data-tour="actions">
+                  Acciones
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

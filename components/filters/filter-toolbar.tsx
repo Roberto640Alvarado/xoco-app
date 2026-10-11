@@ -9,14 +9,17 @@ interface FilterToolbarProps {
   /** Controles a la derecha: navegador de mes, selects, botón de exportar, etc. */
   children: ReactNode
   className?: string
+  /** Ancla para el tour guiado (data-tour). */
+  tourId?: string
 }
 
 /** Barra de encabezado de sección reutilizada en Tráfico de tiendas, Venta
  * Mensual, Ticket Promedio, Mayoreo, Cierre de mes y Venta/Tráfico/Ticket
  * Diario — antes cada vista repetía el mismo div de card + layout. */
-export function FilterToolbar({ description, children, className }: FilterToolbarProps) {
+export function FilterToolbar({ description, children, className, tourId }: FilterToolbarProps) {
   return (
     <div
+      data-tour={tourId}
       className={cn(
         "relative flex flex-col gap-3 overflow-hidden rounded-xl border border-border bg-card p-4 shadow-xs sm:flex-row sm:flex-wrap sm:items-center sm:justify-between",
         className

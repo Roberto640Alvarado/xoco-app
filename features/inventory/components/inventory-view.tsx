@@ -51,8 +51,10 @@ export function InventoryView() {
           onChange={setPosConfigId}
           hideAllStoresOption
           lockedToSingleStore={isVendedor}
+          tourId="inv-store"
         />
         <ExportExcelButton
+          tourId="inv-export"
           filename={`inventario${selectedStore ? `-${selectedStore.name}` : ""}`}
           disabled={inventory.isLoading || items.length === 0}
           sheets={() => [

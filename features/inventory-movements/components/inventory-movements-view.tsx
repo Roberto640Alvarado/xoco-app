@@ -77,11 +77,13 @@ export function InventoryMovementsView() {
             onChange={setPosConfigId}
             hideAllStoresOption
             lockedToSingleStore={isVendedor}
+            tourId="mov-store"
           />
         )}
         {canResolve && (
           <Button
             type="button"
+            data-tour="mov-pending"
             variant={allStoresPending ? "default" : "outline"}
             onClick={() => setAllStoresPending((current) => !current)}
           >
@@ -89,7 +91,7 @@ export function InventoryMovementsView() {
             Pendientes de todas las tiendas
           </Button>
         )}
-        <Button type="button" onClick={() => setCreateOpen(true)} disabled={posConfigId == null || allStoresPending}>
+        <Button type="button" data-tour="mov-new" onClick={() => setCreateOpen(true)} disabled={posConfigId == null || allStoresPending}>
           <Plus className="h-4 w-4" aria-hidden="true" />
           Registrar movimiento
         </Button>

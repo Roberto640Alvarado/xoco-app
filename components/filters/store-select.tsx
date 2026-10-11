@@ -29,6 +29,8 @@ interface StoreSelectProps {
    * pero el usuario sí puede cambiar de tienda — a diferencia de
    * lockedToSingleStore, esto NO deshabilita el trigger. */
   hideAllStoresOption?: boolean
+  /** Ancla para el tour guiado (data-tour). */
+  tourId?: string
 }
 
 /** Select de tienda reutilizado en todos los filter toolbars — mismo
@@ -43,6 +45,7 @@ export function StoreSelect({
   className,
   lockedToSingleStore,
   hideAllStoresOption,
+  tourId,
 }: StoreSelectProps) {
   const stringValue = value ? String(value) : ALL_STORES
   const hideAllStores = lockedToSingleStore || hideAllStoresOption
@@ -61,7 +64,7 @@ export function StoreSelect({
       onValueChange={(next) => onChange(next === ALL_STORES ? undefined : Number(next))}
       disabled={lockedToSingleStore}
     >
-      <SelectTrigger className={cn("w-full gap-2 sm:w-[190px]", className)}>
+      <SelectTrigger className={cn("w-full gap-2 sm:w-[190px]", className)} data-tour={tourId}>
         <StoreIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
         <SelectValue placeholder={placeholder}>
           {(raw: string) => (isLoading ? "Cargando..." : storeLabel(raw))}

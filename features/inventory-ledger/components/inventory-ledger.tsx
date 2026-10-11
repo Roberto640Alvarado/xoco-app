@@ -6,6 +6,7 @@ import { cn } from "cn";
 import { FilterToolbar } from "@/components/filters/filter-toolbar";
 import { DateRangeFilter, type DateRangeValue } from "@/components/filters/date-range-filter";
 import { ExportExcelButton } from "@/components/ui/export-excel-button";
+import { InfoHint } from "@/features/inventory-guide/components/info-hint";
 import { ChartErrorState } from "@/components/ui/chart-error-state";
 import { TableSkeletonRows } from "@/components/ui/table-skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -75,7 +76,10 @@ export function InventoryLedger({ posConfigId, storeName, leading }: InventoryLe
 
   return (
     <div className="flex flex-col gap-4">
-      <FilterToolbar description="Registro de entradas y salidas por tienda — ventas, movimientos y conteos con fecha y hora.">
+      <FilterToolbar
+        tourId="ledger-toolbar"
+        description="Registro de entradas y salidas por tienda — ventas, movimientos y conteos con fecha y hora."
+      >
         {leading}
         <DateRangeFilter value={range} onChange={setRange} />
         <Select
@@ -133,13 +137,18 @@ export function InventoryLedger({ posConfigId, storeName, leading }: InventoryLe
       {ledger.isError ? (
         <ChartErrorState message={ledger.error?.message} />
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border bg-card">
+        <div className="overflow-hidden rounded-xl border border-border bg-card" data-tour="ledger-table">
           <div className="max-h-[65vh] overflow-y-auto">
             <Table>
               <TableHeader className="sticky top-0 z-10 bg-card">
                 <TableRow>
                   <TableHead>Fecha y hora</TableHead>
-                  <TableHead>Tipo</TableHead>
+                  <TableHead data-tour="ledger-type">
+                    <span className="inline-flex items-center gap-1">
+                      Tipo
+                      <InfoHint topic="registro-tipos" />
+                    </span>
+                  </TableHead>
                   <TableHead>Producto</TableHead>
                   <TableHead className="text-right">Cantidad</TableHead>
                   <TableHead>Estado</TableHead>

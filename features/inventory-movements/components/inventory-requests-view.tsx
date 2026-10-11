@@ -71,7 +71,7 @@ export function InventoryRequestsView() {
               hideAllStoresOption
               lockedToSingleStore
             />
-            <Button type="button" onClick={() => setRequestOpen(true)} disabled={defaultPosConfigId == null}>
+            <Button type="button" data-tour="req-new" onClick={() => setRequestOpen(true)} disabled={defaultPosConfigId == null}>
               <PackagePlus className="h-4 w-4" aria-hidden="true" />
               Solicitar stock
             </Button>
@@ -87,6 +87,7 @@ export function InventoryRequestsView() {
           errorMessage={ownMovements.error?.message}
           canResolve={false}
           emptyMessage="Todavía no has hecho solicitudes de stock."
+          statusInfo="estados-solicitud"
         />
       ) : (
         <MovementsTable
@@ -97,6 +98,7 @@ export function InventoryRequestsView() {
           canResolve={isAdminOrFinanzas}
           storeNames={storeNames}
           emptyMessage="No hay solicitudes de stock abiertas."
+          statusInfo="estados-solicitud"
         />
       )}
 

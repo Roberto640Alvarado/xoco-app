@@ -133,3 +133,67 @@
     @apply font-sans;
   }
 }
+/* Tour guiado de Inventario (driver.js) — mismo look que los popovers del
+   dashboard: colores del tema (claro/oscuro) en vez del blanco por defecto. */
+.driver-popover.xoco-tour {
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  max-width: 22rem;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.25);
+}
+.driver-popover.xoco-tour .driver-popover-title {
+  font-size: 1rem;
+  padding-right: 1.75rem;
+}
+.driver-popover.xoco-tour .driver-popover-description {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+.driver-popover.xoco-tour .driver-popover-close-btn {
+  color: var(--muted-foreground);
+}
+.driver-popover.xoco-tour .driver-popover-close-btn:hover,
+.driver-popover.xoco-tour .driver-popover-close-btn:focus {
+  color: var(--foreground);
+}
+.driver-popover.xoco-tour .driver-popover-progress-text {
+  color: var(--muted-foreground);
+}
+.driver-popover.xoco-tour .driver-popover-footer-btn {
+  background-color: var(--secondary);
+  color: var(--secondary-foreground);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  text-shadow: none;
+}
+.driver-popover.xoco-tour .driver-popover-footer-btn:hover,
+.driver-popover.xoco-tour .driver-popover-footer-btn:focus {
+  background-color: var(--accent);
+}
+.driver-popover.xoco-tour .driver-popover-next-btn {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+}
+.driver-popover.xoco-tour .driver-popover-next-btn:hover,
+.driver-popover.xoco-tour .driver-popover-next-btn:focus {
+  background-color: var(--primary);
+  opacity: 0.9;
+}
+.driver-popover.xoco-tour .driver-popover-arrow-side-left {
+  border-left-color: var(--popover);
+}
+.driver-popover.xoco-tour .driver-popover-arrow-side-right {
+  border-right-color: var(--popover);
+}
+.driver-popover.xoco-tour .driver-popover-arrow-side-top {
+  border-top-color: var(--popover);
+}
+.driver-popover.xoco-tour .driver-popover-arrow-side-bottom {
+  border-bottom-color: var(--popover);
+}
