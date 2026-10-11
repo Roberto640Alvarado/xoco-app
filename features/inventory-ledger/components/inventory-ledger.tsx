@@ -3,13 +3,13 @@
 import { useState, type ReactNode } from "react";
 import { ArrowDownToLine, ClipboardCheck, ClipboardList, Cookie, Gift, PackageX, ShoppingCart } from "lucide-react";
 import { cn } from "cn";
-import { SectionCard } from "@/components/ui/section-card";
+import { SectionCard } from "@/design-system/components/section-card";
 import { DateRangeFilter, type DateRangeValue } from "@/components/filters/date-range-filter";
 import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { InfoHint } from "@/features/inventory-guide/components/info-hint";
 import { ChartErrorState } from "@/components/ui/chart-error-state";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { DataTable, type DataTableColumn } from "@/design-system/components/data-table";
 import { useVendedorStoreFilter } from "@/features/sales/hooks/use-vendedor-store-filter";
 import { useInventoryItems } from "@/features/inventory/hooks/use-inventory-items";
 import { formatDateTime, formatInteger, formatKg, isoDateDaysAgo, todayIsoDate } from "@/lib/format";

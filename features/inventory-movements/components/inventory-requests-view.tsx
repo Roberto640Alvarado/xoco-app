@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { PackagePlus } from "lucide-react";
-import { SectionCard } from "@/components/ui/section-card";
+import { SectionCard } from "@/design-system/components/section-card";
 import { StoreSelect } from "@/components/filters/store-select";
 import { Button } from "@/components/ui/button";
 import { useStores } from "@/features/sales/hooks/use-stores";

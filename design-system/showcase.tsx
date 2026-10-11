@@ -3,13 +3,13 @@
 import { useState, type ReactNode } from "react";
 import { ClipboardList, Eye, Loader2, PackagePlus, Plus, Save, Trash2, Warehouse } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
-import { InfoBadge, type InfoBadgeTone } from "@/components/ui/info-badge";
+import { DataTable, type DataTableColumn } from "@/design-system/components/data-table";
+import { InfoBadge, type InfoBadgeTone } from "@/design-system/components/info-badge";
 import { Input } from "@/components/ui/input";
-import { NoticeCard } from "@/components/ui/notice-card";
-import { SectionCard } from "@/components/ui/section-card";
-import { TourGuideCard } from "@/components/ui/tour-guide-card";
-import { ValueBox } from "@/components/ui/value-box";
+import { NoticeCard } from "@/design-system/components/notice-card";
+import { SectionCard } from "@/design-system/components/section-card";
+import { TourGuideCard } from "@/design-system/components/tour-guide-card";
+import { ValueBox } from "@/design-system/components/value-box";
 import { InfoHint } from "@/features/inventory-guide/components/info-hint";
 
 // Catálogo vivo del sistema de diseño del panel (ver design-system/README.md).

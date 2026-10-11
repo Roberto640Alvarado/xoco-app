@@ -257,7 +257,7 @@ Nunca poner secretos reales en variables `NEXT_PUBLIC_*` (son públicas en el bu
 
 ## Catálogo en `design-system/`
 
-La carpeta `design-system/` es la fuente de verdad visual del panel: `README.md` (qué componente usar y cuándo) y `showcase.tsx` (catálogo en vivo, visible como Admin en `/dashboard/admin/design-system`). Todo componente o patrón visual nuevo (botón, badge, card, tabla, etc.) se agrega ahí en el mismo cambio en que se crea. Los botones siguen la guía del README: primary para la acción principal, secondary para apoyo (ej. "Iniciar tour"), destructive para rechazar o eliminar.
+La carpeta `design-system/` es la fuente de verdad visual del panel: `README.md` (qué componente usar y cuándo) y `showcase.tsx` (catálogo en vivo, visible como Admin en `/dashboard/admin/design-system`). Los componentes propios viven en `design-system/components/` (los base de shadcn siguen en `components/ui/`). Todo componente o patrón visual nuevo (botón, badge, card, tabla, etc.) se agrega ahí en el mismo cambio en que se crea, y las pantallas nuevas lo importan de `@/design-system/components/...`; por ejemplo, el encabezado de toda pantalla de Inventario es `SectionCard`. Los botones siguen la guía del README: primary para la acción principal, secondary para apoyo (ej. "Iniciar tour"), destructive para rechazar o eliminar.
 
 ## Principios de diseño
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Warehouse } from "lucide-react";
-import { SectionCard } from "@/components/ui/section-card";
+import { SectionCard } from "@/design-system/components/section-card";
 import { StoreSelect } from "@/components/filters/store-select";
 import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { useStores } from "@/features/sales/hooks/use-stores";

@@ -4,8 +4,8 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Check, X } from "lucide-react";
 import { cn } from "cn";
-import { InfoBadge, type InfoBadgeTone } from "@/components/ui/info-badge";
-import { TourGuideCard } from "@/components/ui/tour-guide-card";
+import { InfoBadge, type InfoBadgeTone } from "@/design-system/components/info-badge";
+import { TourGuideCard } from "@/design-system/components/tour-guide-card";
 import {
   Dialog,
   DialogContent,

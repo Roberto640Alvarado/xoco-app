@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ClipboardList } from "lucide-react";
-import { SectionCard } from "@/components/ui/section-card";
+import { SectionCard } from "@/design-system/components/section-card";
 import { StoreSelect } from "@/components/filters/store-select";
 import { useStores } from "@/features/sales/hooks/use-stores";
 import { useVendedorStoreFilter } from "@/features/sales/hooks/use-vendedor-store-filter";

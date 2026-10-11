@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { cn } from "cn";
-import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { DataTable, type DataTableColumn } from "@/design-system/components/data-table";
 import { Input } from "@/components/ui/input";
-import { ValueBox } from "@/components/ui/value-box";
+import { ValueBox } from "@/design-system/components/value-box";
 import { InfoHint } from "@/features/inventory-guide/components/info-hint";
 import { Button } from "@/components/ui/button";
 import {

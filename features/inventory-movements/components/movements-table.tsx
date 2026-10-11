@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { ArrowDownToLine, Check, CheckCircle2, ChevronRight, Cookie, Gift, PackageX, Truck, X } from "lucide-react";
 import { cn } from "cn";
-import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { DataTable, type DataTableColumn } from "@/design-system/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { InfoHint, type InfoTopic } from "@/features/inventory-guide/components/info-hint";
-import { InfoBadge, type InfoBadgeTone } from "@/components/ui/info-badge";
+import { InfoBadge, type InfoBadgeTone } from "@/design-system/components/info-badge";
 import { ChartErrorState } from "@/components/ui/chart-error-state";
 import { formatDateTime, formatKg, formatInteger } from "@/lib/format";
 import { useResolveInventoryMovement } from "../hooks/use-resolve-inventory-movement";

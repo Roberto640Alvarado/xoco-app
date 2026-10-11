@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Eye, EyeOff, Settings2 } from "lucide-react";
-import { NoticeCard } from "@/components/ui/notice-card";
+import { NoticeCard } from "@/design-system/components/notice-card";
 import { buttonVariants } from "@/components/ui/button";
 import { useAuthStore } from "@/store/auth-store";
 import { useStores } from "@/features/sales/hooks/use-stores";

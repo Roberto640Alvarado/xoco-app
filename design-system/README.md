@@ -4,6 +4,12 @@ Aquí vive todo lo visual del panel: qué componentes existen, cuándo usar cada
 
 **Regla:** todo componente o patrón visual nuevo se agrega a este catálogo (ejemplo en `showcase.tsx` + una línea en este README) en el mismo cambio en que se crea.
 
+## Dónde vive cada cosa
+
+- `design-system/components/`: los componentes propios del panel (SectionCard, TourGuideCard, NoticeCard, InfoBadge, ValueBox, DataTable). Se importan con `@/design-system/components/<nombre>`.
+- `components/ui/`: los componentes base de shadcn/ui (Button, Input, Select, Dialog...), instalados con la CLI.
+- `design-system/showcase.tsx`: catálogo en vivo de todo lo anterior.
+
 ## Ver el catálogo
 
 Entra como Admin a **Administración → Sistema de diseño** (`/dashboard/admin/design-system`). El código de la página está en `design-system/showcase.tsx`.
@@ -21,19 +27,19 @@ Entra como Admin a **Administración → Sistema de diseño** (`/dashboard/admin
 
 Tamaños: `lg`, `default`, `sm`, `xs` y los `icon*`. Los botones de las cards usan `default`/`sm`.
 
-## Badges (`components/ui/info-badge.tsx`)
+## Badges (`design-system/components/info-badge.tsx`)
 
 `InfoBadge` con `tone`: `warning` (espera algo), `info` (en curso), `success` (listo), `danger` (rechazado o error), `violet` (en tránsito), `neutral` (sin énfasis). Con `dot` para estados, con `icon` para avisos. Roles: Admin `violet`, Finanzas `info`, Vendedor `warning`.
 
 ## Cards
 
-- `SectionCard` (`components/ui/section-card.tsx`): encabezado de pantalla con ícono, título, una frase y los botones a la derecha (`stacked` si hay muchos filtros).
-- `TourGuideCard` (`components/ui/tour-guide-card.tsx`): el título siempre es "Tour guiado"; "Iniciar tour" es `secondary`; ⓘ abre la explicación.
-- `NoticeCard` (`components/ui/notice-card.tsx`): aviso con tono (`info`, `success`, `warning`), una frase y un botón opcional.
+- `SectionCard` (`design-system/components/section-card.tsx`): encabezado de pantalla con ícono, título, una frase y los botones a la derecha (`stacked` si hay muchos filtros). Es el encabezado de todas las pantallas de Inventario (Conteo, Solicitudes, Movimientos, Registro y Habilitación por tienda) y el que se usa en las secciones nuevas. Uso: `<SectionCard icon={PackagePlus} title="Solicitudes" description="Pide stock y sigue tus solicitudes.">{selector y botones}</SectionCard>`. La descripción es una sola frase corta; si hay muchos filtros, `stacked`; `tourId` para el tour guiado.
+- `TourGuideCard` (`design-system/components/tour-guide-card.tsx`): el título siempre es "Tour guiado"; "Iniciar tour" es `secondary`; ⓘ abre la explicación.
+- `NoticeCard` (`design-system/components/notice-card.tsx`): aviso con tono (`info`, `success`, `warning`), una frase y un botón opcional.
 
 Texto de las cards: una frase corta, sin guiones largos ("—"), y los botones siempre a la vista.
 
-## Tablas (`components/ui/data-table.tsx`)
+## Tablas (`design-system/components/data-table.tsx`)
 
 `DataTable<T>` es la tabla estándar de Inventario (Conteo, Solicitudes, Movimientos, Registro):
 
@@ -41,7 +47,7 @@ Texto de las cards: una frase corta, sin guiones largos ("—"), y los botones s
 - Pie con "Mostrando X–Y de N", "Limpiar filtros", filas por página (10, 25, 50, 100) y paginación.
 - Wrap de texto (`nowrap` solo para fechas y cantidades); en móvil se vuelve tarjetas (`mobile: "title" | "footer" | "hidden"`).
 - `onRowClick` para abrir un modal de detalle; la tabla muestra lo esencial y el resto vive en el modal.
-- Tabla de captura (Conteo): `ValueBox` (`components/ui/value-box.tsx`) para el valor de solo lectura y un `Input` con borde marcado para el editable.
+- Tabla de captura (Conteo): `ValueBox` (`design-system/components/value-box.tsx`) para el valor de solo lectura y un `Input` con borde marcado para el editable.
 
 ## Otros
 

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Info, Store as StoreIcon, Warehouse } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { NoticeCard } from "@/components/ui/notice-card";
+import { NoticeCard } from "@/design-system/components/notice-card";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
