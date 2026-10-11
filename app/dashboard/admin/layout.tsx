@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
+import { ChocolateLoader } from "@/design-system/components/chocolate-loader";
 
 /**
  * Guarda de ruta para /dashboard/admin/**. Antes de esto, el único control
@@ -39,7 +39,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (!isHydrated || !user || user.role !== "SUPER_ADMIN") {
     return (
       <div className="flex min-h-[70vh] items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" aria-hidden="true" />
+        <ChocolateLoader />
       </div>
     );
   }

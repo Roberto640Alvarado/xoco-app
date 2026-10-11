@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "cn";
 import { Collapsible } from "@base-ui/react/collapsible";
-import { ChevronDown, Loader2, Lock, LogOut, type LucideIcon } from "lucide-react";
+import { ChevronDown, Lock, LogOut, type LucideIcon } from "lucide-react";
 import { XocolatisimoMark } from "@/components/brand/xocolatisimo-mark";
 import { useAuthStore } from "@/store/auth-store";
 import { useLogout } from "@/features/auth/hooks/use-logout";
@@ -36,6 +36,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import type { AuthUser, UserRole } from "@/features/auth/types/auth.types";
+import { ChocolateLoader } from "@/design-system/components/chocolate-loader";
 
 interface DashboardNavLeafBase {
   label: string;
@@ -391,7 +392,7 @@ export function DashboardShell({ navItems, dashboardHref, children }: DashboardS
   if (!isHydrated) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" aria-hidden="true" />
+        <ChocolateLoader size="lg" />
       </div>
     );
   }

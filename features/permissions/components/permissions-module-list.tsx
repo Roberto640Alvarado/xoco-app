@@ -17,6 +17,7 @@ import { MODULE_LABEL, getSharedPeers, type ModuleKey, type RoleModuleAccessRow 
 import { ModuleDetail, ROLE_NAME } from "./module-detail";
 import type { UserRole } from "@/features/auth/types/auth.types";
 import type { ApiError } from "@/lib/api/client";
+import { ChocolateLoader } from "@/design-system/components/chocolate-loader";
 
 interface PermissionsModuleListProps {
   role: UserRole;
@@ -123,7 +124,11 @@ export function PermissionsModuleList({ role }: PermissionsModuleListProps) {
   }
 
   if (matrix.isLoading) {
-    return <p className="text-sm text-muted-foreground">Cargando módulos...</p>;
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <ChocolateLoader label="Cargando permisos..." />
+      </div>
+    );
   }
 
   if (matrix.isError) {

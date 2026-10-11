@@ -3,10 +3,11 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Compass, Home, Loader2 } from "lucide-react";
+import { Compass, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/auth-store";
 import { getDashboardPath } from "@/features/auth/utils/get-dashboard-path";
+import { ChocolateLoader } from "@/design-system/components/chocolate-loader";
 
 /**
  * 404 de la app. El middleware (ver middleware.ts) ya redirige a /login
@@ -37,7 +38,7 @@ export default function NotFound() {
   if (!isHydrated || !user) {
     return (
       <div className="flex min-h-[70vh] items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" aria-hidden="true" />
+        <ChocolateLoader />
       </div>
     );
   }

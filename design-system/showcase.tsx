@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { Eye, Loader2, PackagePlus, Plus, Save, Trash2, Warehouse } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ChocolateLoader } from "@/design-system/components/chocolate-loader";
 import { DataTable, type DataTableColumn } from "@/design-system/components/data-table";
 import { InfoBadge, type InfoBadgeTone } from "@/design-system/components/info-badge";
 import { Input } from "@/components/ui/input";
@@ -270,6 +271,15 @@ function CardsSection() {
           >
             <p className="text-sm text-foreground">El cuerpo lleva el contenido. Con flush, las listas y tablas llegan al borde.</p>
           </Panel>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">ChocolateLoader: animación de carga (sm, md y lg)</p>
+          <div className="flex flex-wrap items-end justify-around gap-6 rounded-2xl border border-border bg-card p-6">
+            <ChocolateLoader size="sm" label="Pequeño" />
+            <ChocolateLoader size="md" label="Mediano" />
+            <ChocolateLoader size="lg" label="Cargando..." />
+          </div>
         </div>
 
         <div className="flex flex-col gap-1.5">

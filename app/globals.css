@@ -197,3 +197,146 @@
 .driver-popover.xoco-tour .driver-popover-arrow-side-bottom {
   border-bottom-color: var(--popover);
 }
+
+/* ── Animación de chocolate (design-system/components/chocolate-loader.tsx) ── */
+.choco-loader {
+  --choco-1: #3b2216;
+  --choco-2: #5a3421;
+  --choco-3: #7b4a30;
+  --choco-hi: #b27a52;
+}
+.dark .choco-loader {
+  --choco-1: #5a3421;
+  --choco-2: #7b4a30;
+  --choco-3: #9a6040;
+  --choco-hi: #d0996c;
+}
+.choco-loader svg * {
+  transform-box: fill-box;
+}
+.choco-square {
+  transform-origin: center;
+  animation: choco-pop 1.9s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.13s);
+}
+.choco-shine {
+  animation: choco-shine 1.9s ease-in-out infinite;
+}
+.choco-hang {
+  transform-origin: top center;
+  animation: choco-hang 1.9s ease-in-out infinite;
+  animation-delay: var(--d, 0s);
+}
+.choco-drop {
+  transform-origin: center;
+  opacity: 0;
+  animation: choco-drop 1.9s ease-in infinite;
+  animation-delay: var(--d, 0s);
+}
+.choco-ripple {
+  transform-origin: center;
+  animation: choco-ripple 1.9s ease-out infinite;
+  animation-delay: var(--d, 0s);
+}
+.choco-fade-in {
+  opacity: 0;
+  animation: choco-fade-in 0.3s ease-out 0.15s forwards;
+}
+
+@keyframes choco-pop {
+  0%,
+  100% {
+    transform: scale(0.86);
+    opacity: 0.45;
+  }
+  35% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+  55% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes choco-shine {
+  0% {
+    transform: translateX(-70px);
+  }
+  60%,
+  100% {
+    transform: translateX(70px);
+  }
+}
+@keyframes choco-hang {
+  0%,
+  100% {
+    transform: scaleY(0.4);
+  }
+  45% {
+    transform: scaleY(1.6);
+  }
+  60% {
+    transform: scaleY(0.5);
+  }
+}
+@keyframes choco-drop {
+  0%,
+  40% {
+    transform: translateY(0) scale(0.4);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(2px) scale(1);
+    opacity: 1;
+  }
+  85% {
+    transform: translateY(22px) scale(1);
+    opacity: 1;
+  }
+  95%,
+  100% {
+    transform: translateY(24px) scale(0.6);
+    opacity: 0;
+  }
+}
+@keyframes choco-ripple {
+  0%,
+  80% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  88% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+@keyframes choco-fade-in {
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .choco-square,
+  .choco-shine,
+  .choco-hang,
+  .choco-drop,
+  .choco-ripple {
+    animation: none;
+  }
+  .choco-square {
+    opacity: 1;
+    transform: none;
+  }
+  .choco-hang {
+    transform: scaleY(1);
+  }
+  .choco-drop,
+  .choco-ripple,
+  .choco-shine {
+    display: none;
+  }
+}

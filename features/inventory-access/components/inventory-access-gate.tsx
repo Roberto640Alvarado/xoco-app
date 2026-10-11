@@ -1,7 +1,8 @@
 "use client";
 
-import { Loader2, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 import { useCanUseInventory } from "../hooks/use-inventory-access";
+import { ChocolateLoader } from "@/design-system/components/chocolate-loader";
 
 // Defensa de cliente para el Vendedor: si su tienda todavía no tiene
 // Inventario habilitado, no se renderiza ninguna pantalla de la sección
@@ -13,7 +14,7 @@ export function InventoryAccessGate({ children }: { children: React.ReactNode })
   if (isLoading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" aria-hidden="true" />
+        <ChocolateLoader />
       </div>
     );
   }
