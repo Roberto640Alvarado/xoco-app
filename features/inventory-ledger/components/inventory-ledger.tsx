@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ArrowDownToLine, ClipboardCheck, Cookie, Gift, PackageX, ShoppingCart } from "lucide-react";
 import { cn } from "cn";
 import { FilterToolbar } from "@/components/filters/filter-toolbar";
@@ -53,13 +53,16 @@ function signedQuantity(entry: InventoryLedgerEntry): { text: string; className:
 interface InventoryLedgerProps {
   posConfigId: number;
   storeName?: string;
+  /** Controles extra al inicio de la barra (ej. el selector de tienda), para
+   * que todos los filtros vivan en una sola card. */
+  leading?: ReactNode;
 }
 
 // Registro de entradas y salidas de una tienda — una línea de tiempo con
 // la fecha y hora de cada venta (Odoo), movimiento manual y conteo físico.
 // Los movimientos RECHAZADOS o PENDIENTES se muestran con su estado: solo
 // los CONFIRMADOS afectan la existencia estimada.
-export function InventoryLedger({ posConfigId, storeName }: InventoryLedgerProps) {
+export function InventoryLedger({ posConfigId, storeName, leading }: InventoryLedgerProps) {
   const [range, setRange] = useState<DateRangeValue>({ dateFrom: isoDateDaysAgo(6), dateTo: todayIsoDate() });
   const [productId, setProductId] = useState<number | undefined>(undefined);
   const [type, setType] = useState<InventoryLedgerEntryType | undefined>(undefined);
@@ -72,7 +75,8 @@ export function InventoryLedger({ posConfigId, storeName }: InventoryLedgerProps
 
   return (
     <div className="flex flex-col gap-4">
-      <FilterToolbar description="Registro de entradas y salidas de la tienda, con fecha y hora de cada venta, movimiento y conteo.">
+      <FilterToolbar description="Registro de entradas y salidas por tienda — ventas, movimientos y conteos con fecha y hora.">
+        {leading}
         <DateRangeFilter value={range} onChange={setRange} />
         <Select
           value={productId ? String(productId) : ALL}
