@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { useRotateOdooConfig } from "../hooks/use-rotate-odoo-config";
 import { rotateOdooConfigSchema, type RotateOdooConfigFormValues } from "../schemas/rotate-odoo-config.schema";
 
-const DEFAULT_VALUES: RotateOdooConfigFormValues = { apiKey: "", uid: 0, durationDays: 30 };
+const DEFAULT_VALUES: RotateOdooConfigFormValues = { apiKey: "", uid: 7, durationDays: 30 };
 
 interface RotateOdooConfigModalProps {
   open: boolean;

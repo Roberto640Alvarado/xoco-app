@@ -21,20 +21,40 @@ function StatusItem({ label, children }: { label: string; children: ReactNode })
   );
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+// Una key por vencer es la que expira en una semana o menos.
+const EXPIRING_SOON_DAYS = 7;
+
+function daysUntil(isoDate: string): number {
+  return Math.ceil((new Date(isoDate).getTime() - Date.now()) / DAY_MS);
+}
+
+function remainingLabel(days: number, expired: boolean): string {
+  if (expired && days >= 0) return "Venció hoy";
+  if (days < 0) return `Venció hace ${-days} ${-days === 1 ? "día" : "días"}`;
+  if (days === 0) return "Vence hoy";
+  return `Quedan ${days} ${days === 1 ? "día" : "días"}`;
+}
+
 export default function OdooConfigPage() {
   const { data: config, isLoading } = useOdooConfig();
   const [modalOpen, setModalOpen] = useState(false);
+
+  const daysLeft = config ? daysUntil(config.expiresAt) : null;
+  const expiringSoon = daysLeft !== null && !config?.isExpired && daysLeft <= EXPIRING_SOON_DAYS;
 
   const status = !config
     ? { tone: "neutral" as const, label: "Sin configurar" }
     : config.isExpired
       ? { tone: "danger" as const, label: "Vencida" }
-      : { tone: "success" as const, label: "Vigente" };
+      : expiringSoon
+        ? { tone: "warning" as const, label: "Por vencer" }
+        : { tone: "success" as const, label: "Vigente" };
 
   return (
     <div className="flex flex-col gap-4">
       <ReportHeader page="admin-odoo">
-        <Button type="button" variant="secondary" onClick={() => setModalOpen(true)}>
+        <Button type="button" onClick={() => setModalOpen(true)}>
           <KeyRound aria-hidden="true" />
           Agregar API key
         </Button>
@@ -71,6 +91,19 @@ export default function OdooConfigPage() {
               <span className={config.isExpired ? "text-destructive" : undefined}>
                 {formatLongDate(config.expiresAt.slice(0, 10))}
               </span>
+              {daysLeft !== null && (
+                <span
+                  className={`mt-0.5 block text-xs font-normal ${
+                    config.isExpired
+                      ? "text-destructive"
+                      : expiringSoon
+                        ? "text-amber-700 dark:text-amber-300"
+                        : "text-muted-foreground"
+                  }`}
+                >
+                  {remainingLabel(daysLeft, config.isExpired)}
+                </span>
+              )}
             </StatusItem>
           </dl>
         )}
