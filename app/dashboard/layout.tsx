@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, CalendarCheck2, CalendarClock, DollarSign, LayoutDashboard, ListOrdered, Package, Receipt, Search, Settings, Store, Tags, TrendingUp, Users, Wallet, Warehouse } from "lucide-react";
+import { Building2, CalendarCheck2, CalendarClock, DollarSign, LayoutDashboard, ListOrdered, Package, PackageMinus, Receipt, Search, Settings, Store, Tags, TrendingUp, Users, Wallet, Warehouse } from "lucide-react";
 import { DashboardShell, type DashboardNavItem } from "@/components/layout/dashboard-shell";
 
 // Todos los reportes viven en un solo bloque sin título (el usuario pidió
@@ -78,6 +78,20 @@ const NAV_ITEMS: DashboardNavItem[] = [
     group: "",
     roles: ["SUPER_ADMIN", "FINANZAS"],
     moduleKey: "dashboard.inventario",
+  },
+
+  // Merma, regalías y degustaciones (segundo tramo de Inventario, ver
+  // plan-history) — a diferencia del ítem de arriba, SÍ entra Vendedor:
+  // puede registrar movimientos de su propia tienda (forzado en el
+  // servidor vía assertOwnStoreOrThrow), aunque solo Admin/Finanzas puede
+  // confirmarlos o rechazarlos (ver InventoryMovementsView/MovementsTable).
+  {
+    label: "Movimientos de inventario",
+    href: "/dashboard/inventario-movimientos",
+    icon: PackageMinus,
+    group: "",
+    roles: ["SUPER_ADMIN", "FINANZAS", "VENDEDOR"],
+    moduleKey: "dashboard.inventario-movimientos",
   },
 
   { label: "Administración", href: "/dashboard/admin", icon: Settings, group: "Sistema", roles: ["SUPER_ADMIN"] },

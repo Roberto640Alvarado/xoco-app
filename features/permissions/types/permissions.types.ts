@@ -1,6 +1,6 @@
 import type { UserRole } from "@/features/auth/types/auth.types";
 
-// Mismo catálogo de 14 moduleKey del backend
+// Mismo catálogo de 15 moduleKey del backend
 // (xoco-api/src/common/constants/module-keys.const.ts) — duplicado a
 // mano, mismo criterio ya usado en el proyecto para ROLE_LABEL, etc.
 // Administración NUNCA tiene moduleKey — queda fuera de este catálogo
@@ -22,6 +22,7 @@ export const MODULE_KEYS = [
   "dashboard.categorias",
   "dashboard.cierre-mes",
   "dashboard.inventario",
+  "dashboard.inventario-movimientos",
 ] as const;
 
 export type ModuleKey = (typeof MODULE_KEYS)[number];
@@ -44,6 +45,7 @@ export const MODULE_LABEL: Record<ModuleKey, string> = {
   "dashboard.categorias": "Categorías",
   "dashboard.cierre-mes": "Cierre del mes",
   "dashboard.inventario": "Inventario",
+  "dashboard.inventario-movimientos": "Movimientos de inventario",
 };
 
 // Grupos de moduleKey que en el backend comparten un mismo endpoint —
