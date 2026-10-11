@@ -18,6 +18,9 @@ export function useReceiveInventoryMovement() {
         ["inventory", "movements", movement.posConfigId],
         (current) => current?.map((item) => (item.id === movement.id ? movement : item)),
       );
+      // El aviso del menú (globo de Movimientos) cambia con cada alta o
+      // cambio de estado.
+      queryClient.invalidateQueries({ queryKey: ["inventory", "notifications"] });
     },
   });
 }

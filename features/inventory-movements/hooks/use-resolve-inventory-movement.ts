@@ -24,6 +24,9 @@ export function useResolveInventoryMovement() {
       // estimatedQuantity — rechazar uno no cambia nada ahí, pero
       // invalidar en ambos casos es más simple que distinguir.
       queryClient.invalidateQueries({ queryKey: ["inventory", "items", movement.posConfigId] });
+      // El aviso del menú (globo de Movimientos) cambia con cada alta o
+      // cambio de estado.
+      queryClient.invalidateQueries({ queryKey: ["inventory", "notifications"] });
     },
   });
 }

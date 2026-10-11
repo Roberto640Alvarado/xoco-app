@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import { cn } from "cn";
 import { Collapsible } from "@base-ui/react/collapsible";
 import { ChevronDown, Loader2, LogOut, type LucideIcon } from "lucide-react";
 import { XocolatisimoMark } from "@/components/brand/xocolatisimo-mark";
@@ -45,6 +46,10 @@ interface DashboardNavLeafBase {
    * user.permissions[moduleKey] === false explícitamente (ausente o
    * true => visible, default-allow). */
   moduleKey?: string;
+  /** Globo de aviso (ej. pendientes por confirmar) — solo se dibuja si es > 0. */
+  badge?: number;
+  /** Texto accesible/tooltip del globo (ej. "3 por confirmar"). */
+  badgeLabel?: string;
 }
 
 export interface DashboardNavLeaf extends DashboardNavLeafBase {
@@ -140,6 +145,27 @@ function filterNavItemsByRole(
   }, []);
 }
 
+// Globo rojo con el conteo; con el sidebar colapsado a ícono se reduce a un
+// punto en la esquina (el número no cabe en el carril de 3rem).
+function NavBadge({ count, label }: { count?: number; label?: string }) {
+  if (!count || count <= 0) return null;
+  return (
+    <>
+      <span
+        className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[11px] font-semibold leading-none text-white group-data-[collapsible=icon]:hidden"
+        title={label}
+        aria-label={label ?? `${count} avisos`}
+      >
+        {count > 99 ? "99+" : count}
+      </span>
+      <span
+        className="absolute right-1.5 top-1.5 hidden size-2 rounded-full bg-destructive group-data-[collapsible=icon]:block"
+        aria-hidden="true"
+      />
+    </>
+  );
+}
+
 function NavLeafRow({
   item,
   isActive,
@@ -170,6 +196,7 @@ function NavLeafRow({
         >
           <Icon />
           <span>{item.label}</span>
+          <NavBadge count={item.badge} label={item.badgeLabel} />
         </SidebarMenuButton>
       </SidebarMenuItem>
     </motion.div>
@@ -185,6 +212,7 @@ function NavSubLeafRow({ item, isActive }: { item: DashboardNavLeaf; isActive: b
         className="gap-2.5 text-[14px]"
       >
         <span>{item.label}</span>
+        <NavBadge count={item.badge} label={item.badgeLabel} />
       </SidebarMenuSubButton>
     </SidebarMenuSubItem>
   );
@@ -203,6 +231,7 @@ function NavGroupRow({
 }) {
   const Icon = item.icon;
   const hasActiveChild = item.children.some((child) => child.href === activeHref);
+  const childrenBadge = item.children.reduce((sum, child) => sum + (child.badge ?? 0), 0);
 
   // Abierto de entrada si ya se cargó sobre una ruta hija. Después, solo se
   // vuelve a abrir automáticamente cuando la navegación ENTRA a este
@@ -238,7 +267,8 @@ function NavGroupRow({
           >
             <Icon aria-hidden="true" />
             <span>{item.label}</span>
-            <ChevronDown className="ml-auto size-4! shrink-0 text-muted-foreground transition-transform duration-200 ease-out group-data-[panel-open]/menu-button:rotate-180" />
+            <NavBadge count={childrenBadge} label={`${childrenBadge} avisos en ${item.label}`} />
+            <ChevronDown className={cn("size-4! shrink-0 text-muted-foreground transition-transform duration-200 ease-out group-data-[panel-open]/menu-button:rotate-180", childrenBadge > 0 ? "ml-2" : "ml-auto")} />
           </Collapsible.Trigger>
           {/* Base UI expone la altura medida del panel en la variable CSS
               --collapsible-panel-height — sin animar `height` a partir de

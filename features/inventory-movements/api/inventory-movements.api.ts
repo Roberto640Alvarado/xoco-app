@@ -1,5 +1,5 @@
 import { apiGet, apiPatch, apiPost } from "@/lib/api/client";
-import type { CreateInventoryMovementPayload, InventoryMovement } from "../types/inventory-movement.types";
+import type { CreateInventoryMovementPayload, InventoryMovement, InventoryMovementNotifications } from "../types/inventory-movement.types";
 
 export function fetchInventoryMovements(posConfigId: number) {
   return apiGet<InventoryMovement[]>(`/inventory/stores/${posConfigId}/movements`);
@@ -22,4 +22,8 @@ export function rejectInventoryMovement(id: string) {
 // necesita que Admin/Finanzas lo confirme o rechace después.
 export function receiveInventoryMovement(id: string, receivedQuantity: number) {
   return apiPatch<InventoryMovement>(`/inventory/movements/${id}/receive`, { receivedQuantity });
+}
+
+export function fetchMovementNotifications(since?: string) {
+  return apiGet<InventoryMovementNotifications>("/inventory/movements/notifications", since ? { params: { since } } : undefined);
 }

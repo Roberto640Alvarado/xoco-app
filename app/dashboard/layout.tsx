@@ -1,7 +1,10 @@
 "use client";
 
 import { Building2, CalendarCheck2, CalendarClock, ClipboardList, DollarSign, LayoutDashboard, ListOrdered, Package, PackageMinus, Receipt, Search, Settings, Store, Tags, TrendingUp, Users, Wallet, Warehouse } from "lucide-react";
+import { useMemo } from "react";
 import { DashboardShell, type DashboardNavItem } from "@/components/layout/dashboard-shell";
+import { useMovementNotifications } from "@/features/inventory-movements/hooks/use-movement-notifications";
+import { useAuthStore } from "@/store/auth-store";
 
 // Todos los reportes viven en un solo bloque sin título (el usuario pidió
 // quitar las secciones "General" y "Reportes"); solo "Sistema" conserva
@@ -90,9 +93,45 @@ const NAV_ITEMS: DashboardNavItem[] = [
   { label: "Administración", href: "/dashboard/admin", icon: Settings, group: "Sistema", roles: ["SUPER_ADMIN"] },
 ];
 
+// Texto del globo de Movimientos según el rol: Admin/Finanzas ven lo que
+// falta por confirmar; el Vendedor, envíos por recibir y lo ya resuelto.
+function movementsBadgeLabel(
+  role: string | undefined,
+  data: { toResolve: number; toReceive: number; resolvedUnseen: number },
+): string {
+  if (role === "VENDEDOR") {
+    const parts: string[] = [];
+    if (data.toReceive > 0) parts.push(`${data.toReceive} por recibir`);
+    if (data.resolvedUnseen > 0) parts.push(`${data.resolvedUnseen} resuelto${data.resolvedUnseen === 1 ? "" : "s"}`);
+    return parts.join(" · ");
+  }
+  return `${data.toResolve} por confirmar`;
+}
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const role = useAuthStore((state) => state.user?.role);
+  const { data: notifications } = useMovementNotifications();
+
+  // Mismo NAV_ITEMS, solo con el globo de Movimientos inyectado — se
+  // recalcula únicamente cuando cambian los contadores o el rol.
+  const navItems = useMemo<DashboardNavItem[]>(() => {
+    const total = notifications?.total ?? 0;
+    if (!notifications || total === 0) return NAV_ITEMS;
+    const label = movementsBadgeLabel(role, notifications);
+    return NAV_ITEMS.map((item) =>
+      "children" in item
+        ? {
+            ...item,
+            children: item.children.map((child) =>
+              child.moduleKey === "dashboard.inventario-movimientos" ? { ...child, badge: total, badgeLabel: label } : child,
+            ),
+          }
+        : item,
+    );
+  }, [notifications, role]);
+
   return (
-    <DashboardShell navItems={NAV_ITEMS} dashboardHref="/dashboard">
+    <DashboardShell navItems={navItems} dashboardHref="/dashboard">
       {children}
     </DashboardShell>
   );

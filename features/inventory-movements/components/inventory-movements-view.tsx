@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { FilterToolbar } from "@/components/filters/filter-toolbar";
 import { StoreSelect } from "@/components/filters/store-select";
@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { useStores } from "@/features/sales/hooks/use-stores";
 import { useVendedorStoreFilter } from "@/features/sales/hooks/use-vendedor-store-filter";
 import { useAuthStore } from "@/store/auth-store";
+import { useQueryClient } from "@tanstack/react-query";
 import { useInventoryMovements } from "../hooks/use-inventory-movements";
+import { markMovementsSeen } from "../lib/last-seen";
 import { CreateMovementDialog } from "./create-movement-dialog";
 import { MovementsTable } from "./movements-table";
 
@@ -22,6 +24,16 @@ import { MovementsTable } from "./movements-table";
 export function InventoryMovementsView() {
   const user = useAuthStore((state) => state.user);
   const canResolve = user?.role === "SUPER_ADMIN" || user?.role === "FINANZAS";
+  const queryClient = useQueryClient();
+
+  // Al abrir la pantalla, lo resuelto ya se ve en la tabla: se marca como
+  // visto y se recalcula el aviso del menú (ver useMovementNotifications).
+  const userEmail = user?.email;
+  useEffect(() => {
+    if (!userEmail) return;
+    markMovementsSeen(userEmail);
+    queryClient.invalidateQueries({ queryKey: ["inventory", "notifications"] });
+  }, [userEmail, queryClient]);
 
   const { isVendedor, defaultPosConfigId } = useVendedorStoreFilter();
   const { data: stores, isLoading: storesLoading } = useStores();

@@ -21,6 +21,9 @@ export function useCreateInventoryMovement() {
       if (movement.status === "CONFIRMADO") {
         queryClient.invalidateQueries({ queryKey: ["inventory", "items", variables.posConfigId] });
       }
+      // El aviso del menú (globo de Movimientos) cambia con cada alta o
+      // cambio de estado.
+      queryClient.invalidateQueries({ queryKey: ["inventory", "notifications"] });
     },
   });
 }

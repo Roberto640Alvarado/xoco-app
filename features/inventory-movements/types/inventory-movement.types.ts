@@ -40,3 +40,14 @@ export interface CreateInventoryMovementPayload {
   quantity: number;
   note?: string;
 }
+
+// Lo que devuelve GET /inventory/movements/notifications (ver
+// InventoryMovementNotificationsDoc en xoco-api): contadores del aviso del
+// menú. Admin/Finanzas usan `toResolve`; Vendedor `toReceive` y
+// `resolvedUnseen`.
+export interface InventoryMovementNotifications {
+  total: number;
+  toResolve: number;
+  toReceive: number;
+  resolvedUnseen: number;
+}
