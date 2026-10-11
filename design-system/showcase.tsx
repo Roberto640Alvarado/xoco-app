@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { ClipboardList, Eye, Loader2, PackagePlus, Plus, Save, Trash2, Warehouse } from "lucide-react";
+import { Eye, Loader2, PackagePlus, Plus, Save, Trash2, Warehouse } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DataTable, type DataTableColumn } from "@/design-system/components/data-table";
 import { InfoBadge, type InfoBadgeTone } from "@/design-system/components/info-badge";
@@ -239,8 +239,8 @@ function CardsSection() {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">SectionCard apilada (con muchos filtros)</p>
-          <SectionCard icon={ClipboardList} title="Registro" description="Entradas y salidas con fecha y hora." stacked>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">SectionCard controlsOnly: varios controles en una sola línea, sin título</p>
+          <SectionCard controlsOnly>
             <Input type="text" placeholder="Rango de fechas" className="w-full sm:w-[220px]" readOnly />
             <Input type="text" placeholder="Todos los productos" className="w-full sm:w-[220px]" readOnly />
             <Button variant="outline" size="sm">

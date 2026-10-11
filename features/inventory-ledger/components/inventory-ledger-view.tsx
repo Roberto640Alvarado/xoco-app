@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { ClipboardList } from "lucide-react";
 import { SectionCard } from "@/design-system/components/section-card";
 import { StoreSelect } from "@/components/filters/store-select";
 import { useStores } from "@/features/sales/hooks/use-stores";
@@ -40,7 +39,7 @@ export function InventoryLedgerView() {
   if (posConfigId === undefined) {
     return (
       <div className="flex flex-col gap-4">
-        <SectionCard icon={ClipboardList} title="Registro" description="Entradas y salidas con fecha y hora.">
+        <SectionCard controlsOnly>
           {storeSelect}
         </SectionCard>
         <div className="flex h-40 items-center justify-center rounded-xl border border-border bg-card text-sm text-muted-foreground">
