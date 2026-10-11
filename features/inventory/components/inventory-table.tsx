@@ -145,11 +145,12 @@ interface InventoryTableProps {
 }
 
 // Tabla editable del catálogo completo de Odoo por tienda. Cada producto
-// muestra DOS campos a la par (pedido explícito del usuario): "Índice
-// inicial (Odoo)" — de solo lectura, la existencia que ya reporta Odoo
-// para esa tienda, como referencia — e "Inventario nuevo" — el input
-// editable donde Finanzas captura el conteo físico real, que es lo único
-// que se guarda. Se guarda en LOTE con un botón "Guardar cambios" que
+// muestra DOS campos a la par: "Existencia estimada" — de solo lectura,
+// el último conteo menos ventas y mermas/regalías/degustaciones, más
+// entradas confirmadas — e "Inventario nuevo" — el input editable donde
+// Finanzas captura el conteo físico real, que es lo único que se guarda.
+// (La existencia de Odoo ya no se muestra: sus cantidades salen negativas
+// porque Odoo nunca recibió las entradas ni los ajustes.) Se guarda en LOTE con un botón "Guardar cambios" que
 // abre un panel de confirmación antes de mandar el PUT — no autosave por
 // fila. Buscador porque el catálogo completo puede ser largo.
 export function InventoryTable({ posConfigId, storeName, items, isLoading, isError, errorMessage }: InventoryTableProps) {
@@ -212,16 +213,17 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
     );
   }
 
-  // Caja de solo lectura con el índice de Odoo — mismo ancho/alineación
-  // que el input editable de al lado, para que se lean como un par.
-  function OdooIndexBox({ item }: { item: InventoryItem }) {
+  // Caja de solo lectura con la existencia estimada — mismo ancho/
+  // alineación que el input editable de al lado, para que se lean como un
+  // par. "—" si el producto nunca se ha contado (no hay de dónde partir).
+  function EstimatedBox({ item }: { item: InventoryItem }) {
     return (
       <div className="flex items-center gap-1.5">
         <Input
           type="text"
           readOnly
           disabled
-          value={item.odooQuantity != null ? String(item.odooQuantity) : "—"}
+          value={item.estimatedQuantity != null ? String(Math.round(item.estimatedQuantity * 1000) / 1000) : "—"}
           className="w-20 border-dashed bg-muted/40 text-right tabular-nums text-muted-foreground"
         />
         <span className="text-xs text-muted-foreground">{item.unit === "kg" ? "Kg" : "u"}</span>
@@ -304,8 +306,8 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
                   <TableHead>Producto</TableHead>
                   <TableHead>Unidad</TableHead>
                   <TableHead className="text-right">
-                    Índice inicial
-                    <span className="block text-[10px] font-normal text-muted-foreground">Odoo · referencia</span>
+                    Existencia estimada
+                    <span className="block text-[10px] font-normal text-muted-foreground">conteo − ventas ± movimientos</span>
                   </TableHead>
                   <TableHead className="text-right">
                     Inventario nuevo
@@ -321,7 +323,7 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
                     <TableCell className="text-muted-foreground">{item.unit === "kg" ? "Kg" : "Unidad"}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end">
-                        <OdooIndexBox item={item} />
+                        <EstimatedBox item={item} />
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
@@ -346,8 +348,8 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
                 </div>
                 <div className="flex items-start gap-4">
                   <div className="flex flex-col gap-1">
-                    <span className="text-[11px] font-medium text-muted-foreground">Índice Odoo</span>
-                    <OdooIndexBox item={item} />
+                    <span className="text-[11px] font-medium text-muted-foreground">Existencia estimada</span>
+                    <EstimatedBox item={item} />
                   </div>
                   <div className="flex flex-col gap-1">
                     <span className="text-[11px] font-medium text-foreground">Inventario nuevo</span>

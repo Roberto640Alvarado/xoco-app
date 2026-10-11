@@ -34,8 +34,8 @@ export function InventoryView() {
 
   return (
     <div className="flex flex-col gap-4">
-      <InDevelopmentBanner message="Inventario está en desarrollo — el índice inicial de Odoo puede no coincidir todavía con cada tienda mientras se corrige la configuración de bodegas." />
-      <FilterToolbar description="Inventario inicial por tienda — índice de Odoo a la par del nuevo conteo físico de cada producto.">
+      <InDevelopmentBanner message="Inventario está en desarrollo — la existencia estimada se corrige cada vez que Finanzas guarda un nuevo conteo físico." />
+      <FilterToolbar description="Inventario por tienda — conteo físico de cada producto y su existencia estimada desde ese conteo.">
         <StoreSelect
           stores={stores}
           isLoading={storesLoading}
@@ -70,7 +70,7 @@ export function InventoryView() {
               rows: items.map((item) => ({
                 Producto: item.productName,
                 Unidad: item.unit === "kg" ? "Kg" : "Unidad",
-                "Índice inicial (Odoo)": item.odooQuantity ?? "",
+                "Existencia estimada": item.estimatedQuantity ?? "",
                 "Inventario nuevo": item.quantity ?? "Sin contar",
                 "Última modificación": item.updatedAt ?? "",
                 "Modificado por": item.updatedByEmail ?? "",

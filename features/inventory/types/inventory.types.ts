@@ -9,10 +9,11 @@ export interface InventoryItem {
   productName: string;
   unit: InventoryUnit;
   quantity: number | null;
-  // Existencia que reporta Odoo (stock.quant) para la bodega de esta
-  // tienda, solo como referencia/punto de partida — null si no hay
-  // bodega mapeada o Odoo no reporta nada para ese producto ahí.
-  odooQuantity: number | null;
+  // `quantity` (el último conteo real) menos lo vendido en Odoo y las
+  // mermas/regalías/degustaciones confirmadas, más las entradas
+  // confirmadas, todo desde esa fecha. null si el producto nunca se ha
+  // contado.
+  estimatedQuantity: number | null;
   updatedAt: string | null;
   updatedByEmail: string | null;
 }
