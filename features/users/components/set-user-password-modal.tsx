@@ -85,7 +85,7 @@ export function SetUserPasswordModal({ user, onOpenChange }: SetUserPasswordModa
             </div>
           </div>
           <DialogDescription className="pt-1 leading-relaxed">
-            Define la nueva contraseña de esta cuenta. Queda activa de inmediato — comparte el usuario y la
+            Define la nueva contraseña de esta cuenta. Queda activa de inmediato. Comparte el usuario y la
             nueva contraseña con la persona por tu cuenta.
           </DialogDescription>
         </DialogHeader>

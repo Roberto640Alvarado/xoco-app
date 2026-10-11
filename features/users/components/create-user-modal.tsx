@@ -108,7 +108,7 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
             <div className="pt-0.5">
               <DialogTitle className="text-lg font-bold text-foreground">Agregar usuario</DialogTitle>
               <DialogDescription className="pt-1 leading-relaxed">
-                Crea la cuenta con la contraseña que definas aquí — el usuario ya puede iniciar sesión con ella
+                Crea la cuenta con la contraseña que definas aquí. El usuario ya puede iniciar sesión con ella
                 de inmediato.
               </DialogDescription>
             </div>
@@ -159,7 +159,7 @@ export function CreateUserModal({ open, onOpenChange }: CreateUserModalProps) {
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger id="create-role" className="w-full">
-                      <SelectValue />
+                      <SelectValue>{(raw: string) => ROLE_OPTIONS.find((option) => option.value === raw)?.label ?? raw}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {ROLE_OPTIONS.map((option) => (

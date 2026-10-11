@@ -137,7 +137,7 @@ export function EditUserModal({ user, isSelf, onOpenChange }: EditUserModalProps
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange} disabled={isSelf}>
                     <SelectTrigger id="edit-role" className="w-full">
-                      <SelectValue />
+                      <SelectValue>{(raw: string) => ROLE_OPTIONS.find((option) => option.value === raw)?.label ?? raw}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {ROLE_OPTIONS.map((option) => (

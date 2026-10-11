@@ -631,7 +631,7 @@ export function MovementsTable({
         }
         description={
           target?.action === "accept"
-            ? `Vas a aceptar la solicitud de ${target.movement.productName}: la tienda la verá como "en camino". Todavía no se suma al stock — eso pasa cuando confirmes la recepción.`
+            ? `Vas a aceptar la solicitud de ${target.movement.productName}: la tienda la verá como "en camino". Todavía no se suma al stock. Eso pasa cuando confirmes la recepción.`
             : `Vas a confirmar esta ${target ? TYPE_LABEL[target.movement.type].toLowerCase() : ""} de ${target?.movement.productName}. ${target?.movement.type === "ENTRADA" ? "Se sumará" : "Se restará"} del inventario estimado de la tienda.`
         }
         confirmLabel={target?.action === "accept" ? "Aceptar" : "Confirmar"}

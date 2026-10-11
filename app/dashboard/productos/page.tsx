@@ -161,7 +161,7 @@ export default function ProductosPage() {
         isLoading={weightTopProducts.isLoading}
         errorMessage={weightTopProducts.error?.message}
         title="Productos a granel más vendidos"
-        subtitle="Por Kg vendidos (ej. Crocks) — no compiten con el ranking por unidades"
+        subtitle="Por Kg vendidos (ej. Crocks). No compiten con el ranking por unidades"
         emptyLabel="Sin productos a granel vendidos en el rango seleccionado"
         headerExtra={<LimitInput id="weightTopLimit" value={weightTopLimit} onChange={setWeightTopLimit} />}
       />

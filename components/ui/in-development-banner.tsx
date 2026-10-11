@@ -9,7 +9,7 @@ interface InDevelopmentBannerProps {
 // para que quien lo vea sepa que puede cambiar o tener datos incompletos,
 // sin tener que ocultar la pantalla mientras se termina de afinar.
 export function InDevelopmentBanner({
-  message = "Este módulo está en desarrollo — lo que ves puede cambiar y algunos datos todavía no están completos.",
+  message = "Este módulo está en desarrollo. Lo que ves puede cambiar y algunos datos todavía no están completos.",
 }: InDevelopmentBannerProps) {
   return (
     <div

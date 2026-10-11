@@ -32,7 +32,7 @@ function ClientBuyersCard({ client }: ClientBuyersCardProps) {
   return (
     <div className="rounded-xl border border-border bg-card p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <h3 className="text-sm font-medium text-foreground">{client.clientLabel} — por comprador</h3>
+        <h3 className="text-sm font-medium text-foreground">{client.clientLabel}: por comprador</h3>
         <span className="text-xs text-muted-foreground">
           {formatInteger(client.buyers.length)} comprador{client.buyers.length === 1 ? "" : "es"} ·{" "}
           {formatCurrency(client.amountTotal)} en total

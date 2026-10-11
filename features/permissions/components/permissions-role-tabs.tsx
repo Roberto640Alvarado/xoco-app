@@ -21,7 +21,7 @@ export function PermissionsRoleTabs({ value, onChange }: PermissionsRoleTabsProp
   return (
     <Select value={value} onValueChange={(next) => onChange(next as UserRole)}>
       <SelectTrigger className="w-full sm:w-56">
-        <SelectValue />
+        <SelectValue>{(raw: string) => ROLE_OPTIONS.find((option) => option.value === raw)?.label ?? raw}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         {ROLE_OPTIONS.map((option) => (

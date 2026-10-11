@@ -248,7 +248,7 @@ export function WholesaleMonthlyTable() {
         <div>
           <h2 className="text-sm font-medium text-foreground">Por comprador</h2>
           <p className="text-xs text-muted-foreground">
-            Desglose de {monthColumnLabel.toLowerCase()} por sucursal/comprador dentro de cada cliente — mismo
+            Desglose de {monthColumnLabel.toLowerCase()} por sucursal/comprador dentro de cada cliente, en el mismo
             período que la tabla de arriba.
           </p>
         </div>
