@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Filter, FilterX } from "lucide-react";
+import { useMemo, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
+import { Check, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Filter, FilterX, ListFilter, X } from "lucide-react";
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TableSkeletonRows } from "@/components/ui/table-skeleton";
 
@@ -53,12 +54,91 @@ interface DataTableProps<T> {
   defaultPageSize?: (typeof PAGE_SIZE_OPTIONS)[number];
   /** Ancla del tour guiado del contenedor y de la fila de filtros. */
   tourId?: string;
+  /** Ancla del tour guiado del primer botón de filtro de la tabla. */
   filtersTourId?: string;
+  /** Si viene, la fila completa es clicable (ej. abrir un modal de detalle). */
+  onRowClick?: (row: T) => void;
   className?: string;
 }
 
 function normalize(value: string): string {
   return value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+}
+
+interface ColumnFilterProps {
+  label: string;
+  type: "text" | "select";
+  value: string;
+  options: Array<{ value: string; label: string }>;
+  onChange: (value: string) => void;
+  tourId?: string;
+}
+
+// Ícono de filtro junto al texto del encabezado: abre un popover con la caja
+// de texto o la lista de valores de esa columna. Se resalta cuando está activo.
+function ColumnFilter({ label, type, value, options, onChange, tourId }: ColumnFilterProps) {
+  const active = value !== "";
+  return (
+    <Popover>
+      <PopoverTrigger
+        data-tour={tourId}
+        aria-label={`Filtrar por ${label}${active ? " (filtro activo)" : ""}`}
+        className={cn(
+          "relative inline-flex size-6 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+          active ? "bg-primary/10 text-primary" : "text-muted-foreground",
+        )}
+      >
+        <ListFilter className="h-3.5 w-3.5" aria-hidden="true" />
+        {active && <span className="absolute -right-0.5 -top-0.5 size-1.5 rounded-full bg-primary" aria-hidden="true" />}
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-60 p-3 font-normal">
+        <p className="mb-2 text-xs font-medium text-muted-foreground">Filtrar por {label.toLowerCase()}</p>
+        {type === "text" ? (
+          <div className="relative">
+            <Input
+              type="text"
+              value={value}
+              onChange={(event) => onChange(event.target.value)}
+              placeholder="Escribe para filtrar..."
+              aria-label={`Filtrar por ${label}`}
+              autoFocus
+              className="pr-8"
+            />
+            {active && (
+              <button
+                type="button"
+                onClick={() => onChange("")}
+                aria-label="Quitar filtro"
+                className="absolute right-1.5 top-1/2 inline-flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            )}
+          </div>
+        ) : (
+          <ul className="flex max-h-60 flex-col gap-0.5 overflow-y-auto" role="listbox" aria-label={label}>
+            {[{ value: "", label: "Todos" }, ...options].map((option) => (
+              <li key={option.value || ALL}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={value === option.value}
+                  onClick={() => onChange(option.value)}
+                  className={cn(
+                    "flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-sm text-foreground hover:bg-muted",
+                    value === option.value && "bg-muted font-medium",
+                  )}
+                >
+                  {option.label}
+                  {value === option.value && <Check className="h-3.5 w-3.5 text-primary" aria-hidden="true" />}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 /**
@@ -81,6 +161,7 @@ export function DataTable<T>({
   defaultPageSize = 10,
   tourId,
   filtersTourId,
+  onRowClick,
   className,
 }: DataTableProps<T>) {
   const [filters, setFilters] = useState<Record<string, string>>({});
@@ -138,6 +219,24 @@ export function DataTable<T>({
     setPage(0);
   }
 
+  // Fila clicable: ignora los clics que vienen de botones/inputs internos.
+  function rowClickProps(row: T) {
+    if (!onRowClick) return {};
+    return {
+      tabIndex: 0,
+      onClick: (event: ReactMouseEvent) => {
+        if ((event.target as HTMLElement).closest("button, a, input, select, textarea, [role=option]")) return;
+        onRowClick(row);
+      },
+      onKeyDown: (event: ReactKeyboardEvent) => {
+        if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) {
+          event.preventDefault();
+          onRowClick(row);
+        }
+      },
+    };
+  }
+
   function filterControl(column: DataTableColumn<T>, compact: boolean) {
     const value = filters[column.id] ?? "";
     if (column.filter === "text") {
@@ -190,25 +289,31 @@ export function DataTable<T>({
         <Table>
           <TableHeader className="sticky top-0 z-10 bg-card">
             <TableRow>
-              {columns.map((column) => (
-                <TableHead
-                  key={column.id}
-                  data-tour={column.tourId}
-                  className={cn("whitespace-normal", column.align === "right" && "text-right", column.className)}
-                >
-                  {column.header}
-                </TableHead>
-              ))}
-            </TableRow>
-            {filterable.length > 0 && (
-              <TableRow className="bg-muted/30 hover:bg-muted/30" data-tour={filtersTourId}>
-                {columns.map((column) => (
-                  <TableHead key={column.id} className="h-auto py-1.5 font-normal">
-                    {column.filter && column.accessor ? filterControl(column, true) : null}
+              {columns.map((column) => {
+                const filterIndex = filterable.indexOf(column);
+                return (
+                  <TableHead
+                    key={column.id}
+                    data-tour={column.tourId}
+                    className={cn("whitespace-normal", column.align === "right" && "text-right", column.className)}
+                  >
+                    <div className={cn("flex items-center gap-1", column.align === "right" && "justify-end")}>
+                      <div className="min-w-0">{column.header}</div>
+                      {filterIndex >= 0 && (
+                        <ColumnFilter
+                          label={column.label}
+                          type={column.filter!}
+                          value={filters[column.id] ?? ""}
+                          options={selectOptions[column.id] ?? []}
+                          onChange={(next) => setFilter(column.id, next)}
+                          tourId={filterIndex === 0 ? filtersTourId : undefined}
+                        />
+                      )}
+                    </div>
                   </TableHead>
-                ))}
-              </TableRow>
-            )}
+                );
+              })}
+            </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
@@ -221,7 +326,11 @@ export function DataTable<T>({
               </TableRow>
             ) : (
               pageRows.map((row, offset) => (
-                <TableRow key={getRowKey(row)}>
+                <TableRow
+                  key={getRowKey(row)}
+                  {...rowClickProps(row)}
+                  className={onRowClick ? "cursor-pointer" : undefined}
+                >
                   {columns.map((column) => (
                     <TableCell
                       key={column.id}
@@ -282,7 +391,11 @@ export function DataTable<T>({
         ) : (
           <ul className="divide-y divide-border">
             {pageRows.map((row, offset) => (
-              <li key={getRowKey(row)} className="flex flex-col gap-3 p-3">
+              <li
+                key={getRowKey(row)}
+                {...rowClickProps(row)}
+                className={cn("flex flex-col gap-3 p-3", onRowClick && "cursor-pointer hover:bg-muted/40")}
+              >
                 <div className="min-w-0 break-words text-sm font-medium text-foreground">
                   {titleColumn.cell(row, start + offset)}
                 </div>

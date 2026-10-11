@@ -215,13 +215,15 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
   function renderEstimated(item: InventoryItem) {
     return (
       <div className="flex items-center justify-end gap-1.5">
-        <Input
-          type="text"
-          readOnly
-          disabled
-          value={item.estimatedQuantity != null ? String(Math.round(item.estimatedQuantity * 1000) / 1000) : "—"}
-          className="w-20 border-dashed bg-muted/40 text-right tabular-nums text-muted-foreground"
-        />
+        <div
+          aria-label={`Existencia estimada de ${item.productName}`}
+          className={cn(
+            "flex h-9 w-20 items-center justify-end rounded-md border border-border bg-muted px-2.5 text-sm tabular-nums",
+            item.estimatedQuantity != null ? "font-semibold text-foreground" : "text-muted-foreground",
+          )}
+        >
+          {item.estimatedQuantity != null ? String(Math.round(item.estimatedQuantity * 1000) / 1000) : "—"}
+        </div>
         <span className="text-xs text-muted-foreground">{item.unit === "kg" ? "Kg" : "u"}</span>
       </div>
     );
@@ -242,7 +244,7 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
             onChange={(e) => setDraft(item.productId, e.target.value)}
             aria-invalid={invalid}
             aria-label={`Inventario nuevo de ${item.productName}`}
-            className={cn("w-24 text-right tabular-nums", invalid && "border-destructive")}
+            className={cn("w-24 border-foreground/30 bg-background text-right tabular-nums", invalid && "border-destructive")}
           />
           <span className="text-xs text-muted-foreground">{item.unit === "kg" ? "Kg" : "u"}</span>
         </div>

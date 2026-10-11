@@ -139,7 +139,7 @@ export const TOURS: Record<GuidePage, Record<GuideRole, TourStep[]>> = {
     admin: [
       WELCOME("conteo", "admin"),
       { target: '[data-tour="inv-store"]', title: "Elige la tienda", description: "El inventario se lleva por tienda. Cambia de tienda aquí; los cambios sin guardar de la anterior se descartan.", side: "bottom" },
-      { target: '[data-tour="inv-search"]', title: "Filtra la tabla", description: "Cada columna tiene su filtro: busca un producto por nombre, o filtra por unidad y por si ya fue contado. Abajo eliges cuántas filas ver por página (10, 25, 50 o 100).", side: "bottom" },
+      { target: '[data-tour="inv-search"]', title: "Filtra la tabla", description: "Cada columna tiene un ícono de filtro junto a su título: púlsalo para buscar un producto por nombre, o filtrar por unidad y por si ya fue contado. Abajo eliges cuántas filas ver por página (10, 25, 50 o 100).", side: "bottom" },
       { target: '[data-tour="inv-estimated"]', title: "Existencia estimada", description: "Lo que debería haber hoy: último conteo − ventas − mermas/regalías confirmadas + entradas confirmadas. \"—\" significa que ese producto aún no se ha contado.", side: "bottom" },
       { target: '[data-tour="inv-count"]', title: "Inventario nuevo", description: "Escribe aquí lo que contaste físicamente. Es lo único que se guarda; a partir de ese momento la existencia estimada vuelve a empezar desde tu conteo.", side: "bottom" },
       { target: '[data-tour="inv-save"]', title: "Guardar cambios", description: "Guarda en lote todos los conteos que modificaste. Antes de enviar te muestra un resumen para confirmar.", side: "left" },
@@ -148,7 +148,7 @@ export const TOURS: Record<GuidePage, Record<GuideRole, TourStep[]>> = {
     vendedor: [
       WELCOME("conteo", "vendedor"),
       { target: '[data-tour="inv-store"]', title: "Tu tienda", description: "Solo ves el inventario de tu propia tienda.", side: "bottom" },
-      { target: '[data-tour="inv-search"]', title: "Filtra la tabla", description: "Filtra por nombre, unidad o si ya fue contado. Abajo eliges cuántas filas ver por página.", side: "bottom" },
+      { target: '[data-tour="inv-search"]', title: "Filtra la tabla", description: "Usa el ícono de filtro del encabezado: por nombre, unidad o si ya fue contado. Abajo eliges cuántas filas ver por página.", side: "bottom" },
       { target: '[data-tour="inv-estimated"]', title: "Existencia estimada", description: "Lo que debería haber hoy en tu tienda. Baja con cada venta y con las mermas y regalías confirmadas, y sube cuando se confirma un envío. \"—\" significa que ese producto aún no se ha contado.", side: "bottom" },
       { target: '[data-tour="inv-export"]', title: "Exportar", description: "Descarga este listado en Excel.", side: "bottom" },
     ],
@@ -157,15 +157,15 @@ export const TOURS: Record<GuidePage, Record<GuideRole, TourStep[]>> = {
     admin: [
       WELCOME("solicitudes", "admin"),
       { target: '[data-tour="movements-table"]', title: "Bandeja de solicitudes", description: "Todas las solicitudes abiertas de todas las tiendas, las más recientes primero.", side: "top" },
-      { target: '[data-tour="status"]', title: "Estado y qué sigue", description: "Pendiente → En camino → Recibido → Confirmado. Debajo de cada estado verás qué toca hacer. Pulsa ⓘ para ver el detalle.", side: "bottom" },
-      { target: '[data-tour="actions"]', title: "Tus acciones", description: "Aceptar (queda en camino), Rechazar (con motivo) y, cuando la tienda ya la recibió, Confirmar: recién ahí se suma al stock.", side: "left" },
+      { target: '[data-tour="status"]', title: "Estado y qué sigue", description: "Pendiente → En camino → Recibido → Confirmado. Pulsa una fila para ver el detalle y qué toca hacer. Pulsa ⓘ para entender cada estado.", side: "bottom" },
+      { target: '[data-tour="actions"]', title: "Gestionar", description: "Pulsa \"Gestionar\" (o la fila) para abrir el detalle. Ahí tienes: Aceptar (queda en camino), Rechazar (con motivo) y, cuando la tienda ya la recibió, Confirmar: recién ahí se suma al stock.", side: "left" },
     ],
     vendedor: [
       WELCOME("solicitudes", "vendedor"),
       { target: '[data-tour="req-new"]', title: "Solicitar stock", description: "Pide más de un producto: elige cuál y cuánto necesitas. Admin o Finanzas la recibe de inmediato.", side: "bottom" },
       { target: '[data-tour="movements-table"]', title: "Tus solicitudes", description: "Aquí queda el historial de lo que has pedido, con su estado actual.", side: "top" },
       { target: '[data-tour="status"]', title: "Estado y qué sigue", description: "Pendiente: esperando respuesta. En camino: aceptada. Recibido: en proceso de aprobación — se suma al stock cuando Admin o Finanzas confirme. Pulsa ⓘ para el detalle.", side: "bottom" },
-      { target: '[data-tour="actions"]', title: "Marcar recibido", description: "Cuando llegue un pedido en camino, aparece aquí \"Marcar recibido\": ingresa la cantidad real que llegó.", side: "left" },
+      { target: '[data-tour="actions"]', title: "Marcar recibido", description: "Cuando llegue un pedido en camino, abre su detalle (\"Gestionar\") y pulsa \"Marcar recibido\": ingresa la cantidad real que llegó.", side: "left" },
     ],
   },
   movimientos: {
@@ -175,7 +175,7 @@ export const TOURS: Record<GuidePage, Record<GuideRole, TourStep[]>> = {
       { target: '[data-tour="mov-pending"]', title: "Pendientes de todas las tiendas", description: "Cambia a la vista de todo lo que está esperando tu confirmación, sin importar la tienda.", side: "bottom" },
       { target: '[data-tour="mov-new"]', title: "Registrar movimiento", description: "Anota tú una merma, regalía o degustación. Al registrarla tú queda confirmada y se resta del stock de inmediato.", side: "bottom" },
       { target: '[data-tour="movements-table"]', title: "Historial", description: "Todos los movimientos con quién los registró y su estado.", side: "top" },
-      { target: '[data-tour="actions"]', title: "Confirmar o rechazar", description: "Confirmar resta la cantidad del stock de la tienda. Rechazar pide un motivo y no afecta el stock; el Vendedor verá el motivo.", side: "left" },
+      { target: '[data-tour="actions"]', title: "Confirmar o rechazar", description: "Abre el detalle de la fila (\"Gestionar\"). Confirmar resta la cantidad del stock de la tienda. Rechazar pide un motivo y no afecta el stock; el Vendedor verá el motivo.", side: "left" },
     ],
     vendedor: [
       WELCOME("movimientos", "vendedor"),

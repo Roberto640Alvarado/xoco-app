@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowDownToLine, Check, CheckCircle2, Cookie, Gift, PackageX, Truck, X } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { ArrowDownToLine, Check, CheckCircle2, ChevronRight, Cookie, Gift, PackageX, Truck, X } from "lucide-react";
 import { cn } from "cn";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
@@ -280,6 +280,107 @@ function RejectMovementDialog({ movement, onOpenChange }: RejectMovementDialogPr
   );
 }
 
+interface MovementDetailDialogProps {
+  movement: InventoryMovement | null;
+  onOpenChange: (open: boolean) => void;
+  storeName?: string;
+  isAdmin: boolean;
+  /** Botones de gestión (aceptar / confirmar / rechazar / marcar recibido). */
+  actions: ReactNode;
+}
+
+function DetailRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-[11px] font-medium text-muted-foreground">{label}</dt>
+      <dd className="break-words text-sm text-foreground">{children}</dd>
+    </div>
+  );
+}
+
+// Detalle completo de un movimiento: la tabla muestra solo lo esencial y
+// aquí vive el resto (nota, quién lo registró/resolvió, motivo del rechazo)
+// junto con los botones de gestión que correspondan al rol y al estado.
+function MovementDetailDialog({ movement, onOpenChange, storeName, isAdmin, actions }: MovementDetailDialogProps) {
+  const hint = movement ? statusHint(movement, isAdmin) : null;
+  const Icon = movement ? TYPE_ICON[movement.type] : null;
+  return (
+    <Dialog open={movement !== null} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+        {movement && Icon && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-lg font-bold text-foreground">
+                <Icon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+                {movement.type === "ENTRADA" ? "Solicitud de stock" : TYPE_LABEL[movement.type]}
+              </DialogTitle>
+              <DialogDescription className="pt-1 leading-relaxed">
+                <span className="font-medium text-foreground">{movement.productName}</span>
+                {storeName ? ` · ${storeName}` : ""}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="flex flex-col gap-1">
+              <StatusPill status={movement.status} />
+              {movement.status === "RECHAZADO" && movement.rejectionReason ? (
+                <p className="text-sm text-destructive">Motivo: {movement.rejectionReason}</p>
+              ) : (
+                hint && <p className="text-sm text-muted-foreground">{hint}</p>
+              )}
+            </div>
+
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg border border-border p-3">
+              <DetailRow label="Cantidad">
+                <span className="tabular-nums">{formatQuantity(movement.quantity)}</span>
+              </DetailRow>
+              <DetailRow label="Cantidad recibida">
+                {movement.receivedQuantity != null ? (
+                  <span
+                    className={cn(
+                      "tabular-nums",
+                      movement.receivedQuantity !== movement.quantity && "text-destructive",
+                    )}
+                  >
+                    {formatQuantity(movement.receivedQuantity)}
+                  </span>
+                ) : (
+                  "—"
+                )}
+              </DetailRow>
+              <DetailRow label="Fecha">{formatDateTime(movement.occurredAt)}</DetailRow>
+              <DetailRow label="Registrado por">
+                {movement.registeredByEmail}
+                <span className="block text-[11px] text-muted-foreground">{ROLE_LABEL[movement.registeredByRole]}</span>
+              </DetailRow>
+              {movement.acceptedByEmail && (
+                <DetailRow label="Aceptada por">
+                  {movement.acceptedByEmail}
+                  {movement.acceptedAt && (
+                    <span className="block text-[11px] text-muted-foreground">{formatDateTime(movement.acceptedAt)}</span>
+                  )}
+                </DetailRow>
+              )}
+              {movement.resolvedByEmail && (
+                <DetailRow label={movement.status === "RECHAZADO" ? "Rechazada por" : "Resuelta por"}>
+                  {movement.resolvedByEmail}
+                  {movement.resolvedAt && (
+                    <span className="block text-[11px] text-muted-foreground">{formatDateTime(movement.resolvedAt)}</span>
+                  )}
+                </DetailRow>
+              )}
+              <div className="col-span-2">
+                <DetailRow label="Nota">{movement.note ?? "—"}</DetailRow>
+              </div>
+            </dl>
+
+            {actions && <DialogFooter className="sm:justify-start">{actions}</DialogFooter>}
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 interface MovementsTableProps {
   movements: InventoryMovement[];
   isLoading: boolean;
@@ -313,6 +414,7 @@ export function MovementsTable({
   const [target, setTarget] = useState<{ movement: InventoryMovement; action: "confirm" | "accept" } | null>(null);
   const [rejectTarget, setRejectTarget] = useState<InventoryMovement | null>(null);
   const [receiveTarget, setReceiveTarget] = useState<InventoryMovement | null>(null);
+  const [detailTarget, setDetailTarget] = useState<InventoryMovement | null>(null);
 
   function handleConfirmDialog() {
     if (!target) return;
@@ -327,46 +429,51 @@ export function MovementsTable({
 
   const activeMutation = target?.action === "accept" ? accept : resolve;
 
-  function renderActions(movement: InventoryMovement) {
+  // Qué puede hacer quien mira con este movimiento. Admin/Finanzas: una
+  // ENTRADA se acepta (PENDIENTE) y luego se confirma (RECIBIDO); lo demás se
+  // confirma directo desde PENDIENTE. Rechazar vale mientras siga abierto.
+  // El Vendedor solo puede marcar recibida una ENTRADA en camino.
+  function actionState(movement: InventoryMovement) {
     const isEntrada = movement.type === "ENTRADA";
-    const canReceiveThis = isEntrada && movement.status === "EN_CAMINO";
-    // Admin/Finanzas: una ENTRADA se acepta (PENDIENTE) y luego se
-    // confirma (RECIBIDO); lo demás se confirma directo desde PENDIENTE.
-    // Rechazar vale mientras siga abierto.
-    const canAcceptThis = canResolve && isEntrada && movement.status === "PENDIENTE";
-    const canConfirmThis = canResolve && (isEntrada ? movement.status === "RECIBIDO" : movement.status === "PENDIENTE");
-    const canRejectThis =
+    const receive = isEntrada && movement.status === "EN_CAMINO";
+    const accept = canResolve && isEntrada && movement.status === "PENDIENTE";
+    const confirm = canResolve && (isEntrada ? movement.status === "RECIBIDO" : movement.status === "PENDIENTE");
+    const reject =
       canResolve && (movement.status === "PENDIENTE" || movement.status === "EN_CAMINO" || movement.status === "RECIBIDO");
-    const hasActions = canReceiveThis || canAcceptThis || canConfirmThis || canRejectThis;
-    if (!hasActions) {
-      return (
-        <span className="text-xs text-muted-foreground">
-          {movement.resolvedByEmail ? `Resuelto por ${movement.resolvedByEmail}` : "—"}
-        </span>
-      );
-    }
+    return { receive, accept, confirm, reject, any: receive || accept || confirm || reject };
+  }
+
+  // Cierra el detalle antes de abrir el diálogo de la acción elegida.
+  function startAction(open: () => void) {
+    setDetailTarget(null);
+    open();
+  }
+
+  function renderActions(movement: InventoryMovement) {
+    const state = actionState(movement);
+    if (!state.any) return null;
     return (
-      <div className="flex flex-wrap justify-end gap-1.5">
-        {canReceiveThis && (
-          <Button type="button" size="sm" variant="outline" onClick={() => setReceiveTarget(movement)}>
+      <div className="flex flex-wrap gap-2">
+        {state.receive && (
+          <Button type="button" size="sm" onClick={() => startAction(() => setReceiveTarget(movement))}>
             <ArrowDownToLine className="h-3.5 w-3.5" aria-hidden="true" />
             Marcar recibido
           </Button>
         )}
-        {canAcceptThis && (
-          <Button type="button" size="sm" variant="outline" onClick={() => setTarget({ movement, action: "accept" })}>
+        {state.accept && (
+          <Button type="button" size="sm" onClick={() => startAction(() => setTarget({ movement, action: "accept" }))}>
             <Truck className="h-3.5 w-3.5" aria-hidden="true" />
             Aceptar
           </Button>
         )}
-        {canConfirmThis && (
-          <Button type="button" size="sm" variant="outline" onClick={() => setTarget({ movement, action: "confirm" })}>
+        {state.confirm && (
+          <Button type="button" size="sm" onClick={() => startAction(() => setTarget({ movement, action: "confirm" }))}>
             <Check className="h-3.5 w-3.5" aria-hidden="true" />
             Confirmar
           </Button>
         )}
-        {canRejectThis && (
-          <Button type="button" size="sm" variant="outline" onClick={() => setRejectTarget(movement)}>
+        {state.reject && (
+          <Button type="button" size="sm" variant="outline" onClick={() => startAction(() => setRejectTarget(movement))}>
             <X className="h-3.5 w-3.5" aria-hidden="true" />
             Rechazar
           </Button>
@@ -457,28 +564,6 @@ export function MovementsTable({
       nowrap: true,
     },
     {
-      id: "note",
-      header: "Nota",
-      label: "Nota",
-      cell: (movement) => <span className="text-muted-foreground">{movement.note ?? "—"}</span>,
-      accessor: (movement) => movement.note ?? "",
-      filter: "text",
-      className: "max-w-[220px]",
-    },
-    {
-      id: "registeredBy",
-      header: "Registrado por",
-      label: "Registrado por",
-      cell: (movement) => (
-        <span className="text-muted-foreground">
-          {movement.registeredByEmail}
-          <span className="block text-[11px]">{ROLE_LABEL[movement.registeredByRole]}</span>
-        </span>
-      ),
-      accessor: (movement) => movement.registeredByEmail,
-      filter: "text",
-    },
-    {
       id: "status",
       header: (
         <span className="inline-flex items-center gap-1">
@@ -487,31 +572,30 @@ export function MovementsTable({
         </span>
       ),
       label: "Estado",
-      cell: (movement) => {
-        const hint = statusHint(movement, canResolve);
-        return (
-          <>
-            <StatusPill status={movement.status} />
-            {movement.status === "RECHAZADO" && movement.rejectionReason ? (
-              <span className="mt-1 block text-[11px] text-destructive">Motivo: {movement.rejectionReason}</span>
-            ) : (
-              hint && <span className="mt-1 block text-[11px] text-muted-foreground">{hint}</span>
-            )}
-          </>
-        );
-      },
+      cell: (movement) => <StatusPill status={movement.status} />,
       accessor: (movement) => STATUS_LABEL[movement.status],
       filter: "select",
       filterOptions: statusOptions,
-      className: "max-w-[240px]",
+      nowrap: true,
       tourId: "status",
     },
     {
-      id: "actions",
-      header: "Acciones",
-      label: "Acciones",
-      cell: (movement) => renderActions(movement),
+      id: "detail",
+      header: "Detalle",
+      label: "Detalle",
+      cell: (movement) => (
+        <Button
+          type="button"
+          size="sm"
+          variant={actionState(movement).any ? "default" : "outline"}
+          onClick={() => setDetailTarget(movement)}
+        >
+          {actionState(movement).any ? "Gestionar" : "Ver detalle"}
+          <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+        </Button>
+      ),
       align: "right",
+      nowrap: true,
       tourId: "actions",
       mobile: "footer",
     },
@@ -527,6 +611,15 @@ export function MovementsTable({
         emptyMessage={emptyMessage}
         itemLabel={{ singular: "movimiento", plural: "movimientos" }}
         tourId="movements-table"
+        onRowClick={setDetailTarget}
+      />
+
+      <MovementDetailDialog
+        movement={detailTarget}
+        onOpenChange={(next) => !next && setDetailTarget(null)}
+        storeName={detailTarget ? storeNames?.get(detailTarget.posConfigId) : undefined}
+        isAdmin={canResolve}
+        actions={detailTarget ? renderActions(detailTarget) : null}
       />
 
       <ConfirmDialog
