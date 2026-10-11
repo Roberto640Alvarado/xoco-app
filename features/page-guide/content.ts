@@ -432,7 +432,7 @@ export const REPORT_GUIDES: Record<ReportPageKey, ReportGuide> = {
     brief: { staff: "Configuración exclusiva del Admin." },
     intro: {
       staff:
-        "Desde aquí administras la conexión con Odoo, las cuentas del panel, los permisos de cada rol, la visibilidad de Inventario por tienda y el catálogo de diseño.",
+        "Desde aquí administras la conexión con Odoo, las cuentas del panel, los permisos de cada rol y la visibilidad de Inventario por tienda.",
     },
     permissions: {
       can: [
@@ -443,7 +443,7 @@ export const REPORT_GUIDES: Record<ReportPageKey, ReportGuide> = {
     },
     steps: {
       staff: [
-        { target: FIRST, title: "Configuraciones", description: "Cada tarjeta lleva a una configuración: Odoo, Usuarios, Permisos, Inventario por tienda y Sistema de diseño.", side: "top" },
+        { target: '[data-tour="admin-sections"]', title: "Configuraciones", description: "Cada tarjeta lleva a una configuración: Odoo, Usuarios, Permisos e Inventario por tienda.", side: "top" },
       ],
     },
   },

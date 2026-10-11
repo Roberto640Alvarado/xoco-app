@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { ReportHeader } from "@/features/page-guide/components/report-header";
-import { ArrowRight, KeyRound, Palette, ShieldCheck, Users, Warehouse, type LucideIcon } from "lucide-react";
+import { PageGuideBar } from "@/features/page-guide/components/page-guide-bar";
+import { ArrowRight, KeyRound, ShieldCheck, Users, Warehouse, type LucideIcon } from "lucide-react";
 
 interface AdminSection {
   href: string;
@@ -35,20 +35,14 @@ const ADMIN_SECTIONS: AdminSection[] = [
     title: "Inventario por tienda",
     description: "Habilita Inventario para los Vendedores de cada tienda.",
   },
-  {
-    href: "/dashboard/admin/design-system",
-    icon: Palette,
-    title: "Sistema de diseño",
-    description: "Botones, badges, cards y tablas del panel, con ejemplos.",
-  },
 ];
 
 export default function AdminIndexPage() {
   return (
     <div className="flex flex-col gap-4">
-      <ReportHeader page="admin-inicio" />
+      <PageGuideBar page="admin-inicio" />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div data-tour="admin-sections" className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {ADMIN_SECTIONS.map((section) => (
           <Link
             key={section.title}
