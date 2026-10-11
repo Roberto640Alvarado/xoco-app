@@ -87,6 +87,7 @@ export default function CategoriasPage() {
   return (
     <div className="flex flex-col gap-6">
       <SalesFiltersBar
+        page="categorias"
         filters={filters}
         onChange={setFilters}
         actions={
@@ -108,13 +109,7 @@ export default function CategoriasPage() {
         }
       />
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-sm font-medium text-foreground">Top productos por categoría</h1>
-          <p className="text-xs text-muted-foreground">
-            Categorías ordenadas por venta total; dentro de cada una, sus productos por {metric === "revenue" ? "ingresos" : "unidades vendidas"}.
-          </p>
-        </div>
+      <div className="flex flex-wrap items-center justify-end gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <MetricToggle value={metric} onChange={setMetric} />
           <div className="flex items-center gap-2">

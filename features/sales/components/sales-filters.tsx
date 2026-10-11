@@ -1,7 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { FilterBar } from "@/components/filters/filter-bar";
+import { ReportHeader } from "@/features/page-guide/components/report-header";
+import type { ReportPageKey } from "@/features/page-guide/content";
 import { DateRangeFilter } from "@/components/filters/date-range-filter";
 import { StoreSelect } from "@/components/filters/store-select";
 import { useStores } from "../hooks/use-stores";
@@ -10,6 +11,8 @@ import { todayIsoDate } from "@/lib/format";
 import type { SalesFilters } from "../types/sales.types";
 
 interface SalesFiltersBarProps {
+  /** Sección a la que pertenece: define el título, el tour y el modal de ayuda. */
+  page: ReportPageKey;
   filters: SalesFilters;
   onChange: (filters: SalesFilters) => void;
   /** Slot para acciones extra en la misma fila (ej. ExportExcelButton) —
@@ -17,12 +20,12 @@ interface SalesFiltersBarProps {
   actions?: ReactNode;
 }
 
-export function SalesFiltersBar({ filters, onChange, actions }: SalesFiltersBarProps) {
+export function SalesFiltersBar({ page, filters, onChange, actions }: SalesFiltersBarProps) {
   const { data: stores, isLoading: storesLoading } = useStores();
   const { isVendedor } = useVendedorStoreFilter();
 
   return (
-    <FilterBar>
+    <ReportHeader page={page}>
       <DateRangeFilter
         value={{ dateFrom: filters.dateFrom, dateTo: filters.dateTo }}
         onChange={({ dateFrom, dateTo }) => onChange({ ...filters, dateFrom, dateTo })}
@@ -37,7 +40,7 @@ export function SalesFiltersBar({ filters, onChange, actions }: SalesFiltersBarP
         lockedToSingleStore={isVendedor}
       />
 
-      {actions && <div className="flex items-center gap-2 sm:ml-auto">{actions}</div>}
-    </FilterBar>
+      {actions}
+    </ReportHeader>
   );
 }

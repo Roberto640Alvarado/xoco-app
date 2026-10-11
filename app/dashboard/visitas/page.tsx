@@ -36,6 +36,7 @@ export default function VisitasPage() {
   return (
     <div className="flex flex-col gap-6">
       <SalesFiltersBar
+        page="visitas"
         filters={filters}
         onChange={setFilters}
         actions={

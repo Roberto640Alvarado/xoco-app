@@ -71,6 +71,7 @@ export default function ProductosPage() {
   return (
     <div className="flex flex-col gap-6">
       <SalesFiltersBar
+        page="productos"
         filters={filters}
         onChange={setFilters}
         actions={

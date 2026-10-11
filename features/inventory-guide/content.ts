@@ -542,3 +542,10 @@ export const INFO: Record<InfoTopic, InfoContent> = {
     ],
   },
 };
+
+/** Rol de la sesión (SUPER_ADMIN / FINANZAS / VENDEDOR) -> rol de las guías. */
+export function guideRoleFor(role: string | undefined): GuideRole {
+  if (role === "SUPER_ADMIN") return "admin";
+  if (role === "FINANZAS") return "finanzas";
+  return "vendedor";
+}

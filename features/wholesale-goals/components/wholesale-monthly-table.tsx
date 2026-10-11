@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { StatTile } from "@/components/ui/stat-tile";
 import { Settings2, Target } from "lucide-react";
-import { FilterToolbar } from "@/components/filters/filter-toolbar";
+import { ReportHeader } from "@/features/page-guide/components/report-header";
 import { MonthNavigator } from "@/components/filters/month-navigator";
 import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import {
@@ -128,14 +128,14 @@ export function WholesaleMonthlyTable() {
 
   return (
     <div className="flex flex-col gap-4">
-      <FilterToolbar description="Meta de venta mensual por cliente de mayoreo, encadenada sobre el total real del mes anterior — avance y valor pendiente.">
+      <ReportHeader page="ventas-mayoreo">
         <MonthNavigator
           label={formatMonthLabel(anchor)}
           onPrevious={goToPreviousMonth}
           onNext={goToNextMonth}
           nextDisabled={isNextMonthDisabled}
         />
-        <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(true)}>
+        <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(true)} data-tour="goal-config">
           <Settings2 className="h-4 w-4" aria-hidden="true" />
           Configurar %
         </Button>
@@ -175,7 +175,7 @@ export function WholesaleMonthlyTable() {
             },
           ]}
         />
-      </FilterToolbar>
+      </ReportHeader>
 
       <div className="rounded-xl border border-border bg-card p-4">
         <div className="overflow-x-auto">

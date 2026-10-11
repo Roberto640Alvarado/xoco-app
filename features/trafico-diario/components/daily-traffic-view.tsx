@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { StatTile } from "@/components/ui/stat-tile";
 import { Users, Target, CheckCircle2 } from "lucide-react";
-import { FilterToolbar } from "@/components/filters/filter-toolbar";
+import { ReportHeader } from "@/features/page-guide/components/report-header";
 import { MonthNavigator } from "@/components/filters/month-navigator";
 import { StoreSelect } from "@/components/filters/store-select";
 import { ExportExcelButton } from "@/components/ui/export-excel-button";
@@ -91,7 +91,7 @@ export function DailyTrafficView() {
 
   return (
     <div className="flex flex-col gap-4">
-      <FilterToolbar description="Tráfico de órdenes por día — mes seleccionado y los dos meses anteriores.">
+      <ReportHeader page="trafico-diario">
         <MonthNavigator
           label={formatMonthLabel(anchor)}
           onPrevious={goToPreviousMonth}
@@ -123,7 +123,7 @@ export function DailyTrafficView() {
             },
           ]}
         />
-      </FilterToolbar>
+      </ReportHeader>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatTile

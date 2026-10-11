@@ -5,7 +5,7 @@ import { cn } from "cn";
 import { Button } from "@/components/ui/button";
 import { StatTile } from "@/components/ui/stat-tile";
 import { Settings2, Target } from "lucide-react";
-import { FilterToolbar } from "@/components/filters/filter-toolbar";
+import { ReportHeader } from "@/features/page-guide/components/report-header";
 import { MonthNavigator } from "@/components/filters/month-navigator";
 import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { currentMonthRef, monthLabel as formatMonthLabel, monthName, nextMonthOf, previousMonthOf, isSameMonth } from "@/lib/month";
@@ -90,14 +90,14 @@ export function AverageTicketTable() {
 
   return (
     <div className="flex flex-col gap-4">
-      <FilterToolbar description="Meta de ticket promedio del mes, encadenada sobre el mes anterior — real y diferencia por tienda.">
+      <ReportHeader page="ticket-promedio">
         <MonthNavigator
           label={formatMonthLabel(anchor)}
           onPrevious={goToPreviousMonth}
           onNext={goToNextMonth}
           nextDisabled={isNextMonthDisabled}
         />
-        <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(true)}>
+        <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(true)} data-tour="goal-config">
           <Settings2 className="h-4 w-4" aria-hidden="true" />
           Configurar %
         </Button>
@@ -124,7 +124,7 @@ export function AverageTicketTable() {
             },
           ]}
         />
-      </FilterToolbar>
+      </ReportHeader>
 
       <div className="rounded-xl border border-border bg-card p-4">
         <div className="overflow-x-auto">

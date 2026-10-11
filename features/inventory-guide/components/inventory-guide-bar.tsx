@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { Check, X } from "lucide-react";
 import { cn } from "cn";
-import { InfoBadge, type InfoBadgeTone } from "@/design-system/components/info-badge";
+import { InfoBadge } from "@/design-system/components/info-badge";
+import { ROLE_TONE, RolePermissions } from "@/features/page-guide/components/role-permissions";
 import { TourGuideCard } from "@/design-system/components/tour-guide-card";
 import {
   Dialog,
@@ -18,10 +18,10 @@ import {
   FLOW,
   PAGE_INTRO,
   PAGE_LABEL,
+  guideRoleFor,
   PERMISSIONS,
   ROLE_LABEL,
   type GuidePage,
-  type GuideRole,
 } from "../content";
 import { useInventoryTour } from "../hooks/use-inventory-tour";
 
@@ -36,18 +36,6 @@ function pageFromPath(pathname: string): GuidePage {
 }
 
 const PAGE_ORDER: GuidePage[] = ["conteo", "solicitudes", "movimientos", "registro"];
-
-const ROLE_TONE: Record<GuideRole, InfoBadgeTone> = {
-  admin: "violet",
-  finanzas: "info",
-  vendedor: "warning",
-};
-
-export function guideRoleFor(role: string | undefined): GuideRole {
-  if (role === "SUPER_ADMIN") return "admin";
-  if (role === "FINANZAS") return "finanzas";
-  return "vendedor";
-}
 
 // Card del tour guiado, común a todas las pantallas de Inventario (se monta
 // en app/dashboard/inventario/layout.tsx y en Administración → Inventario):
@@ -94,32 +82,7 @@ export function InventoryGuideBar() {
 
           <section className="flex flex-col gap-2">
             <h3 className="text-sm font-semibold text-foreground">Tu rol: {ROLE_LABEL[role]}</h3>
-            <div className={cn("grid gap-3", permissions.cannot.length > 0 && "sm:grid-cols-2")}>
-              <div className="rounded-lg border border-emerald-600/25 bg-emerald-500/5 px-3 py-2.5">
-                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Puedes</p>
-                <ul className="mt-1.5 flex flex-col gap-1.5">
-                  {permissions.can.map((item) => (
-                    <li key={item} className="flex items-start gap-2 text-sm leading-snug text-foreground">
-                      <Check className="mt-0.5 size-3.5 shrink-0 text-emerald-600" aria-hidden="true" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              {permissions.cannot.length > 0 && (
-                <div className="rounded-lg border border-border bg-muted/40 px-3 py-2.5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">No puedes</p>
-                  <ul className="mt-1.5 flex flex-col gap-1.5">
-                    {permissions.cannot.map((item) => (
-                      <li key={item} className="flex items-start gap-2 text-sm leading-snug text-foreground">
-                        <X className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
+            <RolePermissions can={permissions.can} cannot={permissions.cannot} />
           </section>
 
           <section className="flex flex-col gap-2">

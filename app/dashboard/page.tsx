@@ -35,6 +35,7 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-6">
       <SalesFiltersBar
+        page="resumen"
         filters={filters}
         onChange={setFilters}
         actions={

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { FilterToolbar } from "@/components/filters/filter-toolbar";
+import { ReportHeader } from "@/features/page-guide/components/report-header";
 import { MonthNavigator } from "@/components/filters/month-navigator";
 import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import {
@@ -104,7 +104,7 @@ export function MonthCloseView() {
 
   return (
     <div className="flex flex-col gap-4">
-      <FilterToolbar description="Cierre del mes seleccionado contra el mes anterior, con la meta y el alcance de Tráfico de tiendas, Venta Mensual y Ticket Promedio.">
+      <ReportHeader page="cierre-mes">
         <MonthNavigator
           label={formatMonthLabel(anchor)}
           onPrevious={goToPreviousMonth}
@@ -125,7 +125,7 @@ export function MonthCloseView() {
             },
           ]}
         />
-      </FilterToolbar>
+      </ReportHeader>
 
       <MonthCloseSectionTable
         title="Tráfico"

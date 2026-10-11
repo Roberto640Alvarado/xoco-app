@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Search } from "lucide-react";
-import { FilterBar } from "@/components/filters/filter-bar";
+import { ReportHeader } from "@/features/page-guide/components/report-header";
 import { DateRangeFilter } from "@/components/filters/date-range-filter";
 import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { Input } from "@/components/ui/input";
@@ -36,16 +36,9 @@ export default function BuscarCompradoresPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-sm font-medium text-foreground">Buscar compradores</h1>
-        <p className="text-xs text-muted-foreground">
-          Encuentra cualquier cliente con facturas en el rango de fechas, por nombre — no solo los de mayoreo fijos.
-        </p>
-      </div>
-
-      <FilterBar>
+      <ReportHeader page="buscar-compradores">
         <div className="flex min-w-[220px] flex-1 flex-col gap-1">
-          <Label htmlFor="customerQuery" className="text-xs text-muted-foreground">
+          <Label htmlFor="customerQuery" className="sr-only">
             Nombre del cliente
           </Label>
           <div className="relative">
@@ -73,7 +66,7 @@ export default function BuscarCompradoresPage() {
           maxDate={todayIsoDate()}
         />
 
-        <div className="sm:ml-auto">
+        <div>
           <ExportExcelButton
             filename="buscar-compradores"
             disabled={showHint || search.isLoading || results.length === 0}
@@ -91,7 +84,7 @@ export default function BuscarCompradoresPage() {
             ]}
           />
         </div>
-      </FilterBar>
+      </ReportHeader>
 
       <div className="rounded-xl border border-border bg-card p-4">
         {showHint ? (

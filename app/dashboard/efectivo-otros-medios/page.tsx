@@ -42,6 +42,7 @@ export default function EfectivoOtrosMediosPage() {
   return (
     <div className="flex flex-col gap-6">
       <SalesFiltersBar
+        page="formas-de-pago"
         filters={filters}
         onChange={setFilters}
         actions={
@@ -62,13 +63,6 @@ export default function EfectivoOtrosMediosPage() {
           />
         }
       />
-
-      <div>
-        <h1 className="text-sm font-medium text-foreground">Formas de pago</h1>
-        <p className="text-xs text-muted-foreground">
-          Venta por método de pago, filtrable por tienda y rango de fechas.
-        </p>
-      </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatTile

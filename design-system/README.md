@@ -34,6 +34,7 @@ Tamaños: `lg`, `default`, `sm`, `xs` y los `icon*`. Los botones de las cards us
 ## Cards
 
 - `SectionCard` (`design-system/components/section-card.tsx`): encabezado de pantalla con ícono, título, una frase y los botones a la derecha (`controlsOnly` cuando hay varios controles: queda solo la fila de controles, en una sola línea, sin ícono ni título). Es el encabezado de todas las pantallas de Inventario (Conteo, Solicitudes, Movimientos, Registro y Habilitación por tienda) y el que se usa en las secciones nuevas. Uso: `<SectionCard icon={PackagePlus} title="Solicitudes" description="Pide stock y sigue tus solicitudes.">{selector y botones}</SectionCard>`. La descripción es una sola frase corta; con varios filtros, `<SectionCard controlsOnly>`; `tourId` para el tour guiado.
+- `ReportHeader` (`features/page-guide/components/report-header.tsx`): encabezado de toda sección de reportes (Ventas, Tráfico, Productos, Tickets, Mayoreo, Cierre del mes). Junta la card del tour guiado con una `SectionCard` y los controles de la pantalla; el título, la frase corta, el tour y el modal salen de `features/page-guide/content.ts` según el rol. Una sección nueva se agrega ahí (`REPORT_GUIDES`) y usa `<ReportHeader page="...">`.
 - `TourGuideCard` (`design-system/components/tour-guide-card.tsx`): el título siempre es "Tour guiado"; "Iniciar tour" es `secondary`; ⓘ abre la explicación.
 - `NoticeCard` (`design-system/components/notice-card.tsx`): aviso con tono (`info`, `success`, `warning`), una frase y un botón opcional.
 
