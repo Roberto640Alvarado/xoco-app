@@ -1,17 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Loader2, Search } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import { cn } from "cn";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
 import { InfoHint } from "@/features/inventory-guide/components/info-hint";
 import { Button } from "@/components/ui/button";
@@ -156,10 +148,11 @@ interface InventoryTableProps {
 // (La existencia de Odoo ya no se muestra: sus cantidades salen negativas
 // porque Odoo nunca recibió las entradas ni los ajustes.) Se guarda en LOTE con un botón "Guardar cambios" que
 // abre un panel de confirmación antes de mandar el PUT — no autosave por
-// fila. Buscador porque el catálogo completo puede ser largo.
+// fila. La tabla es la estándar de Inventario (DataTable): filtros por
+// columna, pie con total y filas por página. Los borradores viven en este
+// componente, así que se conservan al cambiar de página o filtrar.
 export function InventoryTable({ posConfigId, storeName, items, isLoading, isError, errorMessage, readOnly = false }: InventoryTableProps) {
   const upsert = useUpsertInventoryBulk();
-  const [search, setSearch] = useState("");
   const [drafts, setDrafts] = useState<Record<number, string>>({});
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -173,9 +166,6 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
     setConfirmOpen(false);
     upsert.reset();
   }
-
-  const query = search.trim().toLowerCase();
-  const filteredItems = query ? items.filter((item) => item.productName.toLowerCase().includes(query)) : items;
 
   function draftValue(item: InventoryItem): string {
     return drafts[item.productId] ?? quantityToInput(item.quantity);
@@ -220,9 +210,11 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
   // Caja de solo lectura con la existencia estimada — mismo ancho/
   // alineación que el input editable de al lado, para que se lean como un
   // par. "—" si el producto nunca se ha contado (no hay de dónde partir).
-  function EstimatedBox({ item }: { item: InventoryItem }) {
+  // Son funciones de render (no componentes) para que el input no se
+  // remonte —y pierda el foco— en cada tecla.
+  function renderEstimated(item: InventoryItem) {
     return (
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-end gap-1.5">
         <Input
           type="text"
           readOnly
@@ -235,12 +227,12 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
     );
   }
 
-  function NewQuantityInput({ item }: { item: InventoryItem }) {
+  function renderNewQuantity(item: InventoryItem) {
     const value = draftValue(item);
     const invalid = !isValidDraft(value);
     return (
       <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center justify-end gap-1.5">
           <Input
             type="number"
             min={0}
@@ -249,6 +241,7 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
             value={value}
             onChange={(e) => setDraft(item.productId, e.target.value)}
             aria-invalid={invalid}
+            aria-label={`Inventario nuevo de ${item.productName}`}
             className={cn("w-24 text-right tabular-nums", invalid && "border-destructive")}
           />
           <span className="text-xs text-muted-foreground">{item.unit === "kg" ? "Kg" : "u"}</span>
@@ -258,25 +251,74 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
     );
   }
 
-  return (
-    <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="relative min-w-[220px] flex-1 sm:max-w-xs" data-tour="inv-search">
-          <Search
-            className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden="true"
-          />
-          <Input
-            type="text"
-            placeholder="Buscar producto..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-8"
-          />
-        </div>
+  const columns: DataTableColumn<InventoryItem>[] = [
+    {
+      id: "index",
+      header: "#",
+      label: "#",
+      cell: (_item, index) => <span className="text-muted-foreground">{index + 1}</span>,
+      className: "w-10",
+      nowrap: true,
+      mobile: "hidden",
+    },
+    {
+      id: "product",
+      header: "Producto",
+      label: "Producto",
+      cell: (item) => item.productName,
+      accessor: (item) => item.productName,
+      filter: "text",
+      mobile: "title",
+    },
+    {
+      id: "unit",
+      header: "Unidad",
+      label: "Unidad",
+      cell: (item) => <span className="text-muted-foreground">{item.unit === "kg" ? "Kg" : "Unidad"}</span>,
+      accessor: (item) => (item.unit === "kg" ? "Kg" : "Unidad"),
+      filter: "select",
+    },
+    {
+      id: "estimated",
+      header: (
+        <>
+          <span className="inline-flex items-center justify-end gap-1">
+            Existencia estimada
+            <InfoHint topic="existencia-estimada" />
+          </span>
+          <span className="block text-[10px] font-normal text-muted-foreground">conteo − ventas ± movimientos</span>
+        </>
+      ),
+      label: "Existencia estimada",
+      cell: (item) => renderEstimated(item),
+      accessor: (item) => (item.estimatedQuantity != null ? "Contado" : "Sin contar"),
+      filter: "select",
+      align: "right",
+      tourId: "inv-estimated",
+    },
+    ...(readOnly
+      ? []
+      : [
+          {
+            id: "count",
+            header: (
+              <>
+                Inventario nuevo
+                <span className="block text-[10px] font-normal text-muted-foreground">se guarda esto</span>
+              </>
+            ),
+            label: "Inventario nuevo",
+            cell: (item: InventoryItem) => renderNewQuantity(item),
+            align: "right" as const,
+            tourId: "inv-count",
+          },
+        ]),
+  ];
 
-        {!readOnly && (
-        <div className="flex items-center gap-2">
+  return (
+    <div className="flex flex-col gap-3">
+      {!readOnly && (
+        <div className="flex flex-wrap items-center justify-end gap-2">
           {dirtyEntries.length > 0 && (
             <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
               {dirtyEntries.length} sin guardar
@@ -286,95 +328,22 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
             Guardar cambios
           </Button>
         </div>
-        )}
-      </div>
+      )}
 
       {isError ? (
-        <ChartErrorState message={errorMessage} />
-      ) : isLoading ? (
-        <div className="flex flex-col gap-2" aria-hidden="true">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <Skeleton key={index} className="h-10 w-full" />
-          ))}
-        </div>
-      ) : filteredItems.length === 0 ? (
-        <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
-          {items.length === 0 ? "Sin productos en el catálogo." : "Ningún producto coincide con la búsqueda."}
+        <div className="rounded-xl border border-border bg-card p-4">
+          <ChartErrorState message={errorMessage} />
         </div>
       ) : (
-        <div className="max-h-[65vh] overflow-y-auto rounded-lg border border-border">
-          {/* Desktop / tablet: tabla completa, con las 2 columnas a la par */}
-          <div className="hidden md:block">
-            <Table>
-              <TableHeader className="sticky top-0 z-10 bg-card">
-                <TableRow>
-                  <TableHead className="w-10">#</TableHead>
-                  <TableHead>Producto</TableHead>
-                  <TableHead>Unidad</TableHead>
-                  <TableHead className="text-right" data-tour="inv-estimated">
-                    <span className="inline-flex items-center justify-end gap-1">
-                      Existencia estimada
-                      <InfoHint topic="existencia-estimada" />
-                    </span>
-                    <span className="block text-[10px] font-normal text-muted-foreground">conteo − ventas ± movimientos</span>
-                  </TableHead>
-                  {!readOnly && (
-                    <TableHead className="text-right" data-tour="inv-count">
-                      Inventario nuevo
-                      <span className="block text-[10px] font-normal text-muted-foreground">se guarda esto</span>
-                    </TableHead>
-                  )}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredItems.map((item, index) => (
-                  <TableRow key={item.productId}>
-                    <TableCell className="text-muted-foreground">{index + 1}</TableCell>
-                    <TableCell className="whitespace-normal">{item.productName}</TableCell>
-                    <TableCell className="text-muted-foreground">{item.unit === "kg" ? "Kg" : "Unidad"}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end">
-                        <EstimatedBox item={item} />
-                      </div>
-                    </TableCell>
-                    {!readOnly && (
-                      <TableCell className="text-right">
-                        <div className="flex justify-end">
-                          <NewQuantityInput item={item} />
-                        </div>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Mobile: lista de tarjetas — mismo criterio que UsersTable, con
-              los 2 campos a la par dentro de cada tarjeta. */}
-          <ul className="divide-y divide-border md:hidden">
-            {filteredItems.map((item) => (
-              <li key={item.productId} className="flex flex-col gap-2 p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-medium text-foreground">{item.productName}</p>
-                  <span className="shrink-0 text-xs text-muted-foreground">{item.unit === "kg" ? "Kg" : "Unidad"}</span>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[11px] font-medium text-muted-foreground">Existencia estimada</span>
-                    <EstimatedBox item={item} />
-                  </div>
-                  {!readOnly && (
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[11px] font-medium text-foreground">Inventario nuevo</span>
-                      <NewQuantityInput item={item} />
-                    </div>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <DataTable
+          columns={columns}
+          rows={items}
+          getRowKey={(item) => item.productId}
+          isLoading={isLoading}
+          emptyMessage="Sin productos en el catálogo."
+          itemLabel={{ singular: "producto", plural: "productos" }}
+          filtersTourId="inv-search"
+        />
       )}
 
       <ConfirmSaveDialog

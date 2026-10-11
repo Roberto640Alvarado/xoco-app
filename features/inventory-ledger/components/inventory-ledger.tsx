@@ -8,9 +8,8 @@ import { DateRangeFilter, type DateRangeValue } from "@/components/filters/date-
 import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { InfoHint } from "@/features/inventory-guide/components/info-hint";
 import { ChartErrorState } from "@/components/ui/chart-error-state";
-import { TableSkeletonRows } from "@/components/ui/table-skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { useInventoryItems } from "@/features/inventory/hooks/use-inventory-items";
 import { formatDateTime, formatInteger, formatKg, isoDateDaysAgo, todayIsoDate } from "@/lib/format";
 import { useInventoryLedger } from "../hooks/use-inventory-ledger";
@@ -73,6 +72,95 @@ export function InventoryLedger({ posConfigId, storeName, leading }: InventoryLe
   const entries = ledger.data ?? [];
 
   const productLabel = (raw: string) => items?.find((item) => String(item.productId) === raw)?.productName ?? raw;
+
+  const typeOptions = (Object.keys(TYPE_LABEL) as InventoryLedgerEntryType[]).map((key) => ({
+    value: TYPE_LABEL[key],
+    label: TYPE_LABEL[key],
+  }));
+  const statusOptions = Object.values(STATUS_LABEL).map((label) => ({ value: label, label }));
+
+  const columns: DataTableColumn<InventoryLedgerEntry>[] = [
+    {
+      id: "date",
+      header: "Fecha y hora",
+      label: "Fecha y hora",
+      cell: (entry) => <span className="text-muted-foreground">{formatDateTime(entry.occurredAt)}</span>,
+      accessor: (entry) => formatDateTime(entry.occurredAt),
+      filter: "text",
+      nowrap: true,
+    },
+    {
+      id: "type",
+      header: (
+        <span className="inline-flex items-center gap-1">
+          Tipo
+          <InfoHint topic="registro-tipos" />
+        </span>
+      ),
+      label: "Tipo",
+      cell: (entry) => {
+        const Icon = TYPE_ICON[entry.type];
+        return (
+          <span className="inline-flex items-center gap-1.5">
+            <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            {TYPE_LABEL[entry.type]}
+          </span>
+        );
+      },
+      accessor: (entry) => TYPE_LABEL[entry.type],
+      filter: "select",
+      filterOptions: typeOptions,
+      nowrap: true,
+      tourId: "ledger-type",
+    },
+    {
+      id: "product",
+      header: "Producto",
+      label: "Producto",
+      cell: (entry) => entry.productName,
+      accessor: (entry) => entry.productName,
+      filter: "text",
+      mobile: "title",
+    },
+    {
+      id: "quantity",
+      header: "Cantidad",
+      label: "Cantidad",
+      cell: (entry) => {
+        const quantity = signedQuantity(entry);
+        return <span className={cn("font-medium tabular-nums", quantity.className)}>{quantity.text}</span>;
+      },
+      align: "right",
+      nowrap: true,
+    },
+    {
+      id: "status",
+      header: "Estado",
+      label: "Estado",
+      cell: (entry) => <span className="text-muted-foreground">{entry.status ? STATUS_LABEL[entry.status] : "—"}</span>,
+      accessor: (entry) => (entry.status ? STATUS_LABEL[entry.status] : ""),
+      filter: "select",
+      filterOptions: statusOptions,
+      nowrap: true,
+    },
+    {
+      id: "detail",
+      header: "Detalle",
+      label: "Detalle",
+      cell: (entry) => <span className="text-muted-foreground">{entry.detail ?? "—"}</span>,
+      accessor: (entry) => entry.detail ?? "",
+      filter: "text",
+      className: "max-w-[220px]",
+    },
+    {
+      id: "registeredBy",
+      header: "Registrado por",
+      label: "Registrado por",
+      cell: (entry) => <span className="text-muted-foreground">{entry.registeredBy ?? "—"}</span>,
+      accessor: (entry) => entry.registeredBy ?? "",
+      filter: "text",
+    },
+  ];
 
   return (
     <div className="flex flex-col gap-4">
@@ -137,70 +225,15 @@ export function InventoryLedger({ posConfigId, storeName, leading }: InventoryLe
       {ledger.isError ? (
         <ChartErrorState message={ledger.error?.message} />
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border bg-card" data-tour="ledger-table">
-          <div className="max-h-[65vh] overflow-y-auto">
-            <Table>
-              <TableHeader className="sticky top-0 z-10 bg-card">
-                <TableRow>
-                  <TableHead>Fecha y hora</TableHead>
-                  <TableHead data-tour="ledger-type">
-                    <span className="inline-flex items-center gap-1">
-                      Tipo
-                      <InfoHint topic="registro-tipos" />
-                    </span>
-                  </TableHead>
-                  <TableHead>Producto</TableHead>
-                  <TableHead className="text-right">Cantidad</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Detalle</TableHead>
-                  <TableHead>Registrado por</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {ledger.isLoading ? (
-                  <TableSkeletonRows rows={6} columns={7} />
-                ) : entries.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="h-32 text-center text-sm text-muted-foreground">
-                      No hay movimientos en este rango.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  entries.map((entry) => {
-                    const Icon = TYPE_ICON[entry.type];
-                    const quantity = signedQuantity(entry);
-                    return (
-                      <TableRow key={entry.id}>
-                        <TableCell className="whitespace-nowrap text-muted-foreground">
-                          {formatDateTime(entry.occurredAt)}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap">
-                          <span className="inline-flex items-center gap-1.5">
-                            <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                            {TYPE_LABEL[entry.type]}
-                          </span>
-                        </TableCell>
-                        <TableCell className="whitespace-normal">{entry.productName}</TableCell>
-                        <TableCell className={cn("text-right font-medium tabular-nums", quantity.className)}>
-                          {quantity.text}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap text-muted-foreground">
-                          {entry.status ? STATUS_LABEL[entry.status] : "—"}
-                        </TableCell>
-                        <TableCell className="max-w-[220px] whitespace-normal text-muted-foreground">
-                          {entry.detail ?? "—"}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap text-muted-foreground">
-                          {entry.registeredBy ?? "—"}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
+        <DataTable
+          columns={columns}
+          rows={entries}
+          getRowKey={(entry) => entry.id}
+          isLoading={ledger.isLoading}
+          emptyMessage="No hay movimientos en este rango."
+          itemLabel={{ singular: "registro", plural: "registros" }}
+          tourId="ledger-table"
+        />
       )}
     </div>
   );

@@ -139,7 +139,7 @@ export const TOURS: Record<GuidePage, Record<GuideRole, TourStep[]>> = {
     admin: [
       WELCOME("conteo", "admin"),
       { target: '[data-tour="inv-store"]', title: "Elige la tienda", description: "El inventario se lleva por tienda. Cambia de tienda aquí; los cambios sin guardar de la anterior se descartan.", side: "bottom" },
-      { target: '[data-tour="inv-search"]', title: "Busca un producto", description: "El catálogo viene de Odoo y puede ser largo: filtra por nombre.", side: "bottom" },
+      { target: '[data-tour="inv-search"]', title: "Filtra la tabla", description: "Cada columna tiene su filtro: busca un producto por nombre, o filtra por unidad y por si ya fue contado. Abajo eliges cuántas filas ver por página (10, 25, 50 o 100).", side: "bottom" },
       { target: '[data-tour="inv-estimated"]', title: "Existencia estimada", description: "Lo que debería haber hoy: último conteo − ventas − mermas/regalías confirmadas + entradas confirmadas. \"—\" significa que ese producto aún no se ha contado.", side: "bottom" },
       { target: '[data-tour="inv-count"]', title: "Inventario nuevo", description: "Escribe aquí lo que contaste físicamente. Es lo único que se guarda; a partir de ese momento la existencia estimada vuelve a empezar desde tu conteo.", side: "bottom" },
       { target: '[data-tour="inv-save"]', title: "Guardar cambios", description: "Guarda en lote todos los conteos que modificaste. Antes de enviar te muestra un resumen para confirmar.", side: "left" },
@@ -148,7 +148,7 @@ export const TOURS: Record<GuidePage, Record<GuideRole, TourStep[]>> = {
     vendedor: [
       WELCOME("conteo", "vendedor"),
       { target: '[data-tour="inv-store"]', title: "Tu tienda", description: "Solo ves el inventario de tu propia tienda.", side: "bottom" },
-      { target: '[data-tour="inv-search"]', title: "Busca un producto", description: "Filtra el listado por nombre.", side: "bottom" },
+      { target: '[data-tour="inv-search"]', title: "Filtra la tabla", description: "Filtra por nombre, unidad o si ya fue contado. Abajo eliges cuántas filas ver por página.", side: "bottom" },
       { target: '[data-tour="inv-estimated"]', title: "Existencia estimada", description: "Lo que debería haber hoy en tu tienda. Baja con cada venta y con las mermas y regalías confirmadas, y sube cuando se confirma un envío. \"—\" significa que ese producto aún no se ha contado.", side: "bottom" },
       { target: '[data-tour="inv-export"]', title: "Exportar", description: "Descarga este listado en Excel.", side: "bottom" },
     ],

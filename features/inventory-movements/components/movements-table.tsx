@@ -3,15 +3,7 @@
 import { useState } from "react";
 import { ArrowDownToLine, Check, CheckCircle2, Cookie, Gift, PackageX, Truck, X } from "lucide-react";
 import { cn } from "cn";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { TableSkeletonRows } from "@/components/ui/table-skeleton";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,6 +46,14 @@ const ROLE_LABEL: Record<InventoryMovement["registeredByRole"], string> = {
   VENDEDOR: "Vendedor",
 };
 
+const STATUS_LABEL: Record<InventoryMovementStatus, string> = {
+  PENDIENTE: "Pendiente",
+  EN_CAMINO: "En camino",
+  RECIBIDO: "Recibido",
+  CONFIRMADO: "Confirmado",
+  RECHAZADO: "Rechazado",
+};
+
 // Mismo criterio visual que StatusPill/RolePill de Usuarios — pill con
 // punto de color, sin componente Badge aparte en el proyecto todavía.
 // Cada paso del flujo de ENTRADA tiene su propio color: PENDIENTE (ámbar,
@@ -74,17 +74,10 @@ function StatusPill({ status }: { status: InventoryMovementStatus }) {
     CONFIRMADO: "bg-emerald-500",
     RECHAZADO: "bg-destructive",
   };
-  const label: Record<InventoryMovementStatus, string> = {
-    PENDIENTE: "Pendiente",
-    EN_CAMINO: "En camino",
-    RECIBIDO: "Recibido",
-    CONFIRMADO: "Confirmado",
-    RECHAZADO: "Rechazado",
-  };
   return (
     <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium", style[status])}>
       <span className={cn("size-1.5 rounded-full", dot[status])} aria-hidden="true" />
-      {label[status]}
+      {STATUS_LABEL[status]}
     </span>
   );
 }
@@ -321,8 +314,6 @@ export function MovementsTable({
   const [rejectTarget, setRejectTarget] = useState<InventoryMovement | null>(null);
   const [receiveTarget, setReceiveTarget] = useState<InventoryMovement | null>(null);
 
-  const columns = 8 + (storeNames ? 1 : 0);
-
   function handleConfirmDialog() {
     if (!target) return;
     if (target.action === "accept") {
@@ -336,150 +327,207 @@ export function MovementsTable({
 
   const activeMutation = target?.action === "accept" ? accept : resolve;
 
+  function renderActions(movement: InventoryMovement) {
+    const isEntrada = movement.type === "ENTRADA";
+    const canReceiveThis = isEntrada && movement.status === "EN_CAMINO";
+    // Admin/Finanzas: una ENTRADA se acepta (PENDIENTE) y luego se
+    // confirma (RECIBIDO); lo demás se confirma directo desde PENDIENTE.
+    // Rechazar vale mientras siga abierto.
+    const canAcceptThis = canResolve && isEntrada && movement.status === "PENDIENTE";
+    const canConfirmThis = canResolve && (isEntrada ? movement.status === "RECIBIDO" : movement.status === "PENDIENTE");
+    const canRejectThis =
+      canResolve && (movement.status === "PENDIENTE" || movement.status === "EN_CAMINO" || movement.status === "RECIBIDO");
+    const hasActions = canReceiveThis || canAcceptThis || canConfirmThis || canRejectThis;
+    if (!hasActions) {
+      return (
+        <span className="text-xs text-muted-foreground">
+          {movement.resolvedByEmail ? `Resuelto por ${movement.resolvedByEmail}` : "—"}
+        </span>
+      );
+    }
+    return (
+      <div className="flex flex-wrap justify-end gap-1.5">
+        {canReceiveThis && (
+          <Button type="button" size="sm" variant="outline" onClick={() => setReceiveTarget(movement)}>
+            <ArrowDownToLine className="h-3.5 w-3.5" aria-hidden="true" />
+            Marcar recibido
+          </Button>
+        )}
+        {canAcceptThis && (
+          <Button type="button" size="sm" variant="outline" onClick={() => setTarget({ movement, action: "accept" })}>
+            <Truck className="h-3.5 w-3.5" aria-hidden="true" />
+            Aceptar
+          </Button>
+        )}
+        {canConfirmThis && (
+          <Button type="button" size="sm" variant="outline" onClick={() => setTarget({ movement, action: "confirm" })}>
+            <Check className="h-3.5 w-3.5" aria-hidden="true" />
+            Confirmar
+          </Button>
+        )}
+        {canRejectThis && (
+          <Button type="button" size="sm" variant="outline" onClick={() => setRejectTarget(movement)}>
+            <X className="h-3.5 w-3.5" aria-hidden="true" />
+            Rechazar
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  const typeOptions = (Object.keys(TYPE_LABEL) as InventoryMovementType[]).map((type) => ({
+    value: TYPE_LABEL[type],
+    label: TYPE_LABEL[type],
+  }));
+  const statusOptions = (Object.keys(STATUS_LABEL) as InventoryMovementStatus[]).map((status) => ({
+    value: STATUS_LABEL[status],
+    label: STATUS_LABEL[status],
+  }));
+
+  const columns: DataTableColumn<InventoryMovement>[] = [
+    {
+      id: "date",
+      header: "Fecha",
+      label: "Fecha",
+      cell: (movement) => <span className="text-muted-foreground">{formatDateTime(movement.occurredAt)}</span>,
+      accessor: (movement) => formatDateTime(movement.occurredAt),
+      filter: "text",
+      nowrap: true,
+    },
+    ...(storeNames
+      ? [
+          {
+            id: "store",
+            header: "Tienda",
+            label: "Tienda",
+            cell: (movement: InventoryMovement) => (
+              <span className="font-medium">{storeNames.get(movement.posConfigId) ?? `Tienda ${movement.posConfigId}`}</span>
+            ),
+            accessor: (movement: InventoryMovement) =>
+              storeNames.get(movement.posConfigId) ?? `Tienda ${movement.posConfigId}`,
+            filter: "select" as const,
+          },
+        ]
+      : []),
+    {
+      id: "product",
+      header: "Producto",
+      label: "Producto",
+      cell: (movement) => movement.productName,
+      accessor: (movement) => movement.productName,
+      filter: "text",
+      mobile: "title",
+    },
+    {
+      id: "type",
+      header: "Motivo",
+      label: "Motivo",
+      cell: (movement) => {
+        const Icon = TYPE_ICON[movement.type];
+        return (
+          <span className="inline-flex items-center gap-1.5">
+            <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            {TYPE_LABEL[movement.type]}
+          </span>
+        );
+      },
+      accessor: (movement) => TYPE_LABEL[movement.type],
+      filter: "select",
+      filterOptions: typeOptions,
+      nowrap: true,
+    },
+    {
+      id: "quantity",
+      header: "Cantidad",
+      label: "Cantidad",
+      cell: (movement) => {
+        const hasDiscrepancy = movement.receivedQuantity != null && movement.receivedQuantity !== movement.quantity;
+        return (
+          <span className="tabular-nums">
+            {formatQuantity(movement.quantity)}
+            {movement.receivedQuantity != null && (
+              <span className={cn("block text-[11px]", hasDiscrepancy ? "text-destructive" : "text-muted-foreground")}>
+                recibido: {formatQuantity(movement.receivedQuantity)}
+              </span>
+            )}
+          </span>
+        );
+      },
+      align: "right",
+      nowrap: true,
+    },
+    {
+      id: "note",
+      header: "Nota",
+      label: "Nota",
+      cell: (movement) => <span className="text-muted-foreground">{movement.note ?? "—"}</span>,
+      accessor: (movement) => movement.note ?? "",
+      filter: "text",
+      className: "max-w-[220px]",
+    },
+    {
+      id: "registeredBy",
+      header: "Registrado por",
+      label: "Registrado por",
+      cell: (movement) => (
+        <span className="text-muted-foreground">
+          {movement.registeredByEmail}
+          <span className="block text-[11px]">{ROLE_LABEL[movement.registeredByRole]}</span>
+        </span>
+      ),
+      accessor: (movement) => movement.registeredByEmail,
+      filter: "text",
+    },
+    {
+      id: "status",
+      header: (
+        <span className="inline-flex items-center gap-1">
+          Estado
+          <InfoHint topic={statusInfo} />
+        </span>
+      ),
+      label: "Estado",
+      cell: (movement) => {
+        const hint = statusHint(movement, canResolve);
+        return (
+          <>
+            <StatusPill status={movement.status} />
+            {movement.status === "RECHAZADO" && movement.rejectionReason ? (
+              <span className="mt-1 block text-[11px] text-destructive">Motivo: {movement.rejectionReason}</span>
+            ) : (
+              hint && <span className="mt-1 block text-[11px] text-muted-foreground">{hint}</span>
+            )}
+          </>
+        );
+      },
+      accessor: (movement) => STATUS_LABEL[movement.status],
+      filter: "select",
+      filterOptions: statusOptions,
+      className: "max-w-[240px]",
+      tourId: "status",
+    },
+    {
+      id: "actions",
+      header: "Acciones",
+      label: "Acciones",
+      cell: (movement) => renderActions(movement),
+      align: "right",
+      tourId: "actions",
+      mobile: "footer",
+    },
+  ];
+
   return (
     <>
-      <div className="overflow-hidden rounded-xl border border-border bg-card" data-tour="movements-table">
-        <div className="max-h-[65vh] overflow-y-auto">
-          <Table>
-            <TableHeader className="sticky top-0 z-10 bg-card">
-              <TableRow>
-                <TableHead>Fecha</TableHead>
-                {storeNames && <TableHead>Tienda</TableHead>}
-                <TableHead>Producto</TableHead>
-                <TableHead>Motivo</TableHead>
-                <TableHead className="text-right">Cantidad</TableHead>
-                <TableHead>Nota</TableHead>
-                <TableHead>Registrado por</TableHead>
-                <TableHead data-tour="status">
-                  <span className="inline-flex items-center gap-1">
-                    Estado
-                    <InfoHint topic={statusInfo} />
-                  </span>
-                </TableHead>
-                <TableHead className="text-right" data-tour="actions">
-                  Acciones
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableSkeletonRows rows={5} columns={columns} />
-              ) : movements.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={columns} className="h-32 text-center text-sm text-muted-foreground">
-                    {emptyMessage}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                movements.map((movement) => {
-                  const Icon = TYPE_ICON[movement.type];
-                  const isEntrada = movement.type === "ENTRADA";
-                  const canReceiveThis = isEntrada && movement.status === "EN_CAMINO";
-                  // Admin/Finanzas: una ENTRADA se acepta (PENDIENTE) y
-                  // luego se confirma (RECIBIDO); lo demás se confirma
-                  // directo desde PENDIENTE. Rechazar vale mientras siga
-                  // abierto.
-                  const canAcceptThis = canResolve && isEntrada && movement.status === "PENDIENTE";
-                  const canConfirmThis =
-                    canResolve && (isEntrada ? movement.status === "RECIBIDO" : movement.status === "PENDIENTE");
-                  const canRejectThis =
-                    canResolve && (movement.status === "PENDIENTE" || movement.status === "EN_CAMINO" || movement.status === "RECIBIDO");
-                  const hasActions = canReceiveThis || canAcceptThis || canConfirmThis || canRejectThis;
-                  const hasDiscrepancy =
-                    movement.receivedQuantity != null && movement.receivedQuantity !== movement.quantity;
-                  const hint = statusHint(movement, canResolve);
-                  return (
-                    <TableRow key={movement.id}>
-                      <TableCell className="whitespace-nowrap text-muted-foreground">
-                        {formatDateTime(movement.occurredAt)}
-                      </TableCell>
-                      {storeNames && (
-                        <TableCell className="whitespace-nowrap font-medium">
-                          {storeNames.get(movement.posConfigId) ?? `Tienda ${movement.posConfigId}`}
-                        </TableCell>
-                      )}
-                      <TableCell className="whitespace-normal">{movement.productName}</TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1.5">
-                          <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                          {TYPE_LABEL[movement.type]}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {formatQuantity(movement.quantity)}
-                        {movement.receivedQuantity != null && (
-                          <span className={cn("block text-[11px]", hasDiscrepancy ? "text-destructive" : "text-muted-foreground")}>
-                            recibido: {formatQuantity(movement.receivedQuantity)}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="max-w-[220px] whitespace-normal text-muted-foreground">
-                        {movement.note ?? "—"}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap text-muted-foreground">
-                        {movement.registeredByEmail}
-                        <span className="block text-[11px]">{ROLE_LABEL[movement.registeredByRole]}</span>
-                      </TableCell>
-                      <TableCell className="max-w-[240px] whitespace-normal">
-                        <StatusPill status={movement.status} />
-                        {movement.status === "RECHAZADO" && movement.rejectionReason ? (
-                          <span className="mt-1 block text-[11px] text-destructive">Motivo: {movement.rejectionReason}</span>
-                        ) : (
-                          hint && <span className="mt-1 block text-[11px] text-muted-foreground">{hint}</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {hasActions ? (
-                          <div className="flex flex-wrap justify-end gap-1.5">
-                            {canReceiveThis && (
-                              <Button type="button" size="sm" variant="outline" onClick={() => setReceiveTarget(movement)}>
-                                <ArrowDownToLine className="h-3.5 w-3.5" aria-hidden="true" />
-                                Marcar recibido
-                              </Button>
-                            )}
-                            {canAcceptThis && (
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setTarget({ movement, action: "accept" })}
-                              >
-                                <Truck className="h-3.5 w-3.5" aria-hidden="true" />
-                                Aceptar
-                              </Button>
-                            )}
-                            {canConfirmThis && (
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setTarget({ movement, action: "confirm" })}
-                              >
-                                <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                                Confirmar
-                              </Button>
-                            )}
-                            {canRejectThis && (
-                              <Button type="button" size="sm" variant="outline" onClick={() => setRejectTarget(movement)}>
-                                <X className="h-3.5 w-3.5" aria-hidden="true" />
-                                Rechazar
-                              </Button>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">
-                            {movement.resolvedByEmail ? `Resuelto por ${movement.resolvedByEmail}` : "—"}
-                          </span>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+      <DataTable
+        columns={columns}
+        rows={movements}
+        getRowKey={(movement) => movement.id}
+        isLoading={isLoading}
+        emptyMessage={emptyMessage}
+        itemLabel={{ singular: "movimiento", plural: "movimientos" }}
+        tourId="movements-table"
+      />
 
       <ConfirmDialog
         open={target !== null}
