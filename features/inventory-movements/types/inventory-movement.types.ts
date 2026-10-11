@@ -1,11 +1,12 @@
 export type InventoryMovementType = "MERMA" | "REGALIA" | "DEGUSTACION" | "ENTRADA";
 
-// RECIBIDO es exclusivo del flujo de ENTRADA solicitada por un Vendedor:
-// PENDIENTE (el Vendedor pidió el envío) -> RECIBIDO (el Vendedor marcó
-// que ya llegó e ingresó la cantidad real) -> CONFIRMADO/RECHAZADO
-// (Admin o Finanzas cierra el ciclo). Los demás tipos nunca pasan por
-// RECIBIDO.
-export type InventoryMovementStatus = "PENDIENTE" | "RECIBIDO" | "CONFIRMADO" | "RECHAZADO";
+// Flujo de ENTRADA (solicitud de stock de un Vendedor):
+// PENDIENTE (el Vendedor pidió) -> EN_CAMINO (Admin/Finanzas aceptó) ->
+// RECIBIDO (el Vendedor marcó que llegó, con la cantidad real) ->
+// CONFIRMADO (Admin/Finanzas lo da por bueno y recién ahí se suma al
+// stock). Antes de CONFIRMADO se puede pasar a RECHAZADO con motivo.
+// Los demás tipos van directo de PENDIENTE a CONFIRMADO/RECHAZADO.
+export type InventoryMovementStatus = "PENDIENTE" | "EN_CAMINO" | "RECIBIDO" | "CONFIRMADO" | "RECHAZADO";
 
 // Lo que devuelven POST/GET /inventory/stores/:posConfigId/movements
 // (ver InventoryMovementDoc en xoco-api). PENDIENTE solo ocurre cuando lo
@@ -31,6 +32,11 @@ export interface InventoryMovement {
   registeredByRole: "SUPER_ADMIN" | "FINANZAS" | "VENDEDOR";
   resolvedByEmail: string | null;
   resolvedAt: string | null;
+  // Solo ENTRADA: quién/cuándo aceptó la solicitud (pasó a EN_CAMINO).
+  acceptedByEmail: string | null;
+  acceptedAt: string | null;
+  // Motivo con el que Admin/Finanzas rechazó (null si no está rechazado).
+  rejectionReason: string | null;
 }
 
 export interface CreateInventoryMovementPayload {
@@ -42,12 +48,14 @@ export interface CreateInventoryMovementPayload {
 }
 
 // Lo que devuelve GET /inventory/movements/notifications (ver
-// InventoryMovementNotificationsDoc en xoco-api): contadores del aviso del
-// menú. Admin/Finanzas usan `toResolve`; Vendedor `toReceive` y
-// `resolvedUnseen`.
+// InventoryMovementNotificationsDoc en xoco-api): un contador por pantalla.
 export interface InventoryMovementNotifications {
   total: number;
-  toResolve: number;
-  toReceive: number;
-  resolvedUnseen: number;
+  /** Globo de Inventario → Movimientos. */
+  movements: number;
+  /** Globo de Inventario → Solicitudes. */
+  requests: number;
 }
+
+/** Qué bandeja pide Admin/Finanzas: solicitudes de stock o merma/regalía/degustación. */
+export type MovementsInboxKind = "requests" | "movements";

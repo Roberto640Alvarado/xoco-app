@@ -14,7 +14,7 @@ export interface InventoryLedgerEntry {
   productId: number;
   productName: string;
   quantity: number;
-  status: "PENDIENTE" | "RECIBIDO" | "CONFIRMADO" | "RECHAZADO" | null;
+  status: "PENDIENTE" | "EN_CAMINO" | "RECIBIDO" | "CONFIRMADO" | "RECHAZADO" | null;
   detail: string | null;
   registeredBy: string | null;
 }

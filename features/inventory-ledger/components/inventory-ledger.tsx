@@ -35,7 +35,7 @@ const TYPE_ICON: Record<InventoryLedgerEntryType, typeof PackageX> = {
   CONTEO: ClipboardCheck,
 };
 
-const STATUS_LABEL = { PENDIENTE: "Pendiente", RECIBIDO: "Recibido", CONFIRMADO: "Confirmado", RECHAZADO: "Rechazado" } as const;
+const STATUS_LABEL = { PENDIENTE: "Pendiente", EN_CAMINO: "En camino", RECIBIDO: "Recibido", CONFIRMADO: "Confirmado", RECHAZADO: "Rechazado" } as const;
 
 function formatQuantity(quantity: number): string {
   return Number.isInteger(quantity) ? formatInteger(quantity) : formatKg(quantity);

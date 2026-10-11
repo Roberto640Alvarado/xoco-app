@@ -142,6 +142,9 @@ interface InventoryTableProps {
   isLoading: boolean;
   isError: boolean;
   errorMessage?: string;
+  /** Vendedor: solo ve la existencia estimada de su tienda — sin la columna
+   * de captura ni el botón de guardar (el backend tampoco le deja escribir). */
+  readOnly?: boolean;
 }
 
 // Tabla editable del catálogo completo de Odoo por tienda. Cada producto
@@ -153,7 +156,7 @@ interface InventoryTableProps {
 // porque Odoo nunca recibió las entradas ni los ajustes.) Se guarda en LOTE con un botón "Guardar cambios" que
 // abre un panel de confirmación antes de mandar el PUT — no autosave por
 // fila. Buscador porque el catálogo completo puede ser largo.
-export function InventoryTable({ posConfigId, storeName, items, isLoading, isError, errorMessage }: InventoryTableProps) {
+export function InventoryTable({ posConfigId, storeName, items, isLoading, isError, errorMessage, readOnly = false }: InventoryTableProps) {
   const upsert = useUpsertInventoryBulk();
   const [search, setSearch] = useState("");
   const [drafts, setDrafts] = useState<Record<number, string>>({});
@@ -271,6 +274,7 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
           />
         </div>
 
+        {!readOnly && (
         <div className="flex items-center gap-2">
           {dirtyEntries.length > 0 && (
             <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
@@ -281,6 +285,7 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
             Guardar cambios
           </Button>
         </div>
+        )}
       </div>
 
       {isError ? (
@@ -309,10 +314,12 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
                     Existencia estimada
                     <span className="block text-[10px] font-normal text-muted-foreground">conteo − ventas ± movimientos</span>
                   </TableHead>
-                  <TableHead className="text-right">
-                    Inventario nuevo
-                    <span className="block text-[10px] font-normal text-muted-foreground">se guarda esto</span>
-                  </TableHead>
+                  {!readOnly && (
+                    <TableHead className="text-right">
+                      Inventario nuevo
+                      <span className="block text-[10px] font-normal text-muted-foreground">se guarda esto</span>
+                    </TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -326,11 +333,13 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
                         <EstimatedBox item={item} />
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end">
-                        <NewQuantityInput item={item} />
-                      </div>
-                    </TableCell>
+                    {!readOnly && (
+                      <TableCell className="text-right">
+                        <div className="flex justify-end">
+                          <NewQuantityInput item={item} />
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -351,10 +360,12 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
                     <span className="text-[11px] font-medium text-muted-foreground">Existencia estimada</span>
                     <EstimatedBox item={item} />
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[11px] font-medium text-foreground">Inventario nuevo</span>
-                    <NewQuantityInput item={item} />
-                  </div>
+                  {!readOnly && (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[11px] font-medium text-foreground">Inventario nuevo</span>
+                      <NewQuantityInput item={item} />
+                    </div>
+                  )}
                 </div>
               </li>
             ))}

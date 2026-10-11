@@ -44,8 +44,8 @@ export const MODULE_LABEL: Record<ModuleKey, string> = {
   "dashboard.productos": "Mejores productos",
   "dashboard.categorias": "Categorías",
   "dashboard.cierre-mes": "Cierre del mes",
-  "dashboard.inventario": "Inventario",
-  "dashboard.inventario-movimientos": "Movimientos de inventario",
+  "dashboard.inventario": "Conteo y registro de inventario",
+  "dashboard.inventario-movimientos": "Movimientos y solicitudes de inventario",
 };
 
 // Grupos de moduleKey que en el backend comparten un mismo endpoint —

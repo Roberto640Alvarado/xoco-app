@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FilterToolbar } from "@/components/filters/filter-toolbar";
 import { StoreSelect } from "@/components/filters/store-select";
 import { useStores } from "@/features/sales/hooks/use-stores";
+import { useVendedorStoreFilter } from "@/features/sales/hooks/use-vendedor-store-filter";
 import { InventoryLedger } from "./inventory-ledger";
 
 // Registro de entradas y salidas por tienda (ver plan-history
@@ -12,9 +13,11 @@ import { InventoryLedger } from "./inventory-ledger";
 // sentido acá — se oculta esa opción y se autoselecciona la primera.
 export function InventoryLedgerView() {
   const { data: stores, isLoading: storesLoading } = useStores();
-  const [posConfigId, setPosConfigId] = useState<number | undefined>(undefined);
+  // Vendedor: solo ve el Registro de su propia tienda.
+  const { isVendedor, defaultPosConfigId } = useVendedorStoreFilter();
+  const [posConfigId, setPosConfigId] = useState<number | undefined>(defaultPosConfigId);
 
-  if (posConfigId === undefined && stores && stores.length > 0) {
+  if (posConfigId === undefined && !isVendedor && stores && stores.length > 0) {
     setPosConfigId(stores[0].id);
   }
 
@@ -29,6 +32,7 @@ export function InventoryLedgerView() {
           value={posConfigId}
           onChange={setPosConfigId}
           hideAllStoresOption
+          lockedToSingleStore={isVendedor}
         />
       </FilterToolbar>
 

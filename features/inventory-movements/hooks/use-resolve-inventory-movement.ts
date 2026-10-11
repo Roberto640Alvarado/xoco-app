@@ -5,7 +5,7 @@ import { confirmInventoryMovement, rejectInventoryMovement } from "../api/invent
 import type { ApiError } from "@/lib/api/client";
 import type { InventoryMovement } from "../types/inventory-movement.types";
 
-// Confirmar/rechazar un movimiento PENDIENTE reportado por un Vendedor
+// Confirmar/rechazar (con motivo) un movimiento abierto reportado por un Vendedor
 // (solo Admin/Finanzas, ver @Roles en InventoryMovementsController). Un
 // mismo hook para las dos acciones porque comparten la misma respuesta e
 // invalidan la misma cache — la acción (`"confirm" | "reject"`) decide
@@ -13,8 +13,9 @@ import type { InventoryMovement } from "../types/inventory-movement.types";
 export function useResolveInventoryMovement() {
   const queryClient = useQueryClient();
 
-  return useMutation<InventoryMovement, ApiError, { id: string; action: "confirm" | "reject" }>({
-    mutationFn: ({ id, action }) => (action === "confirm" ? confirmInventoryMovement(id) : rejectInventoryMovement(id)),
+  return useMutation<InventoryMovement, ApiError, { id: string; action: "confirm" | "reject"; reason?: string }>({
+    mutationFn: ({ id, action, reason }) =>
+      action === "confirm" ? confirmInventoryMovement(id) : rejectInventoryMovement(id, reason ?? ""),
     onSuccess: (movement) => {
       queryClient.setQueryData<InventoryMovement[]>(
         ["inventory", "movements", movement.posConfigId],
@@ -27,6 +28,7 @@ export function useResolveInventoryMovement() {
       // El aviso del menú (globo de Movimientos) cambia con cada alta o
       // cambio de estado.
       queryClient.invalidateQueries({ queryKey: ["inventory", "notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory", "inbox"] });
     },
   });
 }

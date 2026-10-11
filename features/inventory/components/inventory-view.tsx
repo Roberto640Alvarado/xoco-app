@@ -6,6 +6,7 @@ import { InDevelopmentBanner } from "@/components/ui/in-development-banner";
 import { StoreSelect } from "@/components/filters/store-select";
 import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { useStores } from "@/features/sales/hooks/use-stores";
+import { useVendedorStoreFilter } from "@/features/sales/hooks/use-vendedor-store-filter";
 import { useInventoryItems } from "../hooks/use-inventory-items";
 import { InventoryTable } from "./inventory-table";
 
@@ -17,11 +18,15 @@ import { InventoryTable } from "./inventory-table";
 // al elegir tienda (como el resto del dashboard).
 export function InventoryView() {
   const { data: stores, isLoading: storesLoading } = useStores();
-  const [posConfigId, setPosConfigId] = useState<number | undefined>(undefined);
+  // Vendedor: solo lectura y forzado a su propia tienda (ver InventoryTable
+  // readOnly + StoreSelect lockedToSingleStore); Admin/Finanzas capturan.
+  const { isVendedor, defaultPosConfigId } = useVendedorStoreFilter();
+  const [posConfigId, setPosConfigId] = useState<number | undefined>(defaultPosConfigId);
 
-  // Autoselección de la primera tienda — ajuste de estado durante el
-  // render (mismo criterio que el resto del proyecto), no un useEffect.
-  if (posConfigId === undefined && stores && stores.length > 0) {
+  // Autoselección de la primera tienda (Admin/Finanzas; el Vendedor ya
+  // arranca en la suya) — ajuste de estado durante el render (mismo
+  // criterio que el resto del proyecto), no un useEffect.
+  if (posConfigId === undefined && !isVendedor && stores && stores.length > 0) {
     setPosConfigId(stores[0].id);
   }
 
@@ -33,7 +38,11 @@ export function InventoryView() {
     <div className="flex flex-col gap-4">
       <InDevelopmentBanner message="Inventario está en desarrollo — la existencia estimada se corrige cada vez que Finanzas guarda un nuevo conteo físico." />
       <FilterToolbar
-        description="Inventario por tienda — conteo físico de cada producto y su existencia estimada desde ese conteo."
+        description={
+          isVendedor
+            ? "Existencia de tu tienda — solo lectura. Se descuenta con las ventas, mermas y regalías, y se suma al confirmarse un envío."
+            : "Inventario por tienda — conteo físico de cada producto y su existencia estimada desde ese conteo."
+        }
       >
         <StoreSelect
           stores={stores}
@@ -41,6 +50,7 @@ export function InventoryView() {
           value={posConfigId}
           onChange={setPosConfigId}
           hideAllStoresOption
+          lockedToSingleStore={isVendedor}
         />
         <ExportExcelButton
           filename={`inventario${selectedStore ? `-${selectedStore.name}` : ""}`}
@@ -73,6 +83,7 @@ export function InventoryView() {
           isLoading={inventory.isLoading}
           isError={inventory.isError}
           errorMessage={inventory.error?.message}
+          readOnly={isVendedor}
         />
       )}
     </div>

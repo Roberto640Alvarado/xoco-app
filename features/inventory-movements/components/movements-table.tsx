@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowDownToLine, Check, CheckCircle2, Cookie, Gift, PackageX, X } from "lucide-react";
+import { ArrowDownToLine, Check, CheckCircle2, Cookie, Gift, PackageX, Truck, X } from "lucide-react";
 import { cn } from "cn";
 import {
   Table,
@@ -15,6 +15,7 @@ import { TableSkeletonRows } from "@/components/ui/table-skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,7 @@ import { ChartErrorState } from "@/components/ui/chart-error-state";
 import { formatDateTime, formatKg, formatInteger } from "@/lib/format";
 import { useResolveInventoryMovement } from "../hooks/use-resolve-inventory-movement";
 import { useReceiveInventoryMovement } from "../hooks/use-receive-inventory-movement";
+import { useAcceptInventoryMovement } from "../hooks/use-accept-inventory-movement";
 import type { InventoryMovement, InventoryMovementStatus, InventoryMovementType } from "../types/inventory-movement.types";
 import type { ApiError } from "@/lib/api/client";
 
@@ -53,24 +55,27 @@ const ROLE_LABEL: Record<InventoryMovement["registeredByRole"], string> = {
 
 // Mismo criterio visual que StatusPill/RolePill de Usuarios — pill con
 // punto de color, sin componente Badge aparte en el proyecto todavía.
-// RECIBIDO usa azul/cielo para distinguirse claramente de PENDIENTE
-// (ámbar) — son dos cosas distintas: "el Vendedor todavía no actúa" vs.
-// "el Vendedor ya actuó, falta que Admin/Finanzas revise".
+// Cada paso del flujo de ENTRADA tiene su propio color: PENDIENTE (ámbar,
+// falta que Admin/Finanzas responda), EN_CAMINO (violeta, ya aceptada),
+// RECIBIDO (cielo, falta la confirmación final).
 function StatusPill({ status }: { status: InventoryMovementStatus }) {
   const style: Record<InventoryMovementStatus, string> = {
     PENDIENTE: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    EN_CAMINO: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
     RECIBIDO: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
     CONFIRMADO: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-    RECHAZADO: "bg-muted text-muted-foreground",
+    RECHAZADO: "bg-destructive/10 text-destructive",
   };
   const dot: Record<InventoryMovementStatus, string> = {
     PENDIENTE: "bg-amber-500",
+    EN_CAMINO: "bg-violet-500",
     RECIBIDO: "bg-sky-500",
     CONFIRMADO: "bg-emerald-500",
-    RECHAZADO: "bg-muted-foreground/50",
+    RECHAZADO: "bg-destructive",
   };
   const label: Record<InventoryMovementStatus, string> = {
     PENDIENTE: "Pendiente",
+    EN_CAMINO: "En camino",
     RECIBIDO: "Recibido",
     CONFIRMADO: "Confirmado",
     RECHAZADO: "Rechazado",
@@ -81,6 +86,29 @@ function StatusPill({ status }: { status: InventoryMovementStatus }) {
       {label[status]}
     </span>
   );
+}
+
+// Una línea que explica en qué paso está y qué sigue, según quién mira —
+// el Vendedor necesita saber que "Recibido" todavía no suma al stock.
+function statusHint(movement: InventoryMovement, isAdmin: boolean): string | null {
+  const isEntrada = movement.type === "ENTRADA";
+  switch (movement.status) {
+    case "PENDIENTE":
+      if (isEntrada) return isAdmin ? "Solicitud nueva — acéptala o recházala." : "Esperando respuesta de Admin o Finanzas.";
+      return isAdmin ? "Falta confirmar o rechazar." : "Pendiente de confirmación de Admin o Finanzas.";
+    case "EN_CAMINO":
+      return isAdmin
+        ? "Aceptada — esperando que la tienda la reciba."
+        : "Aceptada y en camino — márcala como recibida cuando llegue.";
+    case "RECIBIDO":
+      return isAdmin
+        ? "La tienda ya la recibió — confirma para sumarla al stock."
+        : "En proceso de aprobación — se sumará al stock cuando Admin o Finanzas confirme.";
+    case "CONFIRMADO":
+      return isEntrada ? "Sumada al stock de la tienda." : null;
+    default:
+      return null;
+  }
 }
 
 function formatQuantity(quantity: number): string {
@@ -144,7 +172,7 @@ function ReceiveMovementDialog({ movement, onOpenChange }: ReceiveMovementDialog
         {receive.isSuccess ? (
           <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/10 px-4 py-4 text-sm font-medium text-primary">
             <CheckCircle2 className="h-5 w-5 shrink-0" aria-hidden="true" />
-            Recepción registrada — queda pendiente de que Admin o Finanzas lo confirme.
+            Recepción registrada — está en proceso de aprobación y se sumará al stock cuando Admin o Finanzas confirme.
           </div>
         ) : (
           <div className="flex flex-col gap-1.5">
@@ -182,33 +210,127 @@ function ReceiveMovementDialog({ movement, onOpenChange }: ReceiveMovementDialog
   );
 }
 
+interface RejectMovementDialogProps {
+  movement: InventoryMovement | null;
+  onOpenChange: (open: boolean) => void;
+}
+
+// Rechazar exige un motivo (lo ve el Vendedor) — por eso es su propio
+// Dialog con un campo de texto y no un ConfirmDialog sí/no.
+function RejectMovementDialog({ movement, onOpenChange }: RejectMovementDialogProps) {
+  const resolve = useResolveInventoryMovement();
+  const [reason, setReason] = useState("");
+  const [lastId, setLastId] = useState<string | null>(null);
+
+  if (movement && movement.id !== lastId) {
+    setLastId(movement.id);
+    setReason("");
+    resolve.reset();
+  }
+
+  const invalid = reason.trim().length < 3;
+
+  function handleReject() {
+    if (!movement || invalid) return;
+    resolve.mutate(
+      { id: movement.id, action: "reject", reason: reason.trim() },
+      { onSuccess: () => onOpenChange(false) },
+    );
+  }
+
+  return (
+    <Dialog open={movement !== null} onOpenChange={(next) => !resolve.isPending && onOpenChange(next)}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-bold text-foreground">
+            {movement?.type === "ENTRADA" ? "Rechazar solicitud" : "Rechazar movimiento"}
+          </DialogTitle>
+          <DialogDescription className="pt-1 leading-relaxed">
+            {movement && (
+              <>
+                {TYPE_LABEL[movement.type]} de <span className="font-medium text-foreground">{movement.productName}</span>
+                . No afectará el inventario. El Vendedor verá el motivo.
+              </>
+            )}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="reject-reason">Motivo</Label>
+          <Textarea
+            id="reject-reason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Ej. no hay existencia en planta esta semana..."
+            maxLength={300}
+            autoFocus
+          />
+        </div>
+
+        {resolve.isError && (
+          <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+            {(resolve.error as ApiError).message}
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={resolve.isPending}>
+            Cancelar
+          </Button>
+          <Button type="button" variant="destructive" onClick={handleReject} disabled={resolve.isPending || invalid}>
+            Rechazar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 interface MovementsTableProps {
   movements: InventoryMovement[];
   isLoading: boolean;
   isError: boolean;
   errorMessage?: string;
-  /** Solo Admin/Finanzas puede confirmar/rechazar (ver @Roles en el
-   * backend) — el Vendedor ve la misma tabla pero sin estos dos botones.
-   * "Marcar recibido" (ENTRADA pendiente) sí se ofrece a cualquiera que
+  /** Solo Admin/Finanzas puede aceptar/confirmar/rechazar (ver @Roles en
+   * el backend) — el Vendedor ve la misma tabla sin esos botones.
+   * "Marcar recibido" (ENTRADA en camino) sí se ofrece a cualquiera que
    * vea la pantalla — el backend valida la tienda, no hace falta
    * duplicar esa regla acá. */
   canResolve: boolean;
+  /** Si viene, se agrega la columna "Tienda" (bandeja de todas las tiendas). */
+  storeNames?: Map<number, string>;
+  emptyMessage?: string;
 }
 
-export function MovementsTable({ movements, isLoading, isError, errorMessage, canResolve }: MovementsTableProps) {
+export function MovementsTable({
+  movements,
+  isLoading,
+  isError,
+  errorMessage,
+  canResolve,
+  storeNames,
+  emptyMessage = "Todavía no hay movimientos registrados.",
+}: MovementsTableProps) {
   const resolve = useResolveInventoryMovement();
-  const [target, setTarget] = useState<{ movement: InventoryMovement; action: "confirm" | "reject" } | null>(null);
+  const accept = useAcceptInventoryMovement();
+  const [target, setTarget] = useState<{ movement: InventoryMovement; action: "confirm" | "accept" } | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<InventoryMovement | null>(null);
   const [receiveTarget, setReceiveTarget] = useState<InventoryMovement | null>(null);
+
+  const columns = 8 + (storeNames ? 1 : 0);
 
   function handleConfirmDialog() {
     if (!target) return;
-    resolve.mutate(
-      { id: target.movement.id, action: target.action },
-      { onSuccess: () => setTarget(null) },
-    );
+    if (target.action === "accept") {
+      accept.mutate({ id: target.movement.id }, { onSuccess: () => setTarget(null) });
+      return;
+    }
+    resolve.mutate({ id: target.movement.id, action: "confirm" }, { onSuccess: () => setTarget(null) });
   }
 
   if (isError) return <ChartErrorState message={errorMessage} />;
+
+  const activeMutation = target?.action === "accept" ? accept : resolve;
 
   return (
     <>
@@ -218,6 +340,7 @@ export function MovementsTable({ movements, isLoading, isError, errorMessage, ca
             <TableHeader className="sticky top-0 z-10 bg-card">
               <TableRow>
                 <TableHead>Fecha</TableHead>
+                {storeNames && <TableHead>Tienda</TableHead>}
                 <TableHead>Producto</TableHead>
                 <TableHead>Motivo</TableHead>
                 <TableHead className="text-right">Cantidad</TableHead>
@@ -229,25 +352,41 @@ export function MovementsTable({ movements, isLoading, isError, errorMessage, ca
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableSkeletonRows rows={5} columns={8} />
+                <TableSkeletonRows rows={5} columns={columns} />
               ) : movements.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="h-32 text-center text-sm text-muted-foreground">
-                    Todavía no hay movimientos registrados.
+                  <TableCell colSpan={columns} className="h-32 text-center text-sm text-muted-foreground">
+                    {emptyMessage}
                   </TableCell>
                 </TableRow>
               ) : (
                 movements.map((movement) => {
                   const Icon = TYPE_ICON[movement.type];
-                  const canReceiveThis = movement.type === "ENTRADA" && movement.status === "PENDIENTE";
-                  const canResolveThis = canResolve && (movement.status === "PENDIENTE" || movement.status === "RECIBIDO");
+                  const isEntrada = movement.type === "ENTRADA";
+                  const canReceiveThis = isEntrada && movement.status === "EN_CAMINO";
+                  // Admin/Finanzas: una ENTRADA se acepta (PENDIENTE) y
+                  // luego se confirma (RECIBIDO); lo demás se confirma
+                  // directo desde PENDIENTE. Rechazar vale mientras siga
+                  // abierto.
+                  const canAcceptThis = canResolve && isEntrada && movement.status === "PENDIENTE";
+                  const canConfirmThis =
+                    canResolve && (isEntrada ? movement.status === "RECIBIDO" : movement.status === "PENDIENTE");
+                  const canRejectThis =
+                    canResolve && (movement.status === "PENDIENTE" || movement.status === "EN_CAMINO" || movement.status === "RECIBIDO");
+                  const hasActions = canReceiveThis || canAcceptThis || canConfirmThis || canRejectThis;
                   const hasDiscrepancy =
                     movement.receivedQuantity != null && movement.receivedQuantity !== movement.quantity;
+                  const hint = statusHint(movement, canResolve);
                   return (
                     <TableRow key={movement.id}>
                       <TableCell className="whitespace-nowrap text-muted-foreground">
                         {formatDateTime(movement.occurredAt)}
                       </TableCell>
+                      {storeNames && (
+                        <TableCell className="whitespace-nowrap font-medium">
+                          {storeNames.get(movement.posConfigId) ?? `Tienda ${movement.posConfigId}`}
+                        </TableCell>
+                      )}
                       <TableCell className="whitespace-normal">{movement.productName}</TableCell>
                       <TableCell className="whitespace-nowrap">
                         <span className="inline-flex items-center gap-1.5">
@@ -270,39 +409,50 @@ export function MovementsTable({ movements, isLoading, isError, errorMessage, ca
                         {movement.registeredByEmail}
                         <span className="block text-[11px]">{ROLE_LABEL[movement.registeredByRole]}</span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="max-w-[240px] whitespace-normal">
                         <StatusPill status={movement.status} />
+                        {movement.status === "RECHAZADO" && movement.rejectionReason ? (
+                          <span className="mt-1 block text-[11px] text-destructive">Motivo: {movement.rejectionReason}</span>
+                        ) : (
+                          hint && <span className="mt-1 block text-[11px] text-muted-foreground">{hint}</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
-                        {canReceiveThis || canResolveThis ? (
-                          <div className="flex justify-end gap-1.5">
+                        {hasActions ? (
+                          <div className="flex flex-wrap justify-end gap-1.5">
                             {canReceiveThis && (
                               <Button type="button" size="sm" variant="outline" onClick={() => setReceiveTarget(movement)}>
                                 <ArrowDownToLine className="h-3.5 w-3.5" aria-hidden="true" />
                                 Marcar recibido
                               </Button>
                             )}
-                            {canResolveThis && (
-                              <>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setTarget({ movement, action: "confirm" })}
-                                >
-                                  <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                                  Confirmar
-                                </Button>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setTarget({ movement, action: "reject" })}
-                                >
-                                  <X className="h-3.5 w-3.5" aria-hidden="true" />
-                                  Rechazar
-                                </Button>
-                              </>
+                            {canAcceptThis && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setTarget({ movement, action: "accept" })}
+                              >
+                                <Truck className="h-3.5 w-3.5" aria-hidden="true" />
+                                Aceptar
+                              </Button>
+                            )}
+                            {canConfirmThis && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setTarget({ movement, action: "confirm" })}
+                              >
+                                <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                                Confirmar
+                              </Button>
+                            )}
+                            {canRejectThis && (
+                              <Button type="button" size="sm" variant="outline" onClick={() => setRejectTarget(movement)}>
+                                <X className="h-3.5 w-3.5" aria-hidden="true" />
+                                Rechazar
+                              </Button>
                             )}
                           </div>
                         ) : (
@@ -323,19 +473,25 @@ export function MovementsTable({ movements, isLoading, isError, errorMessage, ca
       <ConfirmDialog
         open={target !== null}
         onOpenChange={(next) => !next && setTarget(null)}
-        title={target?.action === "confirm" ? "Confirmar movimiento" : "Rechazar movimiento"}
-        description={
-          target?.action === "confirm"
-            ? `Vas a confirmar esta ${target ? TYPE_LABEL[target.movement.type].toLowerCase() : ""} de ${target?.movement.productName}. ${target?.movement.type === "ENTRADA" ? "Se sumará" : "Se restará"} del inventario estimado de la tienda.`
-            : `Vas a rechazar esta ${target ? TYPE_LABEL[target.movement.type].toLowerCase() : ""} de ${target?.movement.productName}. No afectará el inventario.`
+        title={
+          target?.action === "accept"
+            ? "Aceptar solicitud"
+            : target?.movement.type === "ENTRADA"
+              ? "Confirmar entrada"
+              : "Confirmar movimiento"
         }
-        confirmLabel={target?.action === "confirm" ? "Confirmar" : "Rechazar"}
-        variant={target?.action === "reject" ? "destructive" : "default"}
+        description={
+          target?.action === "accept"
+            ? `Vas a aceptar la solicitud de ${target.movement.productName}: la tienda la verá como "en camino". Todavía no se suma al stock — eso pasa cuando confirmes la recepción.`
+            : `Vas a confirmar esta ${target ? TYPE_LABEL[target.movement.type].toLowerCase() : ""} de ${target?.movement.productName}. ${target?.movement.type === "ENTRADA" ? "Se sumará" : "Se restará"} del inventario estimado de la tienda.`
+        }
+        confirmLabel={target?.action === "accept" ? "Aceptar" : "Confirmar"}
         onConfirm={handleConfirmDialog}
-        isLoading={resolve.isPending}
-        errorMessage={(resolve.error as ApiError | null)?.message}
+        isLoading={activeMutation.isPending}
+        errorMessage={(activeMutation.error as ApiError | null)?.message}
       />
 
+      <RejectMovementDialog movement={rejectTarget} onOpenChange={(next) => !next && setRejectTarget(null)} />
       <ReceiveMovementDialog movement={receiveTarget} onOpenChange={(next) => !next && setReceiveTarget(null)} />
     </>
   );

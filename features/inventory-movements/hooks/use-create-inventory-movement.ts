@@ -24,6 +24,7 @@ export function useCreateInventoryMovement() {
       // El aviso del menú (globo de Movimientos) cambia con cada alta o
       // cambio de estado.
       queryClient.invalidateQueries({ queryKey: ["inventory", "notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory", "inbox"] });
     },
   });
 }

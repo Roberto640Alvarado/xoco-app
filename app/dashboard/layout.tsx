@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, CalendarCheck2, CalendarClock, ClipboardList, DollarSign, LayoutDashboard, ListOrdered, Package, PackageMinus, Receipt, Search, Settings, Store, Tags, TrendingUp, Users, Wallet, Warehouse } from "lucide-react";
+import { Building2, CalendarCheck2, CalendarClock, ClipboardList, DollarSign, LayoutDashboard, ListOrdered, Package, PackageMinus, PackagePlus, Receipt, Search, Settings, Store, Tags, TrendingUp, Users, Wallet, Warehouse } from "lucide-react";
 import { useMemo } from "react";
 import { DashboardShell, type DashboardNavItem } from "@/components/layout/dashboard-shell";
 import { useMovementNotifications } from "@/features/inventory-movements/hooks/use-movement-notifications";
@@ -67,64 +67,67 @@ const NAV_ITEMS: DashboardNavItem[] = [
   },
   { label: "Cierre del mes", href: "/dashboard/cierre-mes", icon: CalendarCheck2, group: "", roles: ["SUPER_ADMIN", "FINANZAS"], moduleKey: "dashboard.cierre-mes" },
 
-  // Submenú Inventario (ver plan-history): tres pantallas separadas.
-  // - Conteo: captura centralizada de Finanzas del inventario físico —
-  //   Vendedor no entra (roles es un techo real, el controller también usa
-  //   @Roles(SUPER_ADMIN, FINANZAS)); moduleKey permite a SUPER_ADMIN
-  //   apagárselo a Finanzas desde Permisos (mismo patrón que "Cierre del mes").
-  // - Movimientos: merma, regalías, degustaciones y entradas planta→tienda.
-  //   SÍ entra Vendedor: registra/recibe de su propia tienda (forzado en el
-  //   servidor vía assertOwnStoreOrThrow); solo Admin/Finanzas confirma o
-  //   rechaza.
-  // - Registro: línea de tiempo de entradas y salidas con fecha y hora.
-  //   Comparte moduleKey con Conteo (misma lectura de inventario, mismo
-  //   techo de rol en el backend).
+  // Submenú Inventario (ver plan-history): pantallas separadas.
+  // - Conteo: existencia por producto. Admin/Finanzas la capturan (conteo
+  //   físico); el Vendedor la ve en SOLO LECTURA y solo de su tienda
+  //   (assertOwnStoreOrThrow en el backend; el PUT es solo Admin/Finanzas).
+  // - Movimientos: merma, regalías y degustaciones. Todos los roles; el
+  //   Vendedor registra las de su tienda y solo Admin/Finanzas confirma o
+  //   rechaza (con motivo).
+  // - Solicitudes: pedidos de stock a planta (entradas). El Vendedor pide
+  //   y sigue el estado; Admin/Finanzas atiende desde una bandeja con todas
+  //   las tiendas. Comparte moduleKey con Movimientos.
+  // - Registro: línea de tiempo de entradas y salidas con fecha y hora; el
+  //   Vendedor ve solo la de su tienda. Comparte moduleKey con Conteo.
   {
     label: "Inventario",
     icon: Warehouse,
     group: "",
     children: [
-      { label: "Conteo", href: "/dashboard/inventario", icon: Warehouse, roles: ["SUPER_ADMIN", "FINANZAS"], moduleKey: "dashboard.inventario" },
+      { label: "Conteo", href: "/dashboard/inventario", icon: Warehouse, roles: ["SUPER_ADMIN", "FINANZAS", "VENDEDOR"], moduleKey: "dashboard.inventario" },
+      { label: "Solicitudes", href: "/dashboard/inventario/solicitudes", icon: PackagePlus, roles: ["SUPER_ADMIN", "FINANZAS", "VENDEDOR"], moduleKey: "dashboard.inventario-movimientos" },
       { label: "Movimientos", href: "/dashboard/inventario/movimientos", icon: PackageMinus, roles: ["SUPER_ADMIN", "FINANZAS", "VENDEDOR"], moduleKey: "dashboard.inventario-movimientos" },
-      { label: "Registro", href: "/dashboard/inventario/registro", icon: ClipboardList, roles: ["SUPER_ADMIN", "FINANZAS"], moduleKey: "dashboard.inventario" },
+      { label: "Registro", href: "/dashboard/inventario/registro", icon: ClipboardList, roles: ["SUPER_ADMIN", "FINANZAS", "VENDEDOR"], moduleKey: "dashboard.inventario" },
     ],
   },
 
   { label: "Administración", href: "/dashboard/admin", icon: Settings, group: "Sistema", roles: ["SUPER_ADMIN"] },
 ];
 
-// Texto del globo de Movimientos según el rol: Admin/Finanzas ven lo que
-// falta por confirmar; el Vendedor, envíos por recibir y lo ya resuelto.
-function movementsBadgeLabel(
-  role: string | undefined,
-  data: { toResolve: number; toReceive: number; resolvedUnseen: number },
-): string {
-  if (role === "VENDEDOR") {
-    const parts: string[] = [];
-    if (data.toReceive > 0) parts.push(`${data.toReceive} por recibir`);
-    if (data.resolvedUnseen > 0) parts.push(`${data.resolvedUnseen} resuelto${data.resolvedUnseen === 1 ? "" : "s"}`);
-    return parts.join(" · ");
-  }
-  return `${data.toResolve} por confirmar`;
+// Texto del globo según el rol: Admin/Finanzas ven lo que falta por atender;
+// el Vendedor, novedades de lo suyo (envíos por recibir, cosas resueltas).
+function badgeLabel(role: string | undefined, count: number): string {
+  if (role === "VENDEDOR") return `${count} novedad${count === 1 ? "" : "es"}`;
+  return `${count} por atender`;
 }
+
+// Cada pantalla de Inventario con aviso, por href.
+const BADGE_HREF = {
+  movements: "/dashboard/inventario/movimientos",
+  requests: "/dashboard/inventario/solicitudes",
+} as const;
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const role = useAuthStore((state) => state.user?.role);
   const { data: notifications } = useMovementNotifications();
 
-  // Mismo NAV_ITEMS, solo con el globo de Movimientos inyectado — se
-  // recalcula únicamente cuando cambian los contadores o el rol.
+  // Mismo NAV_ITEMS, solo con los globos de Movimientos y Solicitudes
+  // inyectados — se recalcula únicamente cuando cambian los contadores o
+  // el rol.
   const navItems = useMemo<DashboardNavItem[]>(() => {
-    const total = notifications?.total ?? 0;
-    if (!notifications || total === 0) return NAV_ITEMS;
-    const label = movementsBadgeLabel(role, notifications);
+    if (!notifications || notifications.total === 0) return NAV_ITEMS;
+    const countByHref: Record<string, number> = {
+      [BADGE_HREF.movements]: notifications.movements,
+      [BADGE_HREF.requests]: notifications.requests,
+    };
     return NAV_ITEMS.map((item) =>
       "children" in item
         ? {
             ...item,
-            children: item.children.map((child) =>
-              child.moduleKey === "dashboard.inventario-movimientos" ? { ...child, badge: total, badgeLabel: label } : child,
-            ),
+            children: item.children.map((child) => {
+              const count = countByHref[child.href];
+              return count ? { ...child, badge: count, badgeLabel: badgeLabel(role, count) } : child;
+            }),
           }
         : item,
     );

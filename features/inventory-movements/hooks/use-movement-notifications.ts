@@ -3,11 +3,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/auth-store";
 import { fetchMovementNotifications } from "../api/inventory-movements.api";
-import { readMovementsLastSeen } from "../lib/last-seen";
+import { readLastSeen } from "../lib/last-seen";
 
 const MODULE_KEY = "dashboard.inventario-movimientos";
 
-// Contadores del globo del menú (Inventario → Movimientos). Se vuelve a
+// Contadores de los globos del menú (Inventario → Movimientos y Solicitudes). Se vuelve a
 // consultar cada minuto y al volver a la pestaña; las altas y cambios de
 // estado hechos desde esta misma app lo invalidan al instante (ver
 // hooks de mutación). No consulta si el usuario no tiene el módulo.
@@ -18,7 +18,12 @@ export function useMovementNotifications() {
 
   return useQuery({
     queryKey: ["inventory", "notifications", user?.email],
-    queryFn: () => fetchMovementNotifications(user?.role === "VENDEDOR" ? readMovementsLastSeen(user.email) : undefined),
+    queryFn: () =>
+      fetchMovementNotifications(
+        user?.role === "VENDEDOR"
+          ? { sinceMovements: readLastSeen(user.email, "movements"), sinceRequests: readLastSeen(user.email, "requests") }
+          : {},
+      ),
     enabled: isHydrated && !!user && hasModule,
     refetchInterval: 60_000,
     refetchOnWindowFocus: true,
