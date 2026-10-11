@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, KeyRound, ShieldCheck, Users, Warehouse, type LucideIcon } from "lucide-react";
+import { ArrowRight, KeyRound, Palette, ShieldCheck, Users, Warehouse, type LucideIcon } from "lucide-react";
 
 interface AdminSection {
   href: string;
@@ -33,6 +33,12 @@ const ADMIN_SECTIONS: AdminSection[] = [
     icon: Warehouse,
     title: "Inventario por tienda",
     description: "Habilita Inventario para los Vendedores de cada tienda (recomendado: cargar primero su stock).",
+  },
+  {
+    href: "/dashboard/admin/design-system",
+    icon: Palette,
+    title: "Sistema de diseño",
+    description: "Botones, badges, cards y tablas del panel, con ejemplos.",
   },
 ];
 

@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { InfoHint, type InfoTopic } from "@/features/inventory-guide/components/info-hint";
+import { InfoBadge, type InfoBadgeTone } from "@/components/ui/info-badge";
 import { ChartErrorState } from "@/components/ui/chart-error-state";
 import { formatDateTime, formatKg, formatInteger } from "@/lib/format";
 import { useResolveInventoryMovement } from "../hooks/use-resolve-inventory-movement";
@@ -54,31 +55,22 @@ const STATUS_LABEL: Record<InventoryMovementStatus, string> = {
   RECHAZADO: "Rechazado",
 };
 
-// Mismo criterio visual que StatusPill/RolePill de Usuarios — pill con
-// punto de color, sin componente Badge aparte en el proyecto todavía.
-// Cada paso del flujo de ENTRADA tiene su propio color: PENDIENTE (ámbar,
-// falta que Admin/Finanzas responda), EN_CAMINO (violeta, ya aceptada),
-// RECIBIDO (cielo, falta la confirmación final).
+// Cada paso del flujo de ENTRADA tiene su propio tono (ver InfoBadge):
+// PENDIENTE (ámbar, falta que Admin/Finanzas responda), EN_CAMINO (violeta,
+// ya aceptada), RECIBIDO (cielo, falta la confirmación final).
+const STATUS_TONE: Record<InventoryMovementStatus, InfoBadgeTone> = {
+  PENDIENTE: "warning",
+  EN_CAMINO: "violet",
+  RECIBIDO: "info",
+  CONFIRMADO: "success",
+  RECHAZADO: "danger",
+};
+
 function StatusPill({ status }: { status: InventoryMovementStatus }) {
-  const style: Record<InventoryMovementStatus, string> = {
-    PENDIENTE: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-    EN_CAMINO: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
-    RECIBIDO: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
-    CONFIRMADO: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-    RECHAZADO: "bg-destructive/10 text-destructive",
-  };
-  const dot: Record<InventoryMovementStatus, string> = {
-    PENDIENTE: "bg-amber-500",
-    EN_CAMINO: "bg-violet-500",
-    RECIBIDO: "bg-sky-500",
-    CONFIRMADO: "bg-emerald-500",
-    RECHAZADO: "bg-destructive",
-  };
   return (
-    <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium", style[status])}>
-      <span className={cn("size-1.5 rounded-full", dot[status])} aria-hidden="true" />
+    <InfoBadge tone={STATUS_TONE[status]} dot>
       {STATUS_LABEL[status]}
-    </span>
+    </InfoBadge>
   );
 }
 

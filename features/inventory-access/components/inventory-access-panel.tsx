@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Info, Store as StoreIcon, Warehouse } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { NoticeCard } from "@/components/ui/notice-card";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -42,25 +43,19 @@ export function InventoryAccessPanel() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div
+      <NoticeCard
         role="note"
-        data-tour="access-note"
-        className="flex flex-col gap-3 rounded-2xl border border-sky-500/25 bg-sky-500/[0.06] p-4 sm:flex-row sm:items-center sm:justify-between"
-      >
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-sky-500/15 text-sky-700 dark:text-sky-300">
-            <Info className="size-4" aria-hidden="true" />
-          </span>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-foreground">Carga el stock primero</p>
-            <p className="text-sm text-muted-foreground">Habilita una tienda solo después de contarla. Ocultarla no borra nada.</p>
-          </div>
-        </div>
-        <Link href="/dashboard/inventario" className={buttonVariants({ variant: "outline", size: "sm" })}>
-          <Warehouse className="size-4" aria-hidden="true" />
-          Ir a Conteo
-        </Link>
-      </div>
+        tourId="access-note"
+        icon={Info}
+        title="Carga el stock primero"
+        description="Habilita una tienda solo después de contarla. Ocultarla no borra nada."
+        action={
+          <Link href="/dashboard/inventario" className={buttonVariants({ variant: "outline", size: "sm" })}>
+            <Warehouse className="size-4" aria-hidden="true" />
+            Ir a Conteo
+          </Link>
+        }
+      />
 
       {storesError ? (
         <ChartErrorState message={storesErrorValue?.message} />

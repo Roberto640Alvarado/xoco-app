@@ -255,6 +255,10 @@ Nunca poner secretos reales en variables `NEXT_PUBLIC_*` (son públicas en el bu
 
 # Sistema de Diseño
 
+## Catálogo en `design-system/`
+
+La carpeta `design-system/` es la fuente de verdad visual del panel: `README.md` (qué componente usar y cuándo) y `showcase.tsx` (catálogo en vivo, visible como Admin en `/dashboard/admin/design-system`). Todo componente o patrón visual nuevo (botón, badge, card, tabla, etc.) se agrega ahí en el mismo cambio en que se crea. Los botones siguen la guía del README: primary para la acción principal, secondary para apoyo (ej. "Iniciar tour"), destructive para rechazar o eliminar.
+
 ## Principios de diseño
 
 El producto es un panel administrativo interno. Toda vista nueva debe sentirse:

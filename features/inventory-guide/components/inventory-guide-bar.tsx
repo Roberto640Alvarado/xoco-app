@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { Check, Compass, Info, Play, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { cn } from "cn";
-import { Button } from "@/components/ui/button";
+import { InfoBadge, type InfoBadgeTone } from "@/components/ui/info-badge";
+import { TourGuideCard } from "@/components/ui/tour-guide-card";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +13,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuthStore } from "@/store/auth-store";
 import {
   FLOW,
@@ -37,10 +37,10 @@ function pageFromPath(pathname: string): GuidePage {
 
 const PAGE_ORDER: GuidePage[] = ["conteo", "solicitudes", "movimientos", "registro"];
 
-const ROLE_STYLE: Record<GuideRole, string> = {
-  admin: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
-  finanzas: "bg-sky-500/10 text-sky-700 dark:text-sky-300",
-  vendedor: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
+const ROLE_TONE: Record<GuideRole, InfoBadgeTone> = {
+  admin: "violet",
+  finanzas: "info",
+  vendedor: "warning",
 };
 
 export function guideRoleFor(role: string | undefined): GuideRole {
@@ -70,62 +70,24 @@ export function InventoryGuideBar() {
 
   return (
     <>
-      <section
-        aria-label="Tour guiado"
-        className="flex flex-col gap-3 rounded-2xl border border-primary/15 bg-gradient-to-r from-primary/[0.06] via-card to-card p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between sm:p-5"
-      >
-        <div className="flex min-w-0 items-center gap-3.5">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
-            <Compass className="size-5" aria-hidden="true" />
-          </span>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-base font-semibold leading-tight text-foreground">Tour guiado</h2>
-              <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", ROLE_STYLE[role])}>
-                {ROLE_LABEL[role]}
-              </span>
-            </div>
-            <p className="mt-0.5 text-sm text-muted-foreground">Conoce esta pantalla paso a paso.</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button type="button" onClick={() => void start()} className="relative">
-            <Play className="size-4" aria-hidden="true" />
-            Iniciar tour
-            {!seen && (
-              <span className="absolute -right-1 -top-1 flex size-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-70" />
-                <span className="relative inline-flex size-2.5 rounded-full bg-amber-500" />
-              </span>
-            )}
-          </Button>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setOpen(true)}
-                  aria-label="Más información: cómo funciona Inventario"
-                />
-              }
-            >
-              <Info className="size-4" aria-hidden="true" />
-            </TooltipTrigger>
-            <TooltipContent>Cómo funciona Inventario</TooltipContent>
-          </Tooltip>
-        </div>
-      </section>
+      <TourGuideCard
+        badge={
+          <InfoBadge tone={ROLE_TONE[role]} size="sm">
+            {ROLE_LABEL[role]}
+          </InfoBadge>
+        }
+        onStart={() => void start()}
+        showNewDot={!seen}
+        onInfo={() => setOpen(true)}
+        infoLabel="Cómo funciona Inventario"
+      />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex flex-wrap items-center gap-2 text-lg font-bold text-foreground">
               Cómo funciona Inventario
-              <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", ROLE_STYLE[role])}>
-                {ROLE_LABEL[role]}
-              </span>
+              <InfoBadge tone={ROLE_TONE[role]}>{ROLE_LABEL[role]}</InfoBadge>
             </DialogTitle>
             <DialogDescription className="pt-1 leading-relaxed">{flow.intro}</DialogDescription>
           </DialogHeader>

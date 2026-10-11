@@ -5,6 +5,7 @@ import { CheckCircle2, Loader2 } from "lucide-react";
 import { cn } from "cn";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
+import { ValueBox } from "@/components/ui/value-box";
 import { InfoHint } from "@/features/inventory-guide/components/info-hint";
 import { Button } from "@/components/ui/button";
 import {
@@ -215,15 +216,10 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
   function renderEstimated(item: InventoryItem) {
     return (
       <div className="flex items-center justify-end gap-1.5">
-        <div
+        <ValueBox
           aria-label={`Existencia estimada de ${item.productName}`}
-          className={cn(
-            "flex h-9 w-20 items-center justify-end rounded-md border border-border bg-muted px-2.5 text-sm tabular-nums",
-            item.estimatedQuantity != null ? "font-semibold text-foreground" : "text-muted-foreground",
-          )}
-        >
-          {item.estimatedQuantity != null ? String(Math.round(item.estimatedQuantity * 1000) / 1000) : "—"}
-        </div>
+          value={item.estimatedQuantity != null ? String(Math.round(item.estimatedQuantity * 1000) / 1000) : null}
+        />
         <span className="text-xs text-muted-foreground">{item.unit === "kg" ? "Kg" : "u"}</span>
       </div>
     );
