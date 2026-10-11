@@ -16,3 +16,10 @@ export function confirmInventoryMovement(id: string) {
 export function rejectInventoryMovement(id: string) {
   return apiPatch<InventoryMovement>(`/inventory/movements/${id}/reject`);
 }
+
+// Exclusivo del flujo ENTRADA: el Vendedor marca que el envío llegó e
+// ingresa la cantidad real (puede diferir de lo solicitado) — todavía
+// necesita que Admin/Finanzas lo confirme o rechace después.
+export function receiveInventoryMovement(id: string, receivedQuantity: number) {
+  return apiPatch<InventoryMovement>(`/inventory/movements/${id}/receive`, { receivedQuantity });
+}

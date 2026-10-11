@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, Cookie, Gift, Loader2, PackageX } from "lucide-react";
+import { ArrowDownToLine, CheckCircle2, Cookie, Gift, Loader2, PackageX } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +27,7 @@ const TYPE_OPTIONS: Array<{ value: InventoryMovementType; label: string; icon: t
   { value: "MERMA", label: "Merma", icon: PackageX },
   { value: "REGALIA", label: "Regalía", icon: Gift },
   { value: "DEGUSTACION", label: "Degustación", icon: Cookie },
+  { value: "ENTRADA", label: "Entrada (envío planta→tienda)", icon: ArrowDownToLine },
 ];
 
 const DEFAULT_VALUES: Partial<CreateMovementFormValues> = {
@@ -63,11 +64,15 @@ export function CreateMovementDialog({
     control,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<CreateMovementFormValues>({
     resolver: zodResolver(createMovementSchema),
     defaultValues: DEFAULT_VALUES,
   });
+
+  const type = watch("type");
+  const isVendorEntrada = isVendedor && type === "ENTRADA";
 
   // Mismo criterio de "ajuste de estado durante el render" que
   // CreateUserModal — reinicia formulario + mutación cada vez que el
@@ -100,17 +105,23 @@ export function CreateMovementDialog({
         <DialogHeader>
           <DialogTitle className="text-lg font-bold text-foreground">Registrar movimiento</DialogTitle>
           <DialogDescription className="pt-1 leading-relaxed">
-            Merma, regalía o degustación{storeName ? ` en ${storeName}` : ""}.{" "}
-            {isVendedor
-              ? "Queda pendiente hasta que Admin o Finanzas lo confirme."
-              : "Se aplica de inmediato al inventario estimado."}
+            Merma, regalía, degustación o entrada{storeName ? ` en ${storeName}` : ""}.{" "}
+            {isVendorEntrada
+              ? "Queda como solicitud — cuando llegue, márcala como recibida e ingresa la cantidad real."
+              : isVendedor
+                ? "Queda pendiente hasta que Admin o Finanzas lo confirme."
+                : "Se aplica de inmediato al inventario estimado."}
           </DialogDescription>
         </DialogHeader>
 
         {createMovement.isSuccess ? (
           <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/10 px-4 py-4 text-sm font-medium text-primary">
             <CheckCircle2 className="h-5 w-5 shrink-0" aria-hidden="true" />
-            {isVendedor ? "Movimiento registrado — queda pendiente de confirmación." : "Movimiento registrado correctamente."}
+            {isVendorEntrada
+              ? "Solicitud registrada — notifícale a Admin o Finanzas para que gestione el envío."
+              : isVendedor
+                ? "Movimiento registrado — queda pendiente de confirmación."
+                : "Movimiento registrado correctamente."}
           </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
