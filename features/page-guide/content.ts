@@ -503,13 +503,15 @@ export const REPORT_GUIDES: Record<ReportPageKey, ReportGuide> = {
       staff: "Habilita o deshabilita, por rol, qué módulos del dashboard ve cada quien. El cambio aplica de inmediato en el menú y en la API.",
     },
     permissions: {
-      can: ["Elegir un rol y encender o apagar sus módulos.", "Ver qué módulos comparten el mismo dato en el servidor."],
+      can: ["Elegir un rol y dar o quitar el acceso a cada sección.", "Ver una vista previa de la sección antes de cambiarla.", "Ver qué secciones comparten el mismo dato en el servidor."],
       cannot: ["Dar a un rol más de lo que le permite su techo original: solo se puede quitar, no ampliar."],
     },
     steps: {
       staff: [
         { target: HEADER, title: "Elige el rol", description: "Cada rol tiene su propia lista. Cambia de rol con el selector.", side: "bottom" },
-        { target: FIRST, title: "Módulos del rol", description: "Los módulos están agrupados como el menú. Cada interruptor pide confirmación y aplica al instante.", side: "top" },
+        { target: FIRST, title: "Resumen y filtro", description: "Cuántas secciones ve el rol. Filtra para ver solo las que tiene o las que están ocultas.", side: "bottom" },
+        { target: '[data-tour="perm-list"]', title: "Secciones del rol", description: "Agrupadas como el menú. Haz clic en una para ver su vista previa; el interruptor da o quita el acceso y pide confirmación.", side: "right" },
+        { target: '[data-tour="perm-detail"]', title: "Vista previa", description: "Qué es la sección, qué ve el rol, quién más la ve y un botón para darla o quitarla. También puedes abrir la pantalla real.", side: "left" },
       ],
     },
   },
