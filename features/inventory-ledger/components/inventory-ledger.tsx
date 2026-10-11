@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { ArrowDownToLine, ClipboardCheck, Cookie, Gift, PackageX, ShoppingCart } from "lucide-react";
+import { ArrowDownToLine, ClipboardCheck, ClipboardList, Cookie, Gift, PackageX, ShoppingCart } from "lucide-react";
 import { cn } from "cn";
-import { FilterToolbar } from "@/components/filters/filter-toolbar";
+import { SectionCard } from "@/components/ui/section-card";
 import { DateRangeFilter, type DateRangeValue } from "@/components/filters/date-range-filter";
 import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { InfoHint } from "@/features/inventory-guide/components/info-hint";
 import { ChartErrorState } from "@/components/ui/chart-error-state";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { useVendedorStoreFilter } from "@/features/sales/hooks/use-vendedor-store-filter";
 import { useInventoryItems } from "@/features/inventory/hooks/use-inventory-items";
 import { formatDateTime, formatInteger, formatKg, isoDateDaysAgo, todayIsoDate } from "@/lib/format";
 import { useInventoryLedger } from "../hooks/use-inventory-ledger";
@@ -67,6 +68,7 @@ export function InventoryLedger({ posConfigId, storeName, leading }: InventoryLe
   const [productId, setProductId] = useState<number | undefined>(undefined);
   const [type, setType] = useState<InventoryLedgerEntryType | undefined>(undefined);
 
+  const { isVendedor } = useVendedorStoreFilter();
   const { data: items } = useInventoryItems(posConfigId);
   const ledger = useInventoryLedger({ posConfigId, ...range, productId, type });
   const entries = ledger.data ?? [];
@@ -164,9 +166,12 @@ export function InventoryLedger({ posConfigId, storeName, leading }: InventoryLe
 
   return (
     <div className="flex flex-col gap-4">
-      <FilterToolbar
+      <SectionCard
+        icon={ClipboardList}
+        title="Registro"
+        description={isVendedor ? "Lo que pasó en tu tienda, con fecha y hora." : "Entradas y salidas con fecha y hora."}
+        stacked
         tourId="ledger-toolbar"
-        description="Registro de entradas y salidas por tienda — ventas, movimientos y conteos con fecha y hora."
       >
         {leading}
         <DateRangeFilter value={range} onChange={setRange} />
@@ -220,7 +225,7 @@ export function InventoryLedger({ posConfigId, storeName, leading }: InventoryLe
             },
           ]}
         />
-      </FilterToolbar>
+      </SectionCard>
 
       {ledger.isError ? (
         <ChartErrorState message={ledger.error?.message} />

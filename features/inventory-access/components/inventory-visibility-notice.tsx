@@ -1,16 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { EyeOff, Eye } from "lucide-react";
+import { Eye, EyeOff, Settings2 } from "lucide-react";
+import { cn } from "cn";
+import { buttonVariants } from "@/components/ui/button";
 import { useAuthStore } from "@/store/auth-store";
 import { useStores } from "@/features/sales/hooks/use-stores";
 import { useInventoryAccess } from "../hooks/use-inventory-access";
 
-// Aviso para Admin/Finanzas en todas las pantallas de Inventario: el módulo
-// todavía no es visible para los Vendedores hasta que el Super admin lo
-// habilite por tienda (Administración → Inventario), y se recomienda cargar
-// primero el stock de cada tienda. Cambia de texto según cuántas tiendas ya
-// estén habilitadas.
+// Aviso para Admin/Finanzas en todas las pantallas de Inventario: cuántas
+// tiendas ya son visibles para sus Vendedores. Una frase corta y, solo para
+// el Admin (único que puede habilitar), el botón que lleva a Administración →
+// Inventario. Finanzas solo ve el estado y a quién pedírselo.
 export function InventoryVisibilityNotice() {
   const user = useAuthStore((state) => state.user);
   const { data: access } = useInventoryAccess();
@@ -20,40 +21,47 @@ export function InventoryVisibilityNotice() {
 
   const total = stores?.length ?? 0;
   const enabled = access.enabledPosConfigIds.length;
-  const isSuperAdmin = user.role === "SUPER_ADMIN";
-  const Icon = enabled === 0 ? EyeOff : Eye;
-
-  const adminLink = isSuperAdmin ? (
-    <Link href="/dashboard/admin/inventario" className="font-medium underline underline-offset-2">
-      Administración → Inventario
-    </Link>
-  ) : (
-    "Administración → Inventario (solo Super admin)"
-  );
+  const isAdmin = user.role === "SUPER_ADMIN";
+  const none = enabled === 0;
+  const Icon = none ? EyeOff : Eye;
 
   return (
-    <div
+    <section
       role="status"
-      className="flex items-start gap-2.5 rounded-xl border border-sky-600/30 bg-sky-50 px-4 py-3 text-sm text-sky-900 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-200"
+      data-tour="inv-visibility"
+      className={cn(
+        "flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between",
+        none
+          ? "border-amber-500/30 bg-amber-500/[0.07]"
+          : "border-emerald-500/25 bg-emerald-500/[0.06]",
+      )}
     >
-      <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-      <p className="leading-relaxed">
-        {enabled === 0 ? (
-          <>
-            <span className="font-medium">Inventario todavía no es visible para las tiendas.</span> Los Vendedores no lo
-            verán hasta que el Super admin lo habilite por tienda en {adminLink}.
-          </>
-        ) : (
-          <>
-            <span className="font-medium">
-              Inventario es visible para {enabled}
-              {total > 0 ? ` de ${total}` : ""} tienda{enabled === 1 ? "" : "s"}.
-            </span>{" "}
-            El resto sigue oculto para sus Vendedores hasta que se habilite en {adminLink}.
-          </>
-        )}{" "}
-        Se recomienda ingresar manualmente el stock de cada tienda (Conteo) antes de habilitarla.
-      </p>
-    </div>
+      <div className="flex min-w-0 items-center gap-3">
+        <span
+          className={cn(
+            "flex size-9 shrink-0 items-center justify-center rounded-lg",
+            none ? "bg-amber-500/15 text-amber-700 dark:text-amber-300" : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+          )}
+        >
+          <Icon className="size-4" aria-hidden="true" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-foreground">
+            {none
+              ? "Aún oculto para los Vendedores"
+              : `Visible en ${enabled}${total > 0 ? ` de ${total}` : ""} ${enabled === 1 ? "tienda" : "tiendas"}`}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {isAdmin ? "Carga el stock de cada tienda antes de habilitarla." : "Solo el Admin habilita tiendas. Carga el stock y avísale."}
+          </p>
+        </div>
+      </div>
+      {isAdmin && (
+        <Link href="/dashboard/admin/inventario" className={buttonVariants({ variant: "outline", size: "sm" })}>
+          <Settings2 className="size-4" aria-hidden="true" />
+          Habilitar tiendas
+        </Link>
+      )}
+    </section>
   );
 }

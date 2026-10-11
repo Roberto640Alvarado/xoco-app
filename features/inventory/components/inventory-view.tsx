@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { FilterToolbar } from "@/components/filters/filter-toolbar";
+import { Warehouse } from "lucide-react";
+import { SectionCard } from "@/components/ui/section-card";
 import { StoreSelect } from "@/components/filters/store-select";
 import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { useStores } from "@/features/sales/hooks/use-stores";
@@ -35,12 +36,10 @@ export function InventoryView() {
 
   return (
     <div className="flex flex-col gap-4">
-      <FilterToolbar
-        description={
-          isVendedor
-            ? "Existencia de tu tienda — solo lectura. Se descuenta con las ventas, mermas y regalías, y se suma al confirmarse un envío."
-            : "Inventario por tienda — conteo físico de cada producto y su existencia estimada desde ese conteo."
-        }
+      <SectionCard
+        icon={Warehouse}
+        title="Conteo"
+        description={isVendedor ? "Existencia de tu tienda, solo lectura." : "Captura el conteo físico de cada tienda."}
       >
         <StoreSelect
           stores={stores}
@@ -69,7 +68,7 @@ export function InventoryView() {
             },
           ]}
         />
-      </FilterToolbar>
+      </SectionCard>
 
       {posConfigId === undefined ? (
         <div className="flex h-40 items-center justify-center rounded-xl border border-border bg-card text-sm text-muted-foreground">

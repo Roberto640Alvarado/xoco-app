@@ -7,13 +7,13 @@ import { InventoryVisibilityNotice } from "@/features/inventory-access/component
 // Envoltorio común de las pantallas de Inventario: el Vendedor solo entra
 // si su tienda fue habilitada (InventoryAccessGate) y Admin/Finanzas ven el
 // aviso de visibilidad con la recomendación de cargar primero el stock.
-// Todos ven la barra de ayuda (Cómo funciona + Tour guiado).
+// Todos ven la card del Tour guiado (Cómo funciona + recorrido por rol).
 export default function InventarioLayout({ children }: { children: React.ReactNode }) {
   return (
     <InventoryAccessGate>
       <div className="flex flex-col gap-4">
-        <InventoryVisibilityNotice />
         <InventoryGuideBar />
+        <InventoryVisibilityNotice />
         {children}
       </div>
     </InventoryAccessGate>

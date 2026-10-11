@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Store as StoreIcon } from "lucide-react";
-import { FilterToolbar } from "@/components/filters/filter-toolbar";
+import { PackageMinus, Plus, Store as StoreIcon } from "lucide-react";
+import { SectionCard } from "@/components/ui/section-card";
 import { StoreSelect } from "@/components/filters/store-select";
 import { Button } from "@/components/ui/button";
 import { useStores } from "@/features/sales/hooks/use-stores";
@@ -62,12 +62,10 @@ export function InventoryMovementsView() {
 
   return (
     <div className="flex flex-col gap-4">
-      <FilterToolbar
-        description={
-          isVendedor
-            ? "Registra mermas, regalías o degustaciones de tu tienda — quedan pendientes hasta que Admin o Finanzas las confirme."
-            : "Mermas, regalías y degustaciones — lo pendiente viene de un Vendedor y hace falta confirmarlo o rechazarlo (con motivo)."
-        }
+      <SectionCard
+        icon={PackageMinus}
+        title="Movimientos"
+        description={isVendedor ? "Reporta mermas, regalías y degustaciones." : "Mermas, regalías y degustaciones."}
       >
         {!allStoresPending && (
           <StoreSelect
@@ -95,7 +93,7 @@ export function InventoryMovementsView() {
           <Plus className="h-4 w-4" aria-hidden="true" />
           Registrar movimiento
         </Button>
-      </FilterToolbar>
+      </SectionCard>
 
       {!allStoresPending && posConfigId === undefined ? (
         <div className="flex h-40 items-center justify-center rounded-xl border border-border bg-card text-sm text-muted-foreground">

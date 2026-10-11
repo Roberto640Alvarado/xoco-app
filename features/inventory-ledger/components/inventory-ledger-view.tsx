@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { FilterToolbar } from "@/components/filters/filter-toolbar";
+import { ClipboardList } from "lucide-react";
+import { SectionCard } from "@/components/ui/section-card";
 import { StoreSelect } from "@/components/filters/store-select";
 import { useStores } from "@/features/sales/hooks/use-stores";
 import { useVendedorStoreFilter } from "@/features/sales/hooks/use-vendedor-store-filter";
@@ -39,9 +40,9 @@ export function InventoryLedgerView() {
   if (posConfigId === undefined) {
     return (
       <div className="flex flex-col gap-4">
-        <FilterToolbar description="Registro de entradas y salidas por tienda — ventas, movimientos y conteos con fecha y hora.">
+        <SectionCard icon={ClipboardList} title="Registro" description="Entradas y salidas con fecha y hora.">
           {storeSelect}
-        </FilterToolbar>
+        </SectionCard>
         <div className="flex h-40 items-center justify-center rounded-xl border border-border bg-card text-sm text-muted-foreground">
           {storesLoading ? "Cargando tiendas..." : "Selecciona una tienda para ver su registro."}
         </div>

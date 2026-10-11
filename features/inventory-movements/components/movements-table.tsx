@@ -88,16 +88,16 @@ function statusHint(movement: InventoryMovement, isAdmin: boolean): string | nul
   const isEntrada = movement.type === "ENTRADA";
   switch (movement.status) {
     case "PENDIENTE":
-      if (isEntrada) return isAdmin ? "Solicitud nueva — acéptala o recházala." : "Esperando respuesta de Admin o Finanzas.";
+      if (isEntrada) return isAdmin ? "Solicitud nueva: acéptala o recházala." : "Esperando respuesta de Admin o Finanzas.";
       return isAdmin ? "Falta confirmar o rechazar." : "Pendiente de confirmación de Admin o Finanzas.";
     case "EN_CAMINO":
       return isAdmin
-        ? "Aceptada — esperando que la tienda la reciba."
-        : "Aceptada y en camino — márcala como recibida cuando llegue.";
+        ? "Aceptada, esperando que la tienda la reciba."
+        : "Aceptada y en camino. Márcala como recibida cuando llegue.";
     case "RECIBIDO":
       return isAdmin
-        ? "La tienda ya la recibió — confirma para sumarla al stock."
-        : "En proceso de aprobación — se sumará al stock cuando Admin o Finanzas confirme.";
+        ? "La tienda ya la recibió. Confirma para sumarla al stock."
+        : "En proceso de aprobación. Se sumará al stock cuando Admin o Finanzas confirme.";
     case "CONFIRMADO":
       return isEntrada ? "Sumada al stock de la tienda." : null;
     default:
@@ -166,7 +166,7 @@ function ReceiveMovementDialog({ movement, onOpenChange }: ReceiveMovementDialog
         {receive.isSuccess ? (
           <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/10 px-4 py-4 text-sm font-medium text-primary">
             <CheckCircle2 className="h-5 w-5 shrink-0" aria-hidden="true" />
-            Recepción registrada — está en proceso de aprobación y se sumará al stock cuando Admin o Finanzas confirme.
+            Recepción registrada. Está en proceso de aprobación y se sumará al stock cuando Admin o Finanzas confirme.
           </div>
         ) : (
           <div className="flex flex-col gap-1.5">

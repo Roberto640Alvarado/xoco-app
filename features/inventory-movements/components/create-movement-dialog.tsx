@@ -112,7 +112,7 @@ export function CreateMovementDialog({
           <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/10 px-4 py-4 text-sm font-medium text-primary">
             <CheckCircle2 className="h-5 w-5 shrink-0" aria-hidden="true" />
             {isVendedor
-              ? "Movimiento registrado — queda pendiente de confirmación."
+              ? "Movimiento registrado. Queda pendiente de confirmación."
               : "Movimiento registrado correctamente."}
           </div>
         ) : (

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Info, Store as StoreIcon } from "lucide-react";
+import { Info, Store as StoreIcon, Warehouse } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -43,24 +44,28 @@ export function InventoryAccessPanel() {
     <div className="flex flex-col gap-4">
       <div
         role="note"
-        className="flex items-start gap-2.5 rounded-xl border border-sky-600/30 bg-sky-50 px-4 py-3 text-sm text-sky-900 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-200"
+        data-tour="access-note"
+        className="flex flex-col gap-3 rounded-2xl border border-sky-500/25 bg-sky-500/[0.06] p-4 sm:flex-row sm:items-center sm:justify-between"
       >
-        <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-        <p className="leading-relaxed">
-          <span className="font-medium">Recomendado:</span> ingresa manualmente el stock de cada tienda primero (
-          <Link href="/dashboard/inventario" className="underline underline-offset-2">
-            Inventario → Conteo
-          </Link>
-          ) y recién después habilítala aquí. Al habilitarla, los Vendedores de esa tienda ven el stock en solo lectura,
-          su Registro, y pueden solicitar stock y reportar mermas y regalías. Deshabilitarla solo oculta la sección —
-          no borra nada.
-        </p>
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-sky-500/15 text-sky-700 dark:text-sky-300">
+            <Info className="size-4" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground">Carga el stock primero</p>
+            <p className="text-sm text-muted-foreground">Habilita una tienda solo después de contarla. Ocultarla no borra nada.</p>
+          </div>
+        </div>
+        <Link href="/dashboard/inventario" className={buttonVariants({ variant: "outline", size: "sm" })}>
+          <Warehouse className="size-4" aria-hidden="true" />
+          Ir a Conteo
+        </Link>
       </div>
 
       {storesError ? (
         <ChartErrorState message={storesErrorValue?.message} />
       ) : (
-        <div className="rounded-xl border border-border bg-card">
+        <div className="rounded-xl border border-border bg-card" data-tour="access-list">
           <p className="border-b border-border px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Tiendas
           </p>
@@ -72,7 +77,7 @@ export function InventoryAccessPanel() {
             </div>
           ) : (
             <ul className="divide-y divide-border">
-              {(stores ?? []).map((store) => {
+              {(stores ?? []).map((store, storeIndex) => {
                 const enabled = enabledIds.has(store.id);
                 const isToggling = setAccess.isPending && setAccess.variables?.posConfigId === store.id;
                 return (
@@ -89,6 +94,7 @@ export function InventoryAccessPanel() {
                       </div>
                     </div>
                     <Switch
+                      data-tour={storeIndex === 0 ? "access-switch" : undefined}
                       checked={enabled}
                       disabled={isToggling}
                       onCheckedChange={(checked) =>

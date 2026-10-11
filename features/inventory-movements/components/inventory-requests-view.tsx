@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { PackagePlus } from "lucide-react";
-import { FilterToolbar } from "@/components/filters/filter-toolbar";
+import { SectionCard } from "@/components/ui/section-card";
 import { StoreSelect } from "@/components/filters/store-select";
 import { Button } from "@/components/ui/button";
 import { useStores } from "@/features/sales/hooks/use-stores";
@@ -54,12 +54,10 @@ export function InventoryRequestsView() {
 
   return (
     <div className="flex flex-col gap-4">
-      <FilterToolbar
-        description={
-          isVendedor
-            ? "Pide más stock a planta y sigue el estado de tus solicitudes. Cuando llegue el pedido, márcalo como recibido."
-            : "Solicitudes de stock de todas las tiendas — acepta (en camino), rechaza con motivo o, ya recibida, confirma para sumarla al stock."
-        }
+      <SectionCard
+        icon={PackagePlus}
+        title="Solicitudes"
+        description={isVendedor ? "Pide stock y sigue tus solicitudes." : "Solicitudes de stock de todas las tiendas."}
       >
         {isVendedor && (
           <>
@@ -77,7 +75,7 @@ export function InventoryRequestsView() {
             </Button>
           </>
         )}
-      </FilterToolbar>
+      </SectionCard>
 
       {isVendedor ? (
         <MovementsTable

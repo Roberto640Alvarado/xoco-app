@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { Compass, Info, Play } from "lucide-react";
+import { Check, Compass, Info, Play, X } from "lucide-react";
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,12 +14,21 @@ import {
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuthStore } from "@/store/auth-store";
-import { FLOW, PAGE_INTRO, PAGE_LABEL, type GuidePage, type GuideRole } from "../content";
+import {
+  FLOW,
+  PAGE_INTRO,
+  PAGE_LABEL,
+  PERMISSIONS,
+  ROLE_LABEL,
+  type GuidePage,
+  type GuideRole,
+} from "../content";
 import { useInventoryTour } from "../hooks/use-inventory-tour";
 
 // Ruta -> pantalla de Inventario. /dashboard/inventario es Conteo; el resto
-// son subrutas.
+// son subrutas (y la habilitación por tienda vive en Administración).
 function pageFromPath(pathname: string): GuidePage {
+  if (pathname.startsWith("/dashboard/admin/inventario")) return "habilitacion";
   if (pathname.startsWith("/dashboard/inventario/solicitudes")) return "solicitudes";
   if (pathname.startsWith("/dashboard/inventario/movimientos")) return "movimientos";
   if (pathname.startsWith("/dashboard/inventario/registro")) return "registro";
@@ -28,40 +37,60 @@ function pageFromPath(pathname: string): GuidePage {
 
 const PAGE_ORDER: GuidePage[] = ["conteo", "solicitudes", "movimientos", "registro"];
 
+const ROLE_STYLE: Record<GuideRole, string> = {
+  admin: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
+  finanzas: "bg-sky-500/10 text-sky-700 dark:text-sky-300",
+  vendedor: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
+};
+
+export function guideRoleFor(role: string | undefined): GuideRole {
+  if (role === "SUPER_ADMIN") return "admin";
+  if (role === "FINANZAS") return "finanzas";
+  return "vendedor";
+}
+
 // Card del tour guiado, común a todas las pantallas de Inventario (se monta
-// en app/dashboard/inventario/layout.tsx): "Iniciar tour" lanza el recorrido
-// guiado de la pantalla actual y el mini botón ⓘ abre un modal con el flujo
-// completo y qué hace cada pantalla. El contenido depende del rol (admin = Super admin
-// y Finanzas, vendedor).
+// en app/dashboard/inventario/layout.tsx y en Administración → Inventario):
+// "Iniciar tour" lanza el recorrido de la pantalla actual y el botón ⓘ abre
+// un modal con el flujo completo, qué hace cada pantalla y qué puede (y qué
+// no) hacer el rol de quien mira. El contenido depende del rol: Admin,
+// Finanzas o Vendedor.
 export function InventoryGuideBar() {
   const pathname = usePathname();
   const user = useAuthStore((state) => state.user);
-  const role: GuideRole = user?.role === "VENDEDOR" ? "vendedor" : "admin";
+  const role = guideRoleFor(user?.role);
   const page = pageFromPath(pathname);
   const [open, setOpen] = useState(false);
   const { start, seen } = useInventoryTour(page, role, user?.email);
 
   if (!user) return null;
   const flow = FLOW[role];
+  const permissions = PERMISSIONS[role];
+  const pages = role === "admin" ? [...PAGE_ORDER, "habilitacion" as GuidePage] : PAGE_ORDER;
 
   return (
     <>
-      <div className="relative flex flex-col gap-3 overflow-hidden rounded-xl border border-border bg-card p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
-        <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1 bg-primary/70" />
-        <div className="flex min-w-0 items-start gap-3 pl-2.5">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <Compass className="h-5 w-5" aria-hidden="true" />
+      <section
+        aria-label="Tour guiado"
+        className="flex flex-col gap-3 rounded-2xl border border-primary/15 bg-gradient-to-r from-primary/[0.06] via-card to-card p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between sm:p-5"
+      >
+        <div className="flex min-w-0 items-center gap-3.5">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
+            <Compass className="size-5" aria-hidden="true" />
           </span>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-foreground">Tour guiado — {PAGE_LABEL[page]}</p>
-            <p className="text-sm text-muted-foreground">
-              Un recorrido corto por esta pantalla: qué muestra cada parte y qué puedes hacer aquí.
-            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-base font-semibold leading-tight text-foreground">Tour guiado</h2>
+              <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", ROLE_STYLE[role])}>
+                {ROLE_LABEL[role]}
+              </span>
+            </div>
+            <p className="mt-0.5 text-sm text-muted-foreground">Conoce esta pantalla paso a paso.</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 pl-2.5 sm:pl-0">
-          <Button type="button" size="sm" onClick={() => void start()} className="relative">
-            <Play className="h-4 w-4" aria-hidden="true" />
+        <div className="flex items-center gap-2">
+          <Button type="button" onClick={() => void start()} className="relative">
+            <Play className="size-4" aria-hidden="true" />
             Iniciar tour
             {!seen && (
               <span className="absolute -right-1 -top-1 flex size-2.5">
@@ -76,25 +105,60 @@ export function InventoryGuideBar() {
                 <Button
                   type="button"
                   variant="outline"
-                  size="icon-sm"
+                  size="icon"
                   onClick={() => setOpen(true)}
                   aria-label="Más información: cómo funciona Inventario"
                 />
               }
             >
-              <Info className="h-4 w-4" aria-hidden="true" />
+              <Info className="size-4" aria-hidden="true" />
             </TooltipTrigger>
-            <TooltipContent>Más información: cómo funciona Inventario</TooltipContent>
+            <TooltipContent>Cómo funciona Inventario</TooltipContent>
           </Tooltip>
         </div>
-      </div>
+      </section>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-foreground">Cómo funciona Inventario</DialogTitle>
+            <DialogTitle className="flex flex-wrap items-center gap-2 text-lg font-bold text-foreground">
+              Cómo funciona Inventario
+              <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", ROLE_STYLE[role])}>
+                {ROLE_LABEL[role]}
+              </span>
+            </DialogTitle>
             <DialogDescription className="pt-1 leading-relaxed">{flow.intro}</DialogDescription>
           </DialogHeader>
+
+          <section className="flex flex-col gap-2">
+            <h3 className="text-sm font-semibold text-foreground">Tu rol: {ROLE_LABEL[role]}</h3>
+            <div className={cn("grid gap-3", permissions.cannot.length > 0 && "sm:grid-cols-2")}>
+              <div className="rounded-lg border border-emerald-600/25 bg-emerald-500/5 px-3 py-2.5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Puedes</p>
+                <ul className="mt-1.5 flex flex-col gap-1.5">
+                  {permissions.can.map((item) => (
+                    <li key={item} className="flex items-start gap-2 text-sm leading-snug text-foreground">
+                      <Check className="mt-0.5 size-3.5 shrink-0 text-emerald-600" aria-hidden="true" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              {permissions.cannot.length > 0 && (
+                <div className="rounded-lg border border-border bg-muted/40 px-3 py-2.5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">No puedes</p>
+                  <ul className="mt-1.5 flex flex-col gap-1.5">
+                    {permissions.cannot.map((item) => (
+                      <li key={item} className="flex items-start gap-2 text-sm leading-snug text-foreground">
+                        <X className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </section>
 
           <section className="flex flex-col gap-2">
             <h3 className="text-sm font-semibold text-foreground">El flujo, paso a paso</h3>
@@ -111,7 +175,7 @@ export function InventoryGuideBar() {
           <section className="flex flex-col gap-2">
             <h3 className="text-sm font-semibold text-foreground">Qué hace cada pantalla</h3>
             <ul className="flex flex-col gap-2">
-              {PAGE_ORDER.map((key) => (
+              {pages.map((key) => (
                 <li
                   key={key}
                   className={cn(
@@ -130,8 +194,8 @@ export function InventoryGuideBar() {
           </section>
 
           <p className="text-xs text-muted-foreground">
-            Busca el ícono ⓘ junto a los encabezados de las tablas para ver qué significa cada dato, y usa el
-            &quot;Tour de esta pantalla&quot; para un recorrido guiado.
+            Busca el ícono ⓘ junto a los encabezados de las tablas para ver qué significa cada dato, y usa
+            &quot;Iniciar tour&quot; para un recorrido guiado de la pantalla.
           </p>
         </DialogContent>
       </Dialog>

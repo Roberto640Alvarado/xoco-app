@@ -82,7 +82,7 @@ export function RequestStockDialog({ open, onOpenChange, posConfigId, storeName 
         {createMovement.isSuccess ? (
           <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/10 px-4 py-4 text-sm font-medium text-primary">
             <CheckCircle2 className="h-5 w-5 shrink-0" aria-hidden="true" />
-            Solicitud enviada — Admin o Finanzas ya la ve en su bandeja.
+            Solicitud enviada. Admin o Finanzas ya la ve en su bandeja.
           </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
