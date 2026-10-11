@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { DashboardShell, type DashboardNavItem } from "@/components/layout/dashboard-shell";
 import { useMovementNotifications } from "@/features/inventory-movements/hooks/use-movement-notifications";
 import { useAuthStore } from "@/store/auth-store";
+import { useCanUseInventory } from "@/features/inventory-access/hooks/use-inventory-access";
 
 // Todos los reportes viven en un solo bloque sin título (el usuario pidió
 // quitar las secciones "General" y "Reportes"); solo "Sistema" conserva
@@ -110,17 +111,21 @@ const BADGE_HREF = {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const role = useAuthStore((state) => state.user?.role);
   const { data: notifications } = useMovementNotifications();
+  // El Vendedor solo ve la sección Inventario si habilitaron su tienda
+  // (Administración → Inventario); Admin/Finanzas siempre la ven.
+  const { canUse: canUseInventory } = useCanUseInventory();
 
   // Mismo NAV_ITEMS, solo con los globos de Movimientos y Solicitudes
   // inyectados — se recalcula únicamente cuando cambian los contadores o
   // el rol.
   const navItems = useMemo<DashboardNavItem[]>(() => {
-    if (!notifications || notifications.total === 0) return NAV_ITEMS;
+    const baseItems = canUseInventory ? NAV_ITEMS : NAV_ITEMS.filter((item) => item.label !== "Inventario");
+    if (!notifications || notifications.total === 0) return baseItems;
     const countByHref: Record<string, number> = {
       [BADGE_HREF.movements]: notifications.movements,
       [BADGE_HREF.requests]: notifications.requests,
     };
-    return NAV_ITEMS.map((item) =>
+    return baseItems.map((item) =>
       "children" in item
         ? {
             ...item,
@@ -131,7 +136,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           }
         : item,
     );
-  }, [notifications, role]);
+  }, [notifications, role, canUseInventory]);
 
   return (
     <DashboardShell navItems={navItems} dashboardHref="/dashboard">
