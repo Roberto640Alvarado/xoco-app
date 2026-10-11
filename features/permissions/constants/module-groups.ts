@@ -68,8 +68,6 @@ export const MODULE_GROUPS: ModuleGroup[] = [
   },
   { label: "Mayoreo", moduleKeys: ["dashboard.ventas-mayoreo", "dashboard.buscar-compradores"] },
   { label: "Tickets", moduleKeys: ["dashboard.ticket-promedio", "dashboard.ticket-detallado"] },
-  {
-    label: "Otros",
-    moduleKeys: ["dashboard.cierre-mes", "dashboard.inventario", "dashboard.inventario-movimientos"],
-  },
+  { label: "Inventario", moduleKeys: ["dashboard.inventario", "dashboard.inventario-movimientos"] },
+  { label: "Otros", moduleKeys: ["dashboard.cierre-mes"] },
 ];

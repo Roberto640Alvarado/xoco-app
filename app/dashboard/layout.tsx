@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, CalendarCheck2, CalendarClock, DollarSign, LayoutDashboard, ListOrdered, Package, PackageMinus, Receipt, Search, Settings, Store, Tags, TrendingUp, Users, Wallet, Warehouse } from "lucide-react";
+import { Building2, CalendarCheck2, CalendarClock, ClipboardList, DollarSign, LayoutDashboard, ListOrdered, Package, PackageMinus, Receipt, Search, Settings, Store, Tags, TrendingUp, Users, Wallet, Warehouse } from "lucide-react";
 import { DashboardShell, type DashboardNavItem } from "@/components/layout/dashboard-shell";
 
 // Todos los reportes viven en un solo bloque sin título (el usuario pidió
@@ -64,34 +64,27 @@ const NAV_ITEMS: DashboardNavItem[] = [
   },
   { label: "Cierre del mes", href: "/dashboard/cierre-mes", icon: CalendarCheck2, group: "", roles: ["SUPER_ADMIN", "FINANZAS"], moduleKey: "dashboard.cierre-mes" },
 
-  // Inventario inicial por tienda: captura centralizada de Finanzas (ver
-  // plan-history) — Vendedor no entra en este primer tramo, a diferencia
-  // de la mayoría de módulos donde solo se le oculta vía moduleKey pero
-  // el backend igual lo permitiría. Aquí el roles: [] es un techo real
-  // (el controller también usa @Roles(SUPER_ADMIN, FINANZAS)), y
-  // moduleKey además permite a SUPER_ADMIN apagárselo a Finanzas desde el
-  // panel de Permisos si hiciera falta (mismo patrón que "Cierre del mes").
+  // Submenú Inventario (ver plan-history): tres pantallas separadas.
+  // - Conteo: captura centralizada de Finanzas del inventario físico —
+  //   Vendedor no entra (roles es un techo real, el controller también usa
+  //   @Roles(SUPER_ADMIN, FINANZAS)); moduleKey permite a SUPER_ADMIN
+  //   apagárselo a Finanzas desde Permisos (mismo patrón que "Cierre del mes").
+  // - Movimientos: merma, regalías, degustaciones y entradas planta→tienda.
+  //   SÍ entra Vendedor: registra/recibe de su propia tienda (forzado en el
+  //   servidor vía assertOwnStoreOrThrow); solo Admin/Finanzas confirma o
+  //   rechaza.
+  // - Registro: línea de tiempo de entradas y salidas con fecha y hora.
+  //   Comparte moduleKey con Conteo (misma lectura de inventario, mismo
+  //   techo de rol en el backend).
   {
     label: "Inventario",
-    href: "/dashboard/inventario",
     icon: Warehouse,
     group: "",
-    roles: ["SUPER_ADMIN", "FINANZAS"],
-    moduleKey: "dashboard.inventario",
-  },
-
-  // Merma, regalías y degustaciones (segundo tramo de Inventario, ver
-  // plan-history) — a diferencia del ítem de arriba, SÍ entra Vendedor:
-  // puede registrar movimientos de su propia tienda (forzado en el
-  // servidor vía assertOwnStoreOrThrow), aunque solo Admin/Finanzas puede
-  // confirmarlos o rechazarlos (ver InventoryMovementsView/MovementsTable).
-  {
-    label: "Movimientos de inventario",
-    href: "/dashboard/inventario-movimientos",
-    icon: PackageMinus,
-    group: "",
-    roles: ["SUPER_ADMIN", "FINANZAS", "VENDEDOR"],
-    moduleKey: "dashboard.inventario-movimientos",
+    children: [
+      { label: "Conteo", href: "/dashboard/inventario", icon: Warehouse, roles: ["SUPER_ADMIN", "FINANZAS"], moduleKey: "dashboard.inventario" },
+      { label: "Movimientos", href: "/dashboard/inventario/movimientos", icon: PackageMinus, roles: ["SUPER_ADMIN", "FINANZAS", "VENDEDOR"], moduleKey: "dashboard.inventario-movimientos" },
+      { label: "Registro", href: "/dashboard/inventario/registro", icon: ClipboardList, roles: ["SUPER_ADMIN", "FINANZAS"], moduleKey: "dashboard.inventario" },
+    ],
   },
 
   { label: "Administración", href: "/dashboard/admin", icon: Settings, group: "Sistema", roles: ["SUPER_ADMIN"] },
