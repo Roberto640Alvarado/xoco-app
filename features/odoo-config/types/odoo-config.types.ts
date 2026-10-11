@@ -13,3 +13,15 @@ export interface RotateOdooConfigPayload {
   uid: number;
   durationDays: number;
 }
+
+export interface OdooConfigHistoryItem {
+  id: string;
+  apiKeyMasked: string;
+  uid: number;
+  durationDays: number;
+  createdAt: string;
+  expiresAt: string;
+  isActive: boolean;
+  isExpired: boolean;
+  createdByEmail: string | null;
+}

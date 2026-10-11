@@ -12,6 +12,7 @@ export function useRotateOdooConfig() {
     mutationFn: rotateOdooConfig,
     onSuccess: (data) => {
       queryClient.setQueryData(["odoo-config"], data);
+      void queryClient.invalidateQueries({ queryKey: ["odoo-config-history"] });
     },
   });
 }

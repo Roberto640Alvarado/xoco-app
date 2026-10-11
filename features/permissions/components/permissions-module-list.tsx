@@ -112,7 +112,7 @@ export function PermissionsModuleList({ role }: PermissionsModuleListProps) {
         </div>
       )}
 
-      <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
         {groups.map((group) => (
           <Panel key={group.label} flush title={group.label}>
             <ul className="divide-y divide-border">

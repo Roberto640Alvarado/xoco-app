@@ -13,7 +13,7 @@ export function UsersView() {
   const [createOpen, setCreateOpen] = useState(false);
 
   return (
-    <div className="flex max-w-6xl flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <ReportHeader page="admin-usuarios">
         <Button type="button" onClick={() => setCreateOpen(true)}>
           <UserPlus aria-hidden="true" />

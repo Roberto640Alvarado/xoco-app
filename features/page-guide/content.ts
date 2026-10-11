@@ -452,19 +452,20 @@ export const REPORT_GUIDES: Record<ReportPageKey, ReportGuide> = {
     title: "Integración con Odoo",
     icon: KeyRound,
     roles: ["admin"],
-    brief: { staff: "API key y duración de la conexión." },
+    brief: { staff: "API key activa e historial de keys." },
     intro: {
       staff:
-        "Odoo es la fuente de las ventas del panel. Aquí ves el estado de la API key y la rotas cuando vence o cambia; sin una key vigente el panel no puede traer datos.",
+        "Odoo es la fuente de las ventas del panel. Aquí ves el estado de la API key, la rotas cuando vence o cambia y revisas el historial de keys anteriores; sin una key vigente el panel no puede traer datos.",
     },
     permissions: {
-      can: ["Ver el estado de la API key: enmascarada, uid, duración y fecha de expiración.", "Registrar o rotar la API key."],
-      cannot: ["Ver la key completa: solo se muestra enmascarada."],
+      can: ["Ver el estado de la API key: enmascarada, uid, duración y fecha de expiración.", "Agregar o rotar la API key: la anterior queda en el historial.", "Revisar el historial de keys y quién las registró."],
+      cannot: ["Ver una key completa: siempre se muestra enmascarada."],
     },
     steps: {
       staff: [
+        { target: HEADER, title: "Agregar API key", description: "Abre un formulario con la key nueva, el uid de Odoo y los días que dura. La anterior queda en el historial.", side: "bottom" },
         { target: FIRST, title: "Estado actual", description: "La key enmascarada, el uid de Odoo, la duración y cuándo expira. Si ya venció se marca como vencida.", side: "bottom" },
-        { target: SECOND, title: "Rotar la API key", description: "Pega la key nueva, el uid del usuario de Odoo dueño de esa key y cuántos días dura. Reemplaza a la activa.", side: "top" },
+        { target: SECOND, title: "Historial de API keys", description: "Todas las keys registradas, con fecha, quién las agregó y su estado: activa, vencida o reemplazada.", side: "top" },
       ],
     },
   },

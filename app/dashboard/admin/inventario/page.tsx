@@ -5,7 +5,7 @@ import { InventoryGuideBar } from "@/features/inventory-guide/components/invento
 
 export default function AdminInventoryPage() {
   return (
-    <div className="flex max-w-3xl flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <InventoryGuideBar />
       <SectionCard
         icon={Warehouse}
