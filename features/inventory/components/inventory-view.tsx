@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { FilterToolbar } from "@/components/filters/filter-toolbar";
-import { InDevelopmentBanner } from "@/components/ui/in-development-banner";
 import { StoreSelect } from "@/components/filters/store-select";
 import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { useStores } from "@/features/sales/hooks/use-stores";
@@ -36,7 +35,6 @@ export function InventoryView() {
 
   return (
     <div className="flex flex-col gap-4">
-      <InDevelopmentBanner message="Inventario está en desarrollo — la existencia estimada se corrige cada vez que Finanzas guarda un nuevo conteo físico." />
       <FilterToolbar
         description={
           isVendedor
