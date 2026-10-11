@@ -14,7 +14,7 @@ Entra como Admin a **Administración → Sistema de diseño** (`/dashboard/admin
 | --- | --- | --- |
 | `default` (primary) | La acción principal de la pantalla. Una sola por pantalla. | Guardar cambios |
 | Agregar | `default` + ícono `Plus` (o el ícono del objeto) + verbo en infinitivo. | Registrar movimiento, Solicitar stock |
-| `secondary` | Apoyo que no compite con la acción principal. | Iniciar tour |
+| `secondary` | Apoyo que no compite con la acción principal. Lleva borde y sombra suave para verse en modo claro. | Iniciar tour |
 | `outline` | Acciones neutrales: filtros, exportar, ver detalle. | Exportar |
 | `destructive` | Rechazar, eliminar, ocultar. | Rechazar |
 | `ghost` / `link` | Bajo énfasis: cancelar, "más información". | Cancelar |
