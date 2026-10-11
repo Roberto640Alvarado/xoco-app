@@ -97,7 +97,15 @@ export function RequestStockDialog({ open, onOpenChange, posConfigId, storeName 
                     onValueChange={(next) => field.onChange(Number(next))}
                   >
                     <SelectTrigger id="request-product" className="w-full">
-                      <SelectValue placeholder={itemsLoading ? "Cargando..." : "Selecciona un producto"} />
+                      <SelectValue placeholder={itemsLoading ? "Cargando..." : "Selecciona un producto"}>
+                        {(raw: string) =>
+                          raw
+                            ? (sortedItems.find((item) => String(item.productId) === raw)?.productName ?? raw)
+                            : itemsLoading
+                              ? "Cargando..."
+                              : "Selecciona un producto"
+                        }
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {sortedItems.map((item) => (

@@ -128,7 +128,15 @@ export function CreateMovementDialog({
                     onValueChange={(next) => field.onChange(Number(next))}
                   >
                     <SelectTrigger id="movement-product" className="w-full">
-                      <SelectValue placeholder={itemsLoading ? "Cargando..." : "Selecciona un producto"} />
+                      <SelectValue placeholder={itemsLoading ? "Cargando..." : "Selecciona un producto"}>
+                        {(raw: string) =>
+                          raw
+                            ? (sortedItems.find((item) => String(item.productId) === raw)?.productName ?? raw)
+                            : itemsLoading
+                              ? "Cargando..."
+                              : "Selecciona un producto"
+                        }
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {sortedItems.map((item) => (
@@ -151,7 +159,11 @@ export function CreateMovementDialog({
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger id="movement-type" className="w-full">
-                      <SelectValue placeholder="Selecciona un motivo" />
+                      <SelectValue placeholder="Selecciona un motivo">
+                        {(raw: string) =>
+                          raw ? (TYPE_OPTIONS.find((option) => option.value === raw)?.label ?? raw) : "Selecciona un motivo"
+                        }
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {TYPE_OPTIONS.map((option) => (
