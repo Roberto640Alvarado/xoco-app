@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { CircleHelp, Compass } from "lucide-react";
+import { Compass, Info, Play } from "lucide-react";
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuthStore } from "@/store/auth-store";
 import { FLOW, PAGE_INTRO, PAGE_LABEL, type GuidePage, type GuideRole } from "../content";
 import { useInventoryTour } from "../hooks/use-inventory-tour";
@@ -27,10 +28,10 @@ function pageFromPath(pathname: string): GuidePage {
 
 const PAGE_ORDER: GuidePage[] = ["conteo", "solicitudes", "movimientos", "registro"];
 
-// Barra de ayuda común a todas las pantallas de Inventario (se monta en
-// app/dashboard/inventario/layout.tsx): "Cómo funciona" abre un modal con el
-// flujo completo y qué hace cada pantalla; "Tour" lanza el recorrido guiado
-// de la pantalla actual. El contenido depende del rol (admin = Super admin
+// Card del tour guiado, común a todas las pantallas de Inventario (se monta
+// en app/dashboard/inventario/layout.tsx): "Iniciar tour" lanza el recorrido
+// guiado de la pantalla actual y el mini botón ⓘ abre un modal con el flujo
+// completo y qué hace cada pantalla. El contenido depende del rol (admin = Super admin
 // y Finanzas, vendedor).
 export function InventoryGuideBar() {
   const pathname = usePathname();
@@ -45,21 +46,47 @@ export function InventoryGuideBar() {
 
   return (
     <>
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)}>
-          <CircleHelp className="h-4 w-4" aria-hidden="true" />
-          Cómo funciona
-        </Button>
-        <Button type="button" variant="outline" size="sm" onClick={() => void start()} className="relative">
-          <Compass className="h-4 w-4" aria-hidden="true" />
-          Tour de esta pantalla
-          {!seen && (
-            <span className="absolute -right-1 -top-1 flex size-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
-              <span className="relative inline-flex size-2.5 rounded-full bg-primary" />
-            </span>
-          )}
-        </Button>
+      <div className="relative flex flex-col gap-3 overflow-hidden rounded-xl border border-border bg-card p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+        <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1 bg-primary/70" />
+        <div className="flex min-w-0 items-start gap-3 pl-2.5">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Compass className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground">Tour guiado — {PAGE_LABEL[page]}</p>
+            <p className="text-sm text-muted-foreground">
+              Un recorrido corto por esta pantalla: qué muestra cada parte y qué puedes hacer aquí.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 pl-2.5 sm:pl-0">
+          <Button type="button" size="sm" onClick={() => void start()} className="relative">
+            <Play className="h-4 w-4" aria-hidden="true" />
+            Iniciar tour
+            {!seen && (
+              <span className="absolute -right-1 -top-1 flex size-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-70" />
+                <span className="relative inline-flex size-2.5 rounded-full bg-amber-500" />
+              </span>
+            )}
+          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon-sm"
+                  onClick={() => setOpen(true)}
+                  aria-label="Más información: cómo funciona Inventario"
+                />
+              }
+            >
+              <Info className="h-4 w-4" aria-hidden="true" />
+            </TooltipTrigger>
+            <TooltipContent>Más información: cómo funciona Inventario</TooltipContent>
+          </Tooltip>
+        </div>
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
