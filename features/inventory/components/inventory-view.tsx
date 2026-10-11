@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ClipboardList, Loader2, RefreshCw, Table2 } from "lucide-react";
+import { ClipboardList, Table2 } from "lucide-react";
 import { FilterToolbar } from "@/components/filters/filter-toolbar";
 import { InDevelopmentBanner } from "@/components/ui/in-development-banner";
 import { StoreSelect } from "@/components/filters/store-select";
@@ -17,8 +17,7 @@ import { InventoryTable } from "./inventory-table";
 // catálogo de Odoo. A diferencia del resto del dashboard no existe "todas
 // las tiendas" con sentido acá — el StoreSelect oculta esa opción y se
 // autoselecciona la primera tienda activa. El catálogo carga automático
-// al elegir tienda (como el resto del dashboard); "Actualizar inventario"
-// es un refetch manual, no un gate de la carga inicial.
+// al elegir tienda (como el resto del dashboard).
 export function InventoryView() {
   const { data: stores, isLoading: storesLoading } = useStores();
   const [posConfigId, setPosConfigId] = useState<number | undefined>(undefined);
@@ -63,26 +62,6 @@ export function InventoryView() {
             Registro
           </Button>
         </div>
-        {section === "conteo" && (
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => inventory.refetch()}
-          disabled={posConfigId == null || inventory.isFetching}
-        >
-          {inventory.isFetching ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-              Actualizando...
-            </>
-          ) : (
-            <>
-              <RefreshCw className="h-4 w-4" aria-hidden="true" />
-              Actualizar inventario
-            </>
-          )}
-        </Button>
-        )}
         {section === "conteo" && (
         <ExportExcelButton
           filename={`inventario${selectedStore ? `-${selectedStore.name}` : ""}`}
