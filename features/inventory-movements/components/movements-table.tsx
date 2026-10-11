@@ -389,6 +389,9 @@ interface MovementsTableProps {
   emptyMessage?: string;
   /** Qué explica el ⓘ junto a "Estado" (solicitudes vs. movimientos). */
   statusInfo?: InfoTopic;
+  /** Filtros por columna en el encabezado (por defecto sí). Solicitudes los
+   * apaga porque filtra arriba, en la card. */
+  columnFilters?: boolean;
 }
 
 export function MovementsTable({
@@ -400,6 +403,7 @@ export function MovementsTable({
   storeNames,
   emptyMessage = "Todavía no hay movimientos registrados.",
   statusInfo = "estados-movimiento",
+  columnFilters = true,
 }: MovementsTableProps) {
   const resolve = useResolveInventoryMovement();
   const accept = useAcceptInventoryMovement();
@@ -603,6 +607,7 @@ export function MovementsTable({
         emptyMessage={emptyMessage}
         itemLabel={{ singular: "movimiento", plural: "movimientos" }}
         tourId="movements-table"
+        columnFilters={columnFilters}
         onRowClick={setDetailTarget}
       />
 

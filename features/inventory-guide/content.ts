@@ -234,29 +234,11 @@ const LEDGER_TYPE_STEP: TourStep = {
   side: "bottom",
 };
 
-// Pasos de Admin y Finanzas (la mayoría es igual): `finanzas` solo cambia lo
-// que depende de habilitar tiendas.
+// Pasos de Admin y Finanzas (son los mismos).
 function staffSteps(role: "admin" | "finanzas"): Record<GuidePage, TourStep[]> {
-  const visibility: TourStep =
-    role === "admin"
-      ? {
-          target: '[data-tour="inv-visibility"]',
-          title: "Visibilidad para las tiendas",
-          description:
-            "Aquí ves cuántas tiendas ya tienen Inventario habilitado. Cuando termines de cargar el stock de una tienda, actívala en Administración → Inventario.",
-          side: "bottom",
-        }
-      : {
-          target: '[data-tour="inv-visibility"]',
-          title: "Visibilidad para las tiendas",
-          description:
-            "Aquí ves cuántas tiendas ya tienen Inventario habilitado. Solo el Admin puede habilitarlas: avísale cuando termines de cargar el stock de una tienda.",
-          side: "bottom",
-        };
   return {
     conteo: [
       WELCOME("conteo", role),
-      visibility,
       {
         target: '[data-tour="inv-store"]',
         title: "Elige la tienda",
@@ -288,6 +270,12 @@ function staffSteps(role: "admin" | "finanzas"): Record<GuidePage, TourStep[]> {
     ],
     solicitudes: [
       WELCOME("solicitudes", role),
+      {
+        target: '[data-tour="req-filters"]',
+        title: "Filtros",
+        description: "Filtra las solicitudes por rango de fechas, tienda y estado. Por defecto ves lo que va del año.",
+        side: "bottom",
+      },
       {
         target: '[data-tour="movements-table"]',
         title: "Bandeja de solicitudes",
@@ -377,6 +365,12 @@ const VENDEDOR_STEPS: Record<GuidePage, TourStep[]> = {
   ],
   solicitudes: [
     WELCOME("solicitudes", "vendedor"),
+    {
+      target: '[data-tour="req-filters"]',
+      title: "Filtros",
+      description: "Filtra tus solicitudes por rango de fechas y estado. La tienda es la tuya y no se puede cambiar. Por defecto ves lo que va del año.",
+      side: "bottom",
+    },
     {
       target: '[data-tour="req-new"]',
       title: "Solicitar stock",

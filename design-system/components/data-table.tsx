@@ -56,6 +56,9 @@ interface DataTableProps<T> {
   tourId?: string;
   /** Ancla del tour guiado del primer botón de filtro de la tabla. */
   filtersTourId?: string;
+  /** Muestra el ícono de filtro en el encabezado de cada columna con `filter`
+   * (por defecto sí). Se apaga cuando los filtros viven arriba, en la card. */
+  columnFilters?: boolean;
   /** Si viene, la fila completa es clicable (ej. abrir un modal de detalle). */
   onRowClick?: (row: T) => void;
   className?: string;
@@ -161,6 +164,7 @@ export function DataTable<T>({
   defaultPageSize = 10,
   tourId,
   filtersTourId,
+  columnFilters = true,
   onRowClick,
   className,
 }: DataTableProps<T>) {
@@ -169,7 +173,10 @@ export function DataTable<T>({
   const [pageSize, setPageSize] = useState<number>(defaultPageSize);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  const filterable = columns.filter((column) => column.filter && column.accessor);
+  const filterable = useMemo(
+    () => (columnFilters ? columns.filter((column) => column.filter && column.accessor) : []),
+    [columnFilters, columns],
+  );
   const activeFilters = Object.values(filters).filter((value) => value !== "").length;
 
   // Opciones de las listas: las dadas, o los valores distintos presentes.
