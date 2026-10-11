@@ -340,3 +340,109 @@
     display: none;
   }
 }
+
+/* ── Tableta que se parte (design-system/components/chocolate-break.tsx) ── */
+.choco-break svg * {
+  transform-box: fill-box;
+}
+.choco-snap-left {
+  transform-origin: 100% 100%;
+  animation: choco-snap-left 2.4s cubic-bezier(0.5, 0, 0.3, 1) infinite;
+}
+.choco-snap-right {
+  transform-origin: 0% 100%;
+  animation: choco-snap-right 2.4s cubic-bezier(0.5, 0, 0.3, 1) infinite;
+}
+.choco-snap-crack {
+  opacity: 0;
+  animation: choco-snap-crack 2.4s ease-out infinite;
+}
+.choco-crumb {
+  opacity: 0;
+  animation: choco-crumb 2.4s ease-out infinite;
+  animation-delay: var(--cd, 0s);
+}
+.choco-dots span {
+  animation: choco-dot 1.2s ease-in-out infinite;
+  animation-delay: calc(var(--n) * 0.18s);
+}
+
+@keyframes choco-snap-left {
+  0%,
+  26% {
+    transform: rotate(0) translateX(0);
+  }
+  42%,
+  62% {
+    transform: rotate(-13deg) translateX(-7px);
+  }
+  82%,
+  100% {
+    transform: rotate(0) translateX(0);
+  }
+}
+@keyframes choco-snap-right {
+  0%,
+  26% {
+    transform: rotate(0) translateX(0);
+  }
+  42%,
+  62% {
+    transform: rotate(13deg) translateX(7px);
+  }
+  82%,
+  100% {
+    transform: rotate(0) translateX(0);
+  }
+}
+@keyframes choco-snap-crack {
+  0%,
+  22% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  44%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes choco-crumb {
+  0%,
+  34% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.5);
+  }
+  42% {
+    opacity: 1;
+  }
+  75%,
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(1);
+  }
+}
+@keyframes choco-dot {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .choco-snap-left,
+  .choco-snap-right,
+  .choco-snap-crack,
+  .choco-crumb,
+  .choco-dots span {
+    animation: none;
+  }
+  .choco-crumb,
+  .choco-snap-crack {
+    display: none;
+  }
+}

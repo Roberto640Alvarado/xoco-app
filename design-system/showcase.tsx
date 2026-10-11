@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { Eye, Loader2, PackagePlus, Plus, Save, Trash2, Warehouse } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ChocolateBreak } from "@/design-system/components/chocolate-break";
 import { ChocolateLoader } from "@/design-system/components/chocolate-loader";
 import { DataTable, type DataTableColumn } from "@/design-system/components/data-table";
 import { InfoBadge, type InfoBadgeTone } from "@/design-system/components/info-badge";
@@ -279,6 +280,10 @@ function CardsSection() {
             <ChocolateLoader size="sm" label="Pequeño" />
             <ChocolateLoader size="md" label="Mediano" />
             <ChocolateLoader size="lg" label="Cargando..." />
+          </div>
+          <p className="mt-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">ChocolateBreak: tableta que se parte (Iniciando sesión)</p>
+          <div className="flex justify-center rounded-2xl border border-border bg-card p-6">
+            <ChocolateBreak className="w-48" />
           </div>
         </div>
 

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
+import { LoginOverlay } from "@/features/auth/components/login-overlay";
 import { useLogin } from "@/features/auth/hooks/use-login";
 import {
   loginSchema,
@@ -36,6 +37,7 @@ function LoginForm() {
 
   return (
     <div className="flex flex-col gap-6">
+      {(login.isPending || login.isSuccess) && <LoginOverlay />}
       <div className="flex flex-col items-center gap-3 text-center">
         <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-[#45382E] dark:text-[#E8DCC8]">
           <XocolatisimoMark className="h-9 w-9" />
