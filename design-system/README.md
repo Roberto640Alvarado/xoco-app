@@ -6,7 +6,7 @@ Aquí vive todo lo visual del panel: qué componentes existen, cuándo usar cada
 
 ## Dónde vive cada cosa
 
-- `design-system/components/`: los componentes propios del panel (SectionCard, TourGuideCard, NoticeCard, InfoBadge, ValueBox, DataTable). Se importan con `@/design-system/components/<nombre>`.
+- `design-system/components/`: los componentes propios del panel (SectionCard, Panel, TourGuideCard, NoticeCard, InfoBadge, ValueBox, DataTable). Se importan con `@/design-system/components/<nombre>`.
 - `components/ui/`: los componentes base de shadcn/ui (Button, Input, Select, Dialog...), instalados con la CLI.
 - `design-system/showcase.tsx`: catálogo en vivo de todo lo anterior.
 
@@ -34,7 +34,8 @@ Tamaños: `lg`, `default`, `sm`, `xs` y los `icon*`. Los botones de las cards us
 ## Cards
 
 - `SectionCard` (`design-system/components/section-card.tsx`): encabezado de pantalla con ícono, título, una frase y los botones a la derecha (`controlsOnly` cuando hay varios controles: queda solo la fila de controles, en una sola línea, sin ícono ni título). Es el encabezado de todas las pantallas de Inventario (Conteo, Solicitudes, Movimientos, Registro y Habilitación por tienda) y el que se usa en las secciones nuevas. Uso: `<SectionCard icon={PackagePlus} title="Solicitudes" description="Pide stock y sigue tus solicitudes.">{selector y botones}</SectionCard>`. La descripción es una sola frase corta; con varios filtros, `<SectionCard controlsOnly>`; `tourId` para el tour guiado.
-- `ReportHeader` (`features/page-guide/components/report-header.tsx`): encabezado de toda sección de reportes (Ventas, Tráfico, Productos, Tickets, Mayoreo, Cierre del mes). Junta la card del tour guiado con una `SectionCard` y los controles de la pantalla; el título, la frase corta, el tour y el modal salen de `features/page-guide/content.ts` según el rol. Una sección nueva se agrega ahí (`REPORT_GUIDES`) y usa `<ReportHeader page="...">`.
+- `ReportHeader` (`features/page-guide/components/report-header.tsx`): encabezado de toda sección de reportes (Ventas, Tráfico, Productos, Tickets, Mayoreo, Cierre del mes). Junta la card del tour guiado con una `SectionCard` y los controles de la pantalla; el título, la frase corta, el tour y el modal salen de `features/page-guide/content.ts` según el rol. Una sección nueva se agrega ahí (`REPORT_GUIDES`) y usa `<ReportHeader page="...">`. También lo usan las pantallas de Administración (`admin-inicio`, `admin-odoo`, `admin-usuarios`, `admin-permisos`, `admin-diseno`); el bloque que sigue al encabezado es el ancla del primer paso del tour.
+- `Panel` (`design-system/components/panel.tsx`): la card de contenido que va debajo del encabezado: formularios, listas y tablas. Título, frase corta, `badge` de estado y `action` a la derecha; `flush` para listas y tablas que llegan al borde; `tourId` para el tour. Es el hermano de `SectionCard`. Se usa en todo Administración.
 - `TourGuideCard` (`design-system/components/tour-guide-card.tsx`): el título siempre es "Tour guiado"; "Iniciar tour" es `secondary`; ⓘ abre la explicación.
 - `NoticeCard` (`design-system/components/notice-card.tsx`): aviso con tono (`info`, `success`, `warning`), una frase y un botón opcional.
 

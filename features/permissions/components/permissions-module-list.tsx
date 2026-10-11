@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { Link2 } from "lucide-react";
+import { NoticeCard } from "@/design-system/components/notice-card";
+import { Panel } from "@/design-system/components/panel";
 import { Switch } from "@/components/ui/switch";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -94,15 +96,11 @@ export function PermissionsModuleList({ role }: PermissionsModuleListProps) {
   return (
     <div className="flex flex-col gap-4">
       {hasSharedModule && (
-        <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-xs text-muted-foreground">
-          <Link2 className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          <p>
-            Los módulos marcados con <Link2 className="inline h-3 w-3 -translate-y-px" aria-hidden="true" />{" "}
-            comparten el mismo dato en el servidor con otras pantallas — apagar uno solo oculta esa pantalla,
-            pero el dato solo queda bloqueado de verdad si todas sus pantallas compañeras también están apagadas.
-            Pasa el mouse sobre el ícono de cada uno para ver cuáles.
-          </p>
-        </div>
+        <NoticeCard
+          icon={Link2}
+          title="Datos compartidos"
+          description="Los módulos con este ícono comparten dato con otras pantallas. Pasa el mouse sobre el ícono para ver cuáles."
+        />
       )}
 
       {errorMessage && !confirmTarget && (
@@ -116,10 +114,7 @@ export function PermissionsModuleList({ role }: PermissionsModuleListProps) {
 
       <div className="flex flex-col gap-4">
         {groups.map((group) => (
-          <div key={group.label} className="rounded-xl border border-border bg-card">
-            <p className="border-b border-border px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {group.label}
-            </p>
+          <Panel key={group.label} flush title={group.label}>
             <ul className="divide-y divide-border">
               {group.rows.map((row) => {
                 const Icon = MODULE_ICON[row.moduleKey];
@@ -127,7 +122,7 @@ export function PermissionsModuleList({ role }: PermissionsModuleListProps) {
                 const isTogglingThisRow = setAccess.isPending && setAccess.variables?.moduleKey === row.moduleKey;
 
                 return (
-                  <li key={row.moduleKey} className="flex items-center justify-between gap-3 px-4 py-3">
+                  <li key={row.moduleKey} className="flex items-center justify-between gap-3 px-5 py-3">
                     <div className="flex min-w-0 items-center gap-3">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                         <Icon className="h-4 w-4" aria-hidden="true" />
@@ -164,7 +159,7 @@ export function PermissionsModuleList({ role }: PermissionsModuleListProps) {
                 );
               })}
             </ul>
-          </div>
+          </Panel>
         ))}
       </div>
 

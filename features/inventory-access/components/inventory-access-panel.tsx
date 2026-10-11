@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Info, Store as StoreIcon, Warehouse } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { NoticeCard } from "@/design-system/components/notice-card";
+import { Panel } from "@/design-system/components/panel";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -60,12 +61,9 @@ export function InventoryAccessPanel() {
       {storesError ? (
         <ChartErrorState message={storesErrorValue?.message} />
       ) : (
-        <div className="rounded-xl border border-border bg-card" data-tour="access-list">
-          <p className="border-b border-border px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Tiendas
-          </p>
+        <Panel flush tourId="access-list" icon={StoreIcon} title="Tiendas" description="Activa el interruptor para mostrar Inventario a sus Vendedores.">
           {isLoading ? (
-            <div className="flex flex-col gap-2 p-4" aria-hidden="true">
+            <div className="flex flex-col gap-2 p-5" aria-hidden="true">
               {Array.from({ length: 3 }).map((_, index) => (
                 <Skeleton key={index} className="h-10 w-full" />
               ))}
@@ -76,7 +74,7 @@ export function InventoryAccessPanel() {
                 const enabled = enabledIds.has(store.id);
                 const isToggling = setAccess.isPending && setAccess.variables?.posConfigId === store.id;
                 return (
-                  <li key={store.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                  <li key={store.id} className="flex items-center justify-between gap-3 px-5 py-3">
                     <div className="flex min-w-0 items-center gap-3">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                         <StoreIcon className="h-4 w-4" aria-hidden="true" />
@@ -102,7 +100,7 @@ export function InventoryAccessPanel() {
               })}
             </ul>
           )}
-        </div>
+        </Panel>
       )}
 
       <ConfirmDialog

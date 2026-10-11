@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { Panel } from "@/design-system/components/panel";
+import { InfoBadge } from "@/design-system/components/info-badge";
 import { cn } from "cn";
-import { KeyRound, Pencil, ShieldCheck, UserPlus } from "lucide-react";
+import { KeyRound, Pencil, ShieldCheck, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -38,44 +40,20 @@ const ROLE_LABEL: Record<UserRole, string> = {
   VENDEDOR: "Vendedor",
 };
 
-// Rol como pill — SUPER_ADMIN se distingue con el color de marca (tiene
-// acceso a todo, incluida esta misma pantalla); FINANZAS/VENDEDOR es un
-// tono neutro. Mismo patrón visual que el estado Activo/Inactivo de
-// abajo. Compartido entre la tabla (md+) y las tarjetas (mobile).
 function RolePill({ role }: { role: UserRole }) {
   const isSuperAdmin = role === "SUPER_ADMIN";
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium",
-        isSuperAdmin ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
-      )}
-    >
-      {isSuperAdmin && <ShieldCheck className="h-3 w-3" aria-hidden="true" />}
+    <InfoBadge tone={isSuperAdmin ? "violet" : role === "FINANZAS" ? "info" : "warning"} icon={isSuperAdmin ? ShieldCheck : undefined}>
       {ROLE_LABEL[role]}
-    </span>
+    </InfoBadge>
   );
 }
 
-// Mismo verde (emerald, con variante dark) que ya usa
-// features/cierre-mes/components/month-close-section.tsx para señalar
-// "en buen estado" — acá, cuenta activa.
 function StatusPill({ isActive }: { isActive: boolean }) {
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
-        isActive
-          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-          : "bg-muted text-muted-foreground",
-      )}
-    >
-      <span
-        className={cn("size-1.5 rounded-full", isActive ? "bg-emerald-500" : "bg-muted-foreground/50")}
-        aria-hidden="true"
-      />
+    <InfoBadge tone={isActive ? "success" : "neutral"} dot>
       {isActive ? "Activo" : "Inactivo"}
-    </span>
+    </InfoBadge>
   );
 }
 
@@ -137,11 +115,16 @@ function UserCardSkeletonList({ count }: { count: number }) {
   );
 }
 
-export function UsersTable() {
+interface UsersTableProps {
+  /** El botón "Agregar usuario" vive en el encabezado de la pantalla. */
+  createOpen: boolean;
+  onCreateOpenChange: (open: boolean) => void;
+}
+
+export function UsersTable({ createOpen, onCreateOpenChange }: UsersTableProps) {
   const currentUserId = useAuthStore((state) => state.user?.id);
   const users = useUsers();
   const setActive = useSetUserActive();
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [passwordTarget, setPasswordTarget] = useState<AppUser | null>(null);
   const [editTarget, setEditTarget] = useState<AppUser | null>(null);
   const [activeConfirm, setActiveConfirm] = useState<ActiveConfirmTarget | null>(null);
@@ -165,20 +148,12 @@ export function UsersTable() {
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
-        <div>
-          <h2 className="text-sm font-medium text-foreground">Usuarios existentes</h2>
-          <p className="text-xs text-muted-foreground">
-            {users.isLoading ? "Cargando..." : `${items.length} cuenta${items.length === 1 ? "" : "s"}`}
-          </p>
-        </div>
-        <Button type="button" size="sm" onClick={() => setIsCreateOpen(true)}>
-          <UserPlus className="h-4 w-4" aria-hidden="true" />
-          Agregar usuario
-        </Button>
-      </div>
-
+    <Panel
+      flush
+      icon={Users}
+      title="Cuentas existentes"
+      description={users.isLoading ? "Cargando..." : `${items.length} cuenta${items.length === 1 ? "" : "s"}`}
+    >
       {errorMessage && !activeConfirm && (
         <div role="alert" className="mx-4 mt-3 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {errorMessage}
@@ -322,7 +297,7 @@ export function UsersTable() {
         </ul>
       )}
 
-      <CreateUserModal open={isCreateOpen} onOpenChange={setIsCreateOpen} />
+      <CreateUserModal open={createOpen} onOpenChange={onCreateOpenChange} />
       <EditUserModal
         user={editTarget}
         isSelf={editTarget?.id === currentUserId}
@@ -350,6 +325,6 @@ export function UsersTable() {
         errorMessage={confirmErrorMessage}
         onConfirm={handleConfirmActive}
       />
-    </div>
+    </Panel>
   );
 }

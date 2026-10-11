@@ -1,22 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import { ReportHeader } from "@/features/page-guide/components/report-header";
 import { PermissionsRoleTabs } from "./permissions-role-tabs";
 import { PermissionsModuleList } from "./permissions-module-list";
 import type { UserRole } from "@/features/auth/types/auth.types";
 
-// Raíz con estado del panel "Permisos" — mantiene el rol seleccionado y
-// compone el selector + la lista, para que app/dashboard/admin/permisos/
-// page.tsx se quede como shell delgado (mismo criterio que
-// app/dashboard/admin/users/page.tsx).
+// Raíz con estado de la pantalla "Permisos": el selector de rol va en el
+// encabezado y la lista de módulos es el primer bloque tras él (ancla del
+// tour guiado).
 export function PermissionsPanel() {
   const [role, setRole] = useState<UserRole>("VENDEDOR");
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="max-w-xs">
+    <div className="flex max-w-3xl flex-col gap-4">
+      <ReportHeader page="admin-permisos">
         <PermissionsRoleTabs value={role} onChange={setRole} />
-      </div>
+      </ReportHeader>
       <PermissionsModuleList role={role} />
     </div>
   );

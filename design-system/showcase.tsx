@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { DataTable, type DataTableColumn } from "@/design-system/components/data-table";
 import { InfoBadge, type InfoBadgeTone } from "@/design-system/components/info-badge";
 import { Input } from "@/components/ui/input";
+import { Panel } from "@/design-system/components/panel";
 import { NoticeCard } from "@/design-system/components/notice-card";
 import { SectionCard } from "@/design-system/components/section-card";
 import { TourGuideCard } from "@/design-system/components/tour-guide-card";
 import { ValueBox } from "@/design-system/components/value-box";
+import { ReportHeader } from "@/features/page-guide/components/report-header";
 import { InfoHint } from "@/features/inventory-guide/components/info-hint";
 
 // Catálogo vivo del sistema de diseño del panel (ver design-system/README.md).
@@ -18,7 +20,7 @@ import { InfoHint } from "@/features/inventory-guide/components/info-hint";
 
 function Section({ id, title, description, children }: { id: string; title: string; description: string; children: ReactNode }) {
   return (
-    <section id={id} className="flex flex-col gap-4">
+    <section id={id} className="mt-6 flex flex-col gap-4">
       <div>
         <h2 className="text-xl font-semibold text-foreground">{title}</h2>
         <p className="mt-1 text-sm text-muted-foreground">{description}</p>
@@ -250,6 +252,27 @@ function CardsSection() {
         </div>
 
         <div className="flex flex-col gap-1.5">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Panel: la card de contenido (formularios, listas y tablas)</p>
+          <Panel
+            icon={Warehouse}
+            title="Estado actual"
+            description="Una frase corta que explica el contenido."
+            badge={
+              <InfoBadge tone="success" size="sm" dot>
+                Vigente
+              </InfoBadge>
+            }
+            action={
+              <Button variant="outline" size="sm">
+                Acción
+              </Button>
+            }
+          >
+            <p className="text-sm text-foreground">El cuerpo lleva el contenido. Con flush, las listas y tablas llegan al borde.</p>
+          </Panel>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">NoticeCard: info, éxito y atención</p>
           <NoticeCard
             tone="warning"
@@ -395,13 +418,8 @@ function TablesSection() {
 
 export function DesignSystemShowcase() {
   return (
-    <div className="flex flex-col gap-10">
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">Sistema de diseño</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Botones, badges, cards y tablas del panel. Todo componente nuevo se agrega aquí (ver design-system/README.md).
-        </p>
-      </div>
+    <div className="flex flex-col gap-4">
+      <ReportHeader page="admin-diseno" />
       <ButtonsSection />
       <BadgesSection />
       <CardsSection />

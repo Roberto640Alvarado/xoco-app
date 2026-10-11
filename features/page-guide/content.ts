@@ -5,9 +5,13 @@ import {
   DollarSign,
   LayoutDashboard,
   ListOrdered,
+  KeyRound,
   Package,
+  Palette,
   Receipt,
   Search,
+  Settings,
+  ShieldCheck,
   Store,
   Tags,
   TrendingUp,
@@ -41,7 +45,12 @@ export type ReportPageKey =
   | "buscar-compradores"
   | "ticket-promedio"
   | "ticket-detallado"
-  | "cierre-mes";
+  | "cierre-mes"
+  | "admin-inicio"
+  | "admin-odoo"
+  | "admin-usuarios"
+  | "admin-permisos"
+  | "admin-diseno";
 
 /** Texto para Admin y Finanzas (`staff`) y, si cambia, para el Vendedor. */
 interface RoleText {
@@ -68,6 +77,9 @@ interface ReportGuide {
   storeAccess?: "select" | "all" | "none";
   extraCan?: RoleList;
   extraCannot?: RoleList;
+  /** Reemplaza por completo las listas Puedes / No puedes (pantallas de
+   * Administración, que no son de reportes). */
+  permissions?: { can: string[]; cannot: string[] };
   /** Pasos del tour después de la bienvenida. */
   steps: { staff: TourStep[]; vendedor?: TourStep[] };
 }
@@ -410,6 +422,116 @@ export const REPORT_GUIDES: Record<ReportPageKey, ReportGuide> = {
       ],
     },
   },
+
+  // ── Administración (solo Admin) ──
+
+  "admin-inicio": {
+    title: "Administración",
+    icon: Settings,
+    roles: ["admin"],
+    brief: { staff: "Configuración exclusiva del Admin." },
+    intro: {
+      staff:
+        "Desde aquí administras la conexión con Odoo, las cuentas del panel, los permisos de cada rol, la visibilidad de Inventario por tienda y el catálogo de diseño.",
+    },
+    permissions: {
+      can: [
+        "Entrar a cada configuración desde su tarjeta.",
+        "Cambiar la conexión con Odoo, las cuentas y los permisos de todo el panel.",
+      ],
+      cannot: ["Delegar esta sección: Finanzas y Vendedor no la ven."],
+    },
+    steps: {
+      staff: [
+        { target: FIRST, title: "Configuraciones", description: "Cada tarjeta lleva a una configuración: Odoo, Usuarios, Permisos, Inventario por tienda y Sistema de diseño.", side: "top" },
+      ],
+    },
+  },
+
+  "admin-odoo": {
+    title: "Integración con Odoo",
+    icon: KeyRound,
+    roles: ["admin"],
+    brief: { staff: "API key y duración de la conexión." },
+    intro: {
+      staff:
+        "Odoo es la fuente de las ventas del panel. Aquí ves el estado de la API key y la rotas cuando vence o cambia; sin una key vigente el panel no puede traer datos.",
+    },
+    permissions: {
+      can: ["Ver el estado de la API key: enmascarada, uid, duración y fecha de expiración.", "Registrar o rotar la API key."],
+      cannot: ["Ver la key completa: solo se muestra enmascarada."],
+    },
+    steps: {
+      staff: [
+        { target: FIRST, title: "Estado actual", description: "La key enmascarada, el uid de Odoo, la duración y cuándo expira. Si ya venció se marca como vencida.", side: "bottom" },
+        { target: SECOND, title: "Rotar la API key", description: "Pega la key nueva, el uid del usuario de Odoo dueño de esa key y cuántos días dura. Reemplaza a la activa.", side: "top" },
+      ],
+    },
+  },
+
+  "admin-usuarios": {
+    title: "Usuarios",
+    icon: Users,
+    roles: ["admin"],
+    brief: { staff: "Quién tiene acceso al panel." },
+    intro: {
+      staff: "Crea cuentas, asigna su rol y actívalas o desactívalas. No hay registro público: toda cuenta se crea desde aquí.",
+    },
+    permissions: {
+      can: [
+        "Agregar usuarios y asignarles rol (Admin, Finanzas o Vendedor).",
+        "Editar el rol de una cuenta y cambiar su contraseña.",
+        "Activar o desactivar el acceso de una cuenta.",
+      ],
+      cannot: ["Desactivar tu propia cuenta."],
+    },
+    steps: {
+      staff: [
+        { target: HEADER, title: "Agregar usuario", description: "Crea una cuenta nueva con su correo, contraseña y rol. Un Vendedor queda atado a su tienda.", side: "bottom" },
+        { target: FIRST, title: "Cuentas existentes", description: "Cada cuenta con su rol y estado. Edita, cambia la contraseña o usa el interruptor para activar o desactivar el acceso.", side: "top" },
+      ],
+    },
+  },
+
+  "admin-permisos": {
+    title: "Permisos",
+    icon: ShieldCheck,
+    roles: ["admin"],
+    brief: { staff: "Qué secciones ve cada rol." },
+    intro: {
+      staff: "Habilita o deshabilita, por rol, qué módulos del dashboard ve cada quien. El cambio aplica de inmediato en el menú y en la API.",
+    },
+    permissions: {
+      can: ["Elegir un rol y encender o apagar sus módulos.", "Ver qué módulos comparten el mismo dato en el servidor."],
+      cannot: ["Dar a un rol más de lo que le permite su techo original: solo se puede quitar, no ampliar."],
+    },
+    steps: {
+      staff: [
+        { target: HEADER, title: "Elige el rol", description: "Cada rol tiene su propia lista. Cambia de rol con el selector.", side: "bottom" },
+        { target: FIRST, title: "Módulos del rol", description: "Los módulos están agrupados como el menú. Cada interruptor pide confirmación y aplica al instante.", side: "top" },
+      ],
+    },
+  },
+
+  "admin-diseno": {
+    title: "Sistema de diseño",
+    icon: Palette,
+    roles: ["admin"],
+    brief: { staff: "Botones, badges, cards y tablas del panel." },
+    intro: {
+      staff: "Catálogo en vivo de los componentes del panel, con ejemplos. Todo componente nuevo se agrega aquí.",
+    },
+    permissions: {
+      can: ["Ver cada componente con su ejemplo."],
+      cannot: ["Cambiar el diseño desde aquí: se cambia en el código (carpeta design-system)."],
+    },
+    steps: {
+      staff: [
+        { target: FIRST, title: "Botones", description: "Primary, secondary, outline, destructive y agregar: cuándo usar cada uno.", side: "top" },
+        { target: SECOND, title: "Badges", description: "Estados, roles y tonos de información.", side: "top" },
+      ],
+    },
+  },
 };
 
 // ── Resolución por rol ────────────────────────────────────────────────────
@@ -441,6 +563,7 @@ export function tourStepsFor(page: ReportPageKey, role: GuideRole): TourStep[] {
 /** Lo que el rol puede y no puede hacer en la pantalla. */
 export function permissionsFor(page: ReportPageKey, role: GuideRole): { can: string[]; cannot: string[] } {
   const guide = REPORT_GUIDES[page];
+  if (guide.permissions) return guide.permissions;
   const extraCan = (isStaff(role) ? guide.extraCan?.staff : guide.extraCan?.vendedor) ?? [];
   const extraCannot = (isStaff(role) ? guide.extraCannot?.staff : guide.extraCannot?.vendedor) ?? [];
 

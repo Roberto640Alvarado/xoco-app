@@ -1,12 +1,17 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { CheckCircle2, KeyRound, Loader2, Plug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { InfoBadge } from "@/design-system/components/info-badge";
+import { NoticeCard } from "@/design-system/components/notice-card";
+import { Panel } from "@/design-system/components/panel";
+import { ReportHeader } from "@/features/page-guide/components/report-header";
 import { useOdooConfig } from "@/features/odoo-config/hooks/use-odoo-config";
 import { useRotateOdooConfig } from "@/features/odoo-config/hooks/use-rotate-odoo-config";
 import {
@@ -36,75 +41,67 @@ export default function OdooConfigPage() {
 
   const errorMessage = (rotate.error as ApiError | null)?.message;
 
+  const status = !config
+    ? { tone: "neutral" as const, label: "Sin configurar" }
+    : config.isExpired
+      ? { tone: "danger" as const, label: "Vencido" }
+      : { tone: "success" as const, label: "Vigente" };
+
   return (
-    <div className="flex max-w-2xl flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">Integración con Odoo</h1>
-      </div>
+    <div className="flex max-w-3xl flex-col gap-4">
+      <ReportHeader page="admin-odoo" />
 
-      <div className="rounded-xl border border-border bg-card p-4">
-        <h2 className="text-sm font-medium text-foreground">Estado actual</h2>
+      <Panel
+        title="Estado actual"
+        description="La key que usa el panel para traer datos de Odoo."
+        icon={Plug}
+        badge={
+          isLoading ? undefined : (
+            <InfoBadge tone={status.tone} size="sm" dot>
+              {status.label}
+            </InfoBadge>
+          )
+        }
+      >
         {isLoading ? (
-          <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="col-span-2 grid grid-cols-2 items-center gap-x-4">
-                <Skeleton className="h-3.5 w-20" />
-                <Skeleton className="h-3.5 w-32" />
-              </div>
+              <Skeleton key={index} className="h-16 w-full rounded-xl" />
             ))}
-          </dl>
+          </div>
         ) : !config ? (
-          <p className="mt-2 flex items-center gap-2 text-sm text-destructive">
-            <XCircle className="h-4 w-4" aria-hidden="true" />
-            No hay ningún API key configurado todavía.
-          </p>
+          <p className="text-sm text-muted-foreground">Todavía no hay una API key. Regístrala abajo.</p>
         ) : (
-          <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-            <dt className="text-muted-foreground">API key</dt>
-            <dd className="font-mono text-foreground">{config.apiKeyMasked}</dd>
-
-            <dt className="text-muted-foreground">uid de Odoo</dt>
-            <dd className="text-foreground">{config.uid}</dd>
-
-            <dt className="text-muted-foreground">Duración</dt>
-            <dd className="text-foreground">{config.durationDays} días</dd>
-
-            <dt className="text-muted-foreground">Expira</dt>
-            <dd className="flex items-center gap-1.5 text-foreground">
-              {config.isExpired ? (
-                <XCircle className="h-4 w-4 text-destructive" aria-hidden="true" />
-              ) : (
-                <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden="true" />
-              )}
-              {formatLongDate(config.expiresAt.slice(0, 10))}
-              {config.isExpired && <span className="text-destructive">(vencido)</span>}
-            </dd>
+          <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <StatusItem label="API key">
+              <span className="font-mono">{config.apiKeyMasked}</span>
+            </StatusItem>
+            <StatusItem label="uid de Odoo">{config.uid}</StatusItem>
+            <StatusItem label="Duración">{config.durationDays} días</StatusItem>
+            <StatusItem label="Expira">
+              <span className={config.isExpired ? "text-destructive" : undefined}>
+                {formatLongDate(config.expiresAt.slice(0, 10))}
+              </span>
+            </StatusItem>
           </dl>
         )}
-      </div>
+      </Panel>
 
-      <div className="rounded-xl border border-border bg-card p-4">
-        <h2 className="text-sm font-medium text-foreground">
-          {config ? "Rotar API key" : "Registrar API key"}
-        </h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Reemplaza la key activa (o crea la primera). El uid es el id del usuario de Odoo
-          dueño de esta key — execute_kw lo pide siempre junto con ella.
-        </p>
-
+      <Panel
+        title={config ? "Rotar API key" : "Registrar API key"}
+        description="Reemplaza la key activa. El uid es el id del usuario de Odoo dueño de la key."
+        icon={KeyRound}
+      >
         {rotate.isSuccess && (
-          <div className="mt-3 flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-sm text-primary">
-            <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-            API key actualizada correctamente.
-          </div>
+          <NoticeCard tone="success" icon={CheckCircle2} title="API key actualizada" description="El panel ya usa la nueva key." className="mb-4" />
         )}
         {errorMessage && (
-          <div role="alert" className="mt-3 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <div role="alert" className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {errorMessage}
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="mt-4 flex flex-col gap-4" noValidate>
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="apiKey">API key</Label>
             <Controller
@@ -154,7 +151,16 @@ export default function OdooConfigPage() {
             )}
           </Button>
         </form>
-      </div>
+      </Panel>
+    </div>
+  );
+}
+
+function StatusItem({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="rounded-xl border border-border bg-muted/30 px-4 py-3">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="mt-0.5 text-sm font-medium text-foreground">{children}</dd>
     </div>
   );
 }
