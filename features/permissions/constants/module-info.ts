@@ -102,6 +102,14 @@ export const MODULE_INFO: Record<ModuleKey, ModuleInfo> = {
     contents: ["Ticket promedio de cada día.", "Gráfica contra la meta.", "Exportar a Excel."],
     preview: "chart",
   },
+  "dashboard.ordenes": {
+    href: "/dashboard/ordenes",
+    group: "Tickets",
+    summary: "Cada orden de caja con lo que se compró y cómo se pagó.",
+    contents: ["Órdenes por fecha y tienda, con búsqueda.", "Detalle de cada orden: productos, impuestos y pagos.", "Totales del período y exportar a Excel."],
+    preview: "table",
+    vendedorNote: "El Vendedor solo ve las órdenes de su propia tienda.",
+  },
   "dashboard.productos": {
     href: "/dashboard/productos",
     group: "Productos",
@@ -115,6 +123,14 @@ export const MODULE_INFO: Record<ModuleKey, ModuleInfo> = {
     summary: "La venta agrupada por categoría de producto.",
     contents: ["Venta por categoría.", "Gráfica de la proporción de cada una.", "Filtros de fecha y tienda, y exportar a Excel."],
     preview: "ranking",
+  },
+  "dashboard.comparacion-productos": {
+    href: "/dashboard/comparacion-productos",
+    group: "Productos",
+    summary: "Compara la venta de cada producto entre dos períodos.",
+    contents: ["Mes actual contra el anterior, dos meses o rangos personalizados.", "Totales, gráfica y tabla con el cambio de cada producto.", "Filtro de tienda y exportar a Excel."],
+    preview: "ranking",
+    vendedorNote: "El Vendedor solo compara su propia tienda.",
   },
   "dashboard.cierre-mes": {
     href: "/dashboard/cierre-mes",

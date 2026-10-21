@@ -5,12 +5,10 @@ import { SalesFiltersBar } from "@/features/sales/components/sales-filters";
 import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { ProductRankingChart } from "@/components/charts/product-ranking-chart";
 import { ProductWeightRankingChart } from "@/components/charts/product-weight-ranking-chart";
-import { ProductMonthlyComparisonChart } from "@/components/charts/product-monthly-comparison-chart";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useProductRanking } from "@/features/sales/hooks/use-product-ranking";
 import { useProductRankingByWeight } from "@/features/sales/hooks/use-product-ranking-by-weight";
-import { useProductMonthlyComparison } from "@/features/sales/hooks/use-product-monthly-comparison";
 import { isoDateDaysAgo, todayIsoDate } from "@/lib/format";
 import { useVendedorStoreFilter } from "@/features/sales/hooks/use-vendedor-store-filter";
 import type { SalesFilters } from "@/features/sales/types/sales.types";
@@ -49,6 +47,9 @@ function LimitInput({ id, value, onChange }: LimitInputProps) {
   );
 }
 
+// La comparación mes en curso vs. mes anterior se movió a su propia
+// pantalla (Productos → Comparación, /dashboard/comparacion-productos):
+// acá no compartía los filtros de fecha y saturaba la vista.
 export default function ProductosPage() {
   const { defaultPosConfigId } = useVendedorStoreFilter();
   const [filters, setFilters] = useState<SalesFilters>({
@@ -60,13 +61,11 @@ export default function ProductosPage() {
   const [bottomLimit, setBottomLimit] = useState(DEFAULT_LIMIT);
   const [weightTopLimit, setWeightTopLimit] = useState(DEFAULT_LIMIT);
   const [weightBottomLimit, setWeightBottomLimit] = useState(DEFAULT_LIMIT);
-  const [monthlyLimit, setMonthlyLimit] = useState(DEFAULT_LIMIT);
 
   const topProducts = useProductRanking(filters, topLimit, "desc");
   const bottomProducts = useProductRanking(filters, bottomLimit, "asc");
   const weightTopProducts = useProductRankingByWeight(filters, weightTopLimit, "desc");
   const weightBottomProducts = useProductRankingByWeight(filters, weightBottomLimit, "asc");
-  const monthlyComparison = useProductMonthlyComparison(filters.posConfigId, monthlyLimit);
 
   return (
     <div className="flex flex-col gap-6">
@@ -110,31 +109,10 @@ export default function ProductosPage() {
                   Ingresos: p.totalRevenue,
                 })),
               },
-              {
-                name: "Comparación mensual",
-                rows: (monthlyComparison.data ?? []).map((p) => ({
-                  Producto: p.productName,
-                  "Unidades mes actual": p.currentMonth.quantity,
-                  "Ingresos mes actual": p.currentMonth.revenue,
-                  "Unidades mes anterior": p.previousMonth.quantity,
-                  "Ingresos mes anterior": p.previousMonth.revenue,
-                })),
-              },
             ]}
           />
         }
       />
-
-      <ProductMonthlyComparisonChart
-        data={monthlyComparison.data ?? []}
-        isLoading={monthlyComparison.isLoading}
-        errorMessage={monthlyComparison.error?.message}
-        title="Comparación mensual por producto"
-        emptyLabel="Sin ventas en el mes en curso"
-      />
-      <div className="flex justify-end -mt-4">
-        <LimitInput id="monthlyLimit" value={monthlyLimit} onChange={setMonthlyLimit} />
-      </div>
 
       <ProductRankingChart
         data={topProducts.data ?? []}

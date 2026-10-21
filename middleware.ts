@@ -13,11 +13,13 @@ const VENDEDOR_EXACT_PATHS = ["/dashboard"];
 const VENDEDOR_PREFIX_PATHS = [
   "/dashboard/productos",
   "/dashboard/categorias",
+  "/dashboard/comparacion-productos",
   "/dashboard/visitas",
   "/dashboard/efectivo-otros-medios",
   "/dashboard/venta-diaria",
   "/dashboard/trafico-diario",
   "/dashboard/ticket-detallado",
+  "/dashboard/ordenes",
   "/dashboard/inventario",
 ];
 

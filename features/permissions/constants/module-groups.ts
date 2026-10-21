@@ -3,11 +3,13 @@ import {
   CalendarCheck2,
   CalendarClock,
   DollarSign,
+  GitCompareArrows,
   LayoutDashboard,
   ListOrdered,
   Package,
   PackageMinus,
   Receipt,
+  ReceiptText,
   Search,
   Store,
   Tags,
@@ -35,8 +37,10 @@ export const MODULE_ICON: Record<ModuleKey, LucideIcon> = {
   "dashboard.buscar-compradores": Search,
   "dashboard.ticket-promedio": Receipt,
   "dashboard.ticket-detallado": ListOrdered,
+  "dashboard.ordenes": ReceiptText,
   "dashboard.productos": Package,
   "dashboard.categorias": Tags,
+  "dashboard.comparacion-productos": GitCompareArrows,
   "dashboard.cierre-mes": CalendarCheck2,
   "dashboard.inventario": Warehouse,
   "dashboard.inventario-movimientos": PackageMinus,
@@ -52,7 +56,7 @@ export interface ModuleGroup {
 // del rol elegido (ej. "Mayoreo" para Vendedor) simplemente no se
 // renderiza, igual que en el sidebar real.
 export const MODULE_GROUPS: ModuleGroup[] = [
-  { label: "Productos", moduleKeys: ["dashboard.productos", "dashboard.categorias"] },
+  { label: "Productos", moduleKeys: ["dashboard.productos", "dashboard.categorias", "dashboard.comparacion-productos"] },
   {
     label: "Tráfico",
     moduleKeys: ["dashboard.visitas", "dashboard.trafico-tiendas", "dashboard.trafico-diario"],
@@ -67,7 +71,7 @@ export const MODULE_GROUPS: ModuleGroup[] = [
     ],
   },
   { label: "Mayoreo", moduleKeys: ["dashboard.ventas-mayoreo", "dashboard.buscar-compradores"] },
-  { label: "Tickets", moduleKeys: ["dashboard.ticket-promedio", "dashboard.ticket-detallado"] },
+  { label: "Tickets", moduleKeys: ["dashboard.ticket-promedio", "dashboard.ticket-detallado", "dashboard.ordenes"] },
   { label: "Inventario", moduleKeys: ["dashboard.inventario", "dashboard.inventario-movimientos"] },
   { label: "Otros", moduleKeys: ["dashboard.cierre-mes"] },
 ];

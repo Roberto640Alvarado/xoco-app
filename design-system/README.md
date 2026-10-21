@@ -6,7 +6,7 @@ Aquí vive todo lo visual del panel: qué componentes existen, cuándo usar cada
 
 ## Dónde vive cada cosa
 
-- `design-system/components/`: los componentes propios del panel (SectionCard, Panel, TourGuideCard, NoticeCard, InfoBadge, ValueBox, DataTable). Se importan con `@/design-system/components/<nombre>`.
+- `design-system/components/`: los componentes propios del panel (SectionCard, Panel, TourGuideCard, NoticeCard, InfoBadge, ChangeIndicator, ComparisonStat, SegmentedControl, ValueBox, DataTable). Se importan con `@/design-system/components/<nombre>`.
 - `components/ui/`: los componentes base de shadcn/ui (Button, Input, Select, Dialog...), instalados con la CLI.
 - `design-system/showcase.tsx`: catálogo en vivo de todo lo anterior.
 
@@ -31,6 +31,12 @@ Tamaños: `lg`, `default`, `sm`, `xs` y los `icon*`. Los botones de las cards us
 
 `InfoBadge` con `tone`: `warning` (espera algo), `info` (en curso), `success` (listo), `danger` (rechazado o error), `violet` (en tránsito), `neutral` (sin énfasis). Con `dot` para estados, con `icon` para avisos. Roles: Admin `violet`, Finanzas `info`, Vendedor `warning`.
 
+## Comparación de períodos
+
+- `ChangeIndicator` (`design-system/components/change-indicator.tsx`): pastilla de cambio A vs. B con flecha y % con signo. Sube en `success`, baja en `danger`, sin cambio en `neutral`; "Nuevo" cuando B es 0. La flecha y el signo repiten el sentido para no depender del color.
+- `ComparisonStat` (`design-system/components/comparison-stat.tsx`): tarjeta de número de un período contra otro: cada valor con el nombre de su período y el punto de color de la gráfica (azul = A, gris = B); el principal en grande con su `ChangeIndicator` y el comparado debajo. Misma forma que `StatTile`. La usa Productos → Comparación.
+- `SegmentedControl` (`design-system/components/segmented-control.tsx`): 2-3 opciones excluyentes en una pastilla (ej. Unidades / Ingresos, Por dinero / Por unidad). Para más opciones, un `Select`.
+
 ## Cards
 
 - `SectionCard` (`design-system/components/section-card.tsx`): encabezado de pantalla con ícono, título, una frase y los botones a la derecha (`controlsOnly` cuando hay varios controles: queda solo la fila de controles, en una sola línea, sin ícono ni título). Es el encabezado de todas las pantallas de Inventario (Conteo, Solicitudes, Movimientos, Registro y Habilitación por tienda) y el que se usa en las secciones nuevas. Uso: `<SectionCard icon={PackagePlus} title="Solicitudes" description="Pide stock y sigue tus solicitudes.">{selector y botones}</SectionCard>`. La descripción es una sola frase corta; con varios filtros, `<SectionCard controlsOnly>`; `tourId` para el tour guiado.
@@ -51,7 +57,12 @@ Texto de las cards: una frase corta, sin guiones largos ("—"), y los botones s
 - Pie con "Mostrando X–Y de N", "Limpiar filtros", filas por página (10, 25, 50, 100) y paginación.
 - Wrap de texto (`nowrap` solo para fechas y cantidades); en móvil se vuelve tarjetas (`mobile: "title" | "footer" | "hidden"`).
 - `onRowClick` para abrir un modal de detalle; la tabla muestra lo esencial y el resto vive en el modal.
+- `TablePagination` (`design-system/components/table-pagination.tsx`): el pie de paginación (Mostrando X–Y de N, filas por página y botones). Lo usa `DataTable` y los listados que pagina la API (ej. Tickets → Órdenes).
 - Tabla de captura (Conteo): `ValueBox` (`design-system/components/value-box.tsx`) para el valor de solo lectura y un `Input` con borde marcado para el editable.
+
+## Recibo de orden
+
+El detalle de una orden (Tickets → Órdenes) se dibuja como el recibo de la caja: fondo `muted`, borde troquelado arriba y abajo, líneas separadas con guiones, montos con puntos guía y cifras tabulares. Es el único lugar del panel con ese tratamiento; no se reutiliza para otras cards.
 
 ## Otros
 

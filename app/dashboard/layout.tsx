@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, CalendarCheck2, CalendarClock, ClipboardList, DollarSign, LayoutDashboard, ListOrdered, Package, PackageMinus, PackagePlus, Receipt, Search, Settings, Store, Tags, TrendingUp, Users, Wallet, Warehouse } from "lucide-react";
+import { Building2, CalendarCheck2, CalendarClock, ClipboardList, DollarSign, GitCompareArrows, LayoutDashboard, ListOrdered, Package, PackageMinus, PackagePlus, Receipt, ReceiptText, Search, Settings, Store, Tags, TrendingUp, Users, Wallet, Warehouse } from "lucide-react";
 import { useMemo } from "react";
 import { DashboardShell, type DashboardNavItem } from "@/components/layout/dashboard-shell";
 import { useMovementNotifications } from "@/features/inventory-movements/hooks/use-movement-notifications";
@@ -13,7 +13,7 @@ import { useCanUseInventory } from "@/features/inventory-access/hooks/use-invent
 //
 // Los ítems relacionados van agrupados en submenús colapsables (`children`)
 // en vez de listarse sueltos: cada submenú es un "tipo" de dato — Productos
-// (ranking + categorías), Tráfico (visitas = tráfico de la tienda), Ventas
+// (ranking, categorías y comparación entre períodos), Tráfico (visitas = tráfico de la tienda), Ventas
 // (mensual/diaria y su desglose por medio de pago), Mayoreo (venta a granel
 // y quién compra) y Tickets. "Cierre del mes" queda como ítem directo porque
 // no comparte tipo con ninguno.
@@ -25,6 +25,7 @@ const NAV_ITEMS: DashboardNavItem[] = [
     children: [
       { label: "Mejores productos", href: "/dashboard/productos", icon: Package, moduleKey: "dashboard.productos" },
       { label: "Categorías", href: "/dashboard/categorias", icon: Tags, moduleKey: "dashboard.categorias" },
+      { label: "Comparación", href: "/dashboard/comparacion-productos", icon: GitCompareArrows, moduleKey: "dashboard.comparacion-productos" },
     ],
   },
   {
@@ -64,6 +65,7 @@ const NAV_ITEMS: DashboardNavItem[] = [
     children: [
       { label: "Ticket promedio", href: "/dashboard/ticket-promedio", icon: Receipt, roles: ["SUPER_ADMIN", "FINANZAS"], moduleKey: "dashboard.ticket-promedio" },
       { label: "Ticket detallado", href: "/dashboard/ticket-detallado", icon: ListOrdered, moduleKey: "dashboard.ticket-detallado" },
+      { label: "Órdenes", href: "/dashboard/ordenes", icon: ReceiptText, moduleKey: "dashboard.ordenes" },
     ],
   },
   { label: "Cierre del mes", href: "/dashboard/cierre-mes", icon: CalendarCheck2, group: "", roles: ["SUPER_ADMIN", "FINANZAS"], moduleKey: "dashboard.cierre-mes" },

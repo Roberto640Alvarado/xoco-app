@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
-import { Check, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Filter, FilterX, ListFilter, X } from "lucide-react";
+import { Check, Filter, FilterX, ListFilter, X } from "lucide-react";
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TableSkeletonRows } from "@/components/ui/table-skeleton";
 
-export const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
+import { PAGE_SIZE_OPTIONS, TablePagination } from "./table-pagination";
+
+export { PAGE_SIZE_OPTIONS };
 const ALL = "__all__";
 
 export interface DataTableColumn<T> {
@@ -63,6 +65,7 @@ interface DataTableProps<T> {
   onRowClick?: (row: T) => void;
   className?: string;
 }
+
 
 function normalize(value: string): string {
   return value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
@@ -152,7 +155,8 @@ function ColumnFilter({ label, type, value, options, onChange, tourId }: ColumnF
  * filtros en un panel plegable) para que no haga falta scroll horizontal.
  *
  * El filtrado y la paginación son del lado del cliente sobre `rows` — el
- * componente no sabe de la fuente de datos.
+ * componente no sabe de la fuente de datos. Para listados que pagina la API,
+ * usar TablePagination directamente (ej. Tickets → Órdenes).
  */
 export function DataTable<T>({
   columns,
@@ -212,9 +216,6 @@ export function DataTable<T>({
   const safePage = Math.min(page, pageCount - 1);
   const start = safePage * pageSize;
   const pageRows = filteredRows.slice(start, start + pageSize);
-  const from = total === 0 ? 0 : start + 1;
-  const to = start + pageRows.length;
-  const unit = (count: number) => (count === 1 ? itemLabel.singular : itemLabel.plural);
 
   function setFilter(id: string, value: string) {
     setFilters((current) => ({ ...current, [id]: value }));
@@ -424,97 +425,26 @@ export function DataTable<T>({
       </div>
 
       {/* Pie: total de resultados, filas por página y paginación */}
-      <div className="flex flex-col gap-3 border-t border-border px-4 py-3 text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <p>
-            {total === 0 ? (
-              <>0 {itemLabel.plural}</>
-            ) : (
-              <>
-                Mostrando <span className="font-medium text-foreground">{from}–{to}</span> de{" "}
-                <span className="font-medium text-foreground">{total}</span> {unit(total)}
-              </>
+      <TablePagination
+        page={safePage}
+        pageSize={pageSize}
+        total={total}
+        pageRowCount={pageRows.length}
+        itemLabel={itemLabel}
+        onPageChange={setPage}
+        onPageSizeChange={setPageSize}
+        summaryExtra={
+          <>
+            {activeFilters > 0 && rows.length !== total && <span>(de {rows.length} en total)</span>}
+            {activeFilters > 0 && (
+              <Button type="button" variant="ghost" size="xs" onClick={clearFilters}>
+                <FilterX className="h-3.5 w-3.5" aria-hidden="true" />
+                Limpiar filtros
+              </Button>
             )}
-            {activeFilters > 0 && rows.length !== total && <span> (de {rows.length} en total)</span>}
-          </p>
-          {activeFilters > 0 && (
-            <Button type="button" variant="ghost" size="xs" onClick={clearFilters}>
-              <FilterX className="h-3.5 w-3.5" aria-hidden="true" />
-              Limpiar filtros
-            </Button>
-          )}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <label className="flex items-center gap-2">
-            Filas por página
-            <Select
-              value={String(pageSize)}
-              onValueChange={(next) => {
-                setPageSize(Number(next));
-                setPage(0);
-              }}
-            >
-              <SelectTrigger size="sm" aria-label="Filas por página" className="w-[4.5rem] gap-1">
-                <SelectValue>{(raw: string) => raw}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {PAGE_SIZE_OPTIONS.map((size) => (
-                  <SelectItem key={size} value={String(size)}>
-                    {size}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </label>
-
-          <div className="flex items-center gap-1">
-            <span className="mr-1 tabular-nums">
-              Página <span className="font-medium text-foreground">{safePage + 1}</span> de {pageCount}
-            </span>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-sm"
-              onClick={() => setPage(0)}
-              disabled={safePage === 0}
-              aria-label="Primera página"
-            >
-              <ChevronsLeft className="h-4 w-4" aria-hidden="true" />
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-sm"
-              onClick={() => setPage(safePage - 1)}
-              disabled={safePage === 0}
-              aria-label="Página anterior"
-            >
-              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-sm"
-              onClick={() => setPage(safePage + 1)}
-              disabled={safePage >= pageCount - 1}
-              aria-label="Página siguiente"
-            >
-              <ChevronRight className="h-4 w-4" aria-hidden="true" />
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-sm"
-              onClick={() => setPage(pageCount - 1)}
-              disabled={safePage >= pageCount - 1}
-              aria-label="Última página"
-            >
-              <ChevronsRight className="h-4 w-4" aria-hidden="true" />
-            </Button>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
     </div>
   );
 }

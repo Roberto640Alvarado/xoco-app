@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Eye, Loader2, PackagePlus, Plus, Save, Trash2, Warehouse } from "lucide-react";
+import { DollarSign, Eye, Loader2, Package, PackagePlus, Plus, Save, Trash2, Warehouse } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ChangeIndicator } from "@/design-system/components/change-indicator";
 import { ChocolateBreak } from "@/design-system/components/chocolate-break";
 import { ChocolateLoader } from "@/design-system/components/chocolate-loader";
 import { DataTable, type DataTableColumn } from "@/design-system/components/data-table";
+import { ComparisonStat } from "@/design-system/components/comparison-stat";
 import { InfoBadge, type InfoBadgeTone } from "@/design-system/components/info-badge";
+import { SegmentedControl } from "@/design-system/components/segmented-control";
 import { Input } from "@/components/ui/input";
 import { Panel } from "@/design-system/components/panel";
 import { NoticeCard } from "@/design-system/components/notice-card";
@@ -201,7 +204,40 @@ function BadgesSection() {
           <InfoBadge tone="danger">Error</InfoBadge>
           <InfoBadge tone="violet">En tránsito</InfoBadge>
         </Specimen>
+        <Specimen label="ChangeIndicator: cambio entre dos períodos">
+          <ChangeIndicator diff={12} pct={0.153} />
+          <ChangeIndicator diff={-4} pct={-0.08} />
+          <ChangeIndicator diff={0} pct={0} />
+          <ChangeIndicator diff={5} pct={null} />
+        </Specimen>
       </div>
+    </Section>
+  );
+}
+
+function ComparisonSection() {
+  const [metric, setMetric] = useState<"quantity" | "revenue">("quantity");
+  return (
+    <Section
+      id="comparacion"
+      title="Comparación de períodos"
+      description="Números de un período contra otro: el valor principal en grande, el cambio en una pastilla y el valor comparado debajo."
+    >
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <ComparisonStat icon={Package} label="Unidades vendidas" value="1,284" compareValue="1,120" valueLabel="Octubre 2026 (al 20)" compareLabel="Septiembre 2026" change={{ diff: 164, pct: 0.146 }} />
+        <ComparisonStat icon={DollarSign} label="Ingresos" value="$2,410.50" compareValue="$2,655.00" valueLabel="Octubre 2026 (al 20)" compareLabel="Septiembre 2026" change={{ diff: -244.5, pct: -0.092 }} />
+      </div>
+      <Specimen label="SegmentedControl: 2-3 opciones excluyentes">
+        <SegmentedControl
+          ariaLabel="Medir por"
+          options={[
+            { value: "quantity", label: "Unidades" },
+            { value: "revenue", label: "Ingresos" },
+          ]}
+          value={metric}
+          onChange={setMetric}
+        />
+      </Specimen>
     </Section>
   );
 }
@@ -437,6 +473,7 @@ export function DesignSystemShowcase() {
       <ReportHeader page="admin-diseno" />
       <ButtonsSection />
       <BadgesSection />
+      <ComparisonSection />
       <CardsSection />
       <TablesSection />
     </div>

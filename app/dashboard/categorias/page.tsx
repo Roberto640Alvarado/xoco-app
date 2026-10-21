@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { cn } from "cn";
 import { SalesFiltersBar } from "@/features/sales/components/sales-filters";
 import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { CategoryTopProductsChart } from "@/components/charts/category-top-products-chart";
 import { ChartErrorState } from "@/components/ui/chart-error-state";
-import { Button } from "@/components/ui/button";
+import { SegmentedControl, type SegmentedOption } from "@/design-system/components/segmented-control";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useProductRankingByCategory } from "@/features/sales/hooks/use-product-ranking-by-category";
@@ -23,7 +22,12 @@ function clampLimit(value: number): number {
   return Math.min(MAX_LIMIT, Math.max(MIN_LIMIT, Math.round(value)));
 }
 
-const METRIC_OPTIONS: Array<{ value: CategoryProductMetric; label: string }> = [
+// "Por dinero" ordena y muestra ingresos ($, comparable entre un producto
+// por pieza y uno a granel); "Por unidad" ordena y muestra la cantidad en la
+// unidad propia de cada producto (u/Kg — ver CategoryProduct.unit). Las
+// categorías siempre quedan ordenadas por ingresos; esto solo cambia el
+// orden y el valor de los PRODUCTOS dentro de cada una.
+const METRIC_OPTIONS: SegmentedOption<CategoryProductMetric>[] = [
   { value: "revenue", label: "Por dinero" },
   { value: "quantity", label: "Por unidad" },
 ];
@@ -32,38 +36,6 @@ const METRIC_SUBTITLE: Record<CategoryProductMetric, string> = {
   revenue: "Por ingresos",
   quantity: "Por unidades vendidas",
 };
-
-interface MetricToggleProps {
-  value: CategoryProductMetric;
-  onChange: (value: CategoryProductMetric) => void;
-}
-
-// Segmented control de 2 opciones — mismo criterio que el resto del panel
-// (sin instalar un componente shadcn nuevo para esto): "Por dinero"
-// ordena y muestra ingresos ($, comparable entre un producto por pieza y
-// uno a granel); "Por unidad" ordena y muestra la cantidad en la unidad
-// propia de cada producto (u/Kg — ver CategoryProduct.unit). Las
-// categorías siempre quedan ordenadas por ingresos; esto solo cambia el
-// orden y el valor de los PRODUCTOS dentro de cada una.
-function MetricToggle({ value, onChange }: MetricToggleProps) {
-  return (
-    <div className="inline-flex items-center gap-0.5 rounded-lg border border-border p-0.5">
-      {METRIC_OPTIONS.map((option) => (
-        <Button
-          key={option.value}
-          type="button"
-          size="sm"
-          variant={value === option.value ? "default" : "ghost"}
-          onClick={() => onChange(option.value)}
-          aria-pressed={value === option.value}
-          className={cn("h-7 px-3", value !== option.value && "text-muted-foreground")}
-        >
-          {option.label}
-        </Button>
-      ))}
-    </div>
-  );
-}
 
 // Se separó de /dashboard/productos (que ya tenía 5 gráficos) porque se
 // pidió "el top 10 por categoría" como su propio módulo — ver
@@ -111,7 +83,7 @@ export default function CategoriasPage() {
 
       <div className="flex flex-wrap items-center justify-end gap-3">
         <div className="flex flex-wrap items-center gap-3">
-          <MetricToggle value={metric} onChange={setMetric} />
+          <SegmentedControl ariaLabel="Ordenar productos por" options={METRIC_OPTIONS} value={metric} onChange={setMetric} />
           <div className="flex items-center gap-2">
             <Label htmlFor="categoryLimit" className="text-xs text-muted-foreground">
               Mostrar

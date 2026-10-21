@@ -6,7 +6,8 @@ import type {
   CustomerSearchResult,
   DailySalesPoint,
   PaymentMethodsSummary,
-  ProductMonthlyComparison,
+  ProductComparison,
+  ProductComparisonPeriods,
   ProductRankOrder,
   SalesFilters,
   Store,
@@ -69,12 +70,16 @@ export function fetchCustomerSearch(filters: CustomerSearchFilters) {
   return apiGet<CustomerSearchResult[]>(`/sales/customers/search?${params.toString()}`);
 }
 
-// No toma rango de fechas: el backend siempre compara el mes en curso
-// (día 1 a hoy) contra el mes anterior completo — ver
-// SalesService.findProductMonthlyComparison.
-export function fetchProductMonthlyComparison(params: { posConfigId?: number; limit?: number } = {}) {
-  const query = new URLSearchParams();
-  if (params.posConfigId) query.set("posConfigId", String(params.posConfigId));
-  if (params.limit) query.set("limit", String(params.limit));
-  return apiGet<ProductMonthlyComparison[]>(`/sales/product-monthly-comparison?${query.toString()}`);
+// Dos períodos libres (A = principal, B = contra el que se compara) — ver
+// SalesService.findProductComparison. Para un Vendedor la API ignora
+// posConfigId y usa siempre su propia tienda.
+export function fetchProductComparison(periods: ProductComparisonPeriods, posConfigId?: number) {
+  const query = new URLSearchParams({
+    periodAFrom: periods.a.dateFrom,
+    periodATo: periods.a.dateTo,
+    periodBFrom: periods.b.dateFrom,
+    periodBTo: periods.b.dateTo,
+  });
+  if (posConfigId) query.set("posConfigId", String(posConfigId));
+  return apiGet<ProductComparison>(`/sales/product-comparison?${query.toString()}`);
 }

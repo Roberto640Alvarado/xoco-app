@@ -7,6 +7,8 @@ import { cn } from "cn"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { SegmentedControl, type SegmentedOption } from "@/design-system/components/segmented-control"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 export interface DateRangeValue {
   dateFrom: string // YYYY-MM-DD
@@ -21,6 +23,13 @@ interface DateRangeFilterProps {
   maxDate?: string
   className?: string
 }
+
+type PickMode = "single" | "range"
+
+const PICK_MODE_OPTIONS: SegmentedOption<PickMode>[] = [
+  { value: "single", label: "Un día" },
+  { value: "range", label: "Rango" },
+]
 
 interface Preset {
   key: string
@@ -55,6 +64,14 @@ const PRESETS: Preset[] = [
     key: "today",
     label: "Hoy",
     range: (today) => ({ dateFrom: toIsoDate(today), dateTo: toIsoDate(today) }),
+  },
+  {
+    key: "yesterday",
+    label: "Ayer",
+    range: (today) => {
+      const yesterday = toIsoDate(addDays(today, -1))
+      return { dateFrom: yesterday, dateTo: yesterday }
+    },
   },
   {
     key: "last7",
@@ -124,11 +141,15 @@ export function DateRangeFilter({ value, onChange, maxDate, className }: DateRan
   const today = React.useMemo(() => new Date(), []);
   const max = React.useMemo(() => (maxDate ? fromIsoDate(maxDate) : today), [maxDate, today]);
 
+  const isMobile = useIsMobile();
   const [open, setOpen] = React.useState(false);
   const [pendingRange, setPendingRange] = React.useState<DateRange | undefined>({
     from: fromIsoDate(value.dateFrom),
     to: fromIsoDate(value.dateTo),
   });
+  // "Un día" elige una sola fecha (desde = hasta); "Rango", inicio y fin.
+  const [pickMode, setPickMode] = React.useState<PickMode>(value.dateFrom === value.dateTo ? "single" : "range");
+  const [pendingDay, setPendingDay] = React.useState<Date | undefined>(fromIsoDate(value.dateTo));
 
   const activePresetKey = matchingPresetKey(value, today);
   const triggerLabel = activePresetKey
@@ -140,6 +161,8 @@ export function DateRangeFilter({ value, onChange, maxDate, className }: DateRan
       // Al abrir, el calendario arranca sincronizado con el rango activo
       // (si el usuario ya tenía un rango personalizado aplicado).
       setPendingRange({ from: fromIsoDate(value.dateFrom), to: fromIsoDate(value.dateTo) });
+      setPendingDay(fromIsoDate(value.dateTo));
+      setPickMode(value.dateFrom === value.dateTo ? "single" : "range");
     }
     setOpen(next);
   }
@@ -150,6 +173,13 @@ export function DateRangeFilter({ value, onChange, maxDate, className }: DateRan
   }
 
   function applyCustomRange() {
+    if (pickMode === "single") {
+      if (!pendingDay) return;
+      const day = toIsoDate(pendingDay);
+      onChange({ dateFrom: day, dateTo: day });
+      setOpen(false);
+      return;
+    }
     if (!pendingRange?.from) return;
     const from = pendingRange.from;
     const to = pendingRange.to ?? pendingRange.from;
@@ -157,7 +187,7 @@ export function DateRangeFilter({ value, onChange, maxDate, className }: DateRan
     setOpen(false);
   }
 
-  const hasPendingCustomRange = pendingRange?.from != null;
+  const hasPendingCustomRange = pickMode === "single" ? pendingDay != null : pendingRange?.from != null;
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
@@ -206,17 +236,39 @@ export function DateRangeFilter({ value, onChange, maxDate, className }: DateRan
           </div>
 
           <div className="flex flex-col p-2">
-            <Calendar
-              mode="range"
-              numberOfMonths={2}
-              defaultMonth={pendingRange?.from ?? fromIsoDate(value.dateFrom)}
-              selected={pendingRange}
-              onSelect={setPendingRange}
-              disabled={{ after: max }}
+            <SegmentedControl
+              ariaLabel="Elegir"
+              options={PICK_MODE_OPTIONS}
+              value={pickMode}
+              onChange={setPickMode}
+              className="mx-3 mt-1 self-start"
             />
+            {pickMode === "single" ? (
+              <Calendar
+                mode="single"
+                numberOfMonths={1}
+                defaultMonth={pendingDay ?? fromIsoDate(value.dateTo)}
+                selected={pendingDay}
+                onSelect={setPendingDay}
+                disabled={{ after: max }}
+              />
+            ) : (
+              <Calendar
+                mode="range"
+                numberOfMonths={isMobile ? 1 : 2}
+                defaultMonth={pendingRange?.from ?? fromIsoDate(value.dateFrom)}
+                selected={pendingRange}
+                onSelect={setPendingRange}
+                disabled={{ after: max }}
+              />
+            )}
             <div className="flex items-center justify-between gap-2 border-t border-border px-1 pt-2">
               <p className="text-xs text-muted-foreground">
-                {hasPendingCustomRange && pendingRange?.from
+                {pickMode === "single"
+                  ? pendingDay
+                    ? SHORT_DATE_WITH_YEAR_FORMATTER.format(pendingDay)
+                    : "Elige un día"
+                  : hasPendingCustomRange && pendingRange?.from
                   ? `${SHORT_DATE_WITH_YEAR_FORMATTER.format(pendingRange.from)} – ${
                       pendingRange.to ? SHORT_DATE_WITH_YEAR_FORMATTER.format(pendingRange.to) : "…"
                     }`

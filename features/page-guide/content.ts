@@ -3,12 +3,14 @@ import {
   CalendarCheck2,
   CalendarClock,
   DollarSign,
+  GitCompareArrows,
   LayoutDashboard,
   ListOrdered,
   KeyRound,
   Package,
   Palette,
   Receipt,
+  ReceiptText,
   Search,
   Settings,
   ShieldCheck,
@@ -41,10 +43,12 @@ export type ReportPageKey =
   | "trafico-diario"
   | "productos"
   | "categorias"
+  | "comparacion-productos"
   | "ventas-mayoreo"
   | "buscar-compradores"
   | "ticket-promedio"
   | "ticket-detallado"
+  | "ordenes"
   | "cierre-mes"
   | "admin-inicio"
   | "admin-odoo"
@@ -285,21 +289,21 @@ export const REPORT_GUIDES: Record<ReportPageKey, ReportGuide> = {
     roles: ALL_ROLES,
     brief: { staff: "Productos más y menos vendidos.", vendedor: "Los productos que más y menos se venden en tu tienda." },
     intro: {
-      staff: "Rankings de productos por unidades y por Kg (a granel) en el rango de fechas, más la comparación del mes en curso contra el anterior.",
-      vendedor: "Rankings de los productos de tu tienda por unidades y por Kg (a granel) en el rango de fechas, más la comparación del mes en curso contra el anterior.",
+      staff: "Rankings de productos por unidades y por Kg (a granel) en el rango de fechas. Para comparar dos períodos, usa Productos → Comparación.",
+      vendedor: "Rankings de los productos de tu tienda por unidades y por Kg (a granel) en el rango de fechas. Para comparar dos períodos, usa Productos → Comparación.",
     },
     steps: {
       staff: [
         DATE_STORE_HEADER.staff,
-        { target: FIRST, title: "Comparación mensual", description: "Cada producto del mes en curso contra el mes anterior.", side: "top" },
-        { target: SECOND, title: "Cuántos productos ver", description: "Cada gráfica tiene su campo de cantidad: cámbialo para ver más o menos productos.", side: "top" },
-        { target: THIRD, title: "Rankings", description: "Más y menos vendidos por unidades y, más abajo, los de a granel por Kg.", side: "top" },
+        { target: FIRST, title: "Más vendidos", description: "Los productos con más unidades vendidas. Cambia el campo \"Mostrar\" para ver más o menos productos.", side: "top" },
+        { target: SECOND, title: "Menos vendidos", description: "Los productos con menos unidades vendidas en el rango.", side: "top" },
+        { target: THIRD, title: "A granel", description: "Más abajo, los productos que se venden por Kg, en su propio ranking.", side: "top" },
       ],
       vendedor: [
         DATE_STORE_HEADER.vendedor,
-        { target: FIRST, title: "Comparación mensual", description: "Cada producto de tu tienda en el mes en curso contra el mes anterior.", side: "top" },
-        { target: SECOND, title: "Cuántos productos ver", description: "Cada gráfica tiene su campo de cantidad: cámbialo para ver más o menos productos.", side: "top" },
-        { target: THIRD, title: "Rankings", description: "Más y menos vendidos por unidades y, más abajo, los de a granel por Kg.", side: "top" },
+        { target: FIRST, title: "Más vendidos", description: "Los productos de tu tienda con más unidades vendidas. Cambia el campo \"Mostrar\" para ver más o menos productos.", side: "top" },
+        { target: SECOND, title: "Menos vendidos", description: "Los productos de tu tienda con menos unidades vendidas en el rango.", side: "top" },
+        { target: THIRD, title: "A granel", description: "Más abajo, los productos que se venden por Kg, en su propio ranking.", side: "top" },
       ],
     },
   },
@@ -323,6 +327,36 @@ export const REPORT_GUIDES: Record<ReportPageKey, ReportGuide> = {
         DATE_STORE_HEADER.vendedor,
         { target: FIRST, title: "Cómo ordenar", description: "Cambia entre \"Por dinero\" y \"Por unidad\", y cuántos productos mostrar por categoría.", side: "bottom" },
         { target: SECOND, title: "Una gráfica por categoría", description: "Los productos más vendidos de cada categoría de tu tienda, de la que más vende a la que menos.", side: "top" },
+      ],
+    },
+  },
+
+  "comparacion-productos": {
+    title: "Comparación de productos",
+    icon: GitCompareArrows,
+    roles: ALL_ROLES,
+    brief: { staff: "Compara la venta de cada producto entre dos períodos.", vendedor: "Compara la venta de los productos de tu tienda entre dos períodos." },
+    intro: {
+      staff: "Elige dos períodos y compara, producto por producto, las unidades y los ingresos. Por defecto, el mes actual contra el mes anterior.",
+      vendedor: "Elige dos períodos y compara, producto por producto, las unidades y los ingresos de tu tienda. Por defecto, el mes actual contra el mes anterior.",
+    },
+    steps: {
+      staff: [
+        headerStep(
+          "Elige qué comparar: el mes actual contra el anterior, dos meses o dos rangos personalizados. Elige la tienda, o todas, y exporta a Excel.",
+          "Elige qué comparar: el mes actual contra el anterior, dos meses o dos rangos personalizados. La tienda es la tuya y no se puede cambiar.",
+        ).staff,
+        { target: FIRST, title: "Totales", description: "Unidades, ingresos y productos distintos vendidos. Arriba el período A (azul) con su cambio y abajo el período B (gris).", side: "bottom" },
+        { target: SECOND, title: "Gráfica", description: "Cada producto con una barra por período. Cambia entre unidades e ingresos, el orden y cuántos productos ver.", side: "top" },
+        { target: THIRD, title: "Tabla", description: "Todos los productos con su cambio en unidades y en dinero. Busca un producto con el filtro de la columna.", side: "top" },
+      ],
+      vendedor: [
+        headerStep(
+          "Elige qué comparar: el mes actual contra el anterior, dos meses o dos rangos personalizados. La tienda es la tuya y no se puede cambiar.",
+        ).vendedor,
+        { target: FIRST, title: "Totales", description: "Unidades, ingresos y productos distintos vendidos de tu tienda. Arriba el período A (azul) con su cambio y abajo el período B (gris).", side: "bottom" },
+        { target: SECOND, title: "Gráfica", description: "Cada producto con una barra por período. Cambia entre unidades e ingresos, el orden y cuántos productos ver.", side: "top" },
+        { target: THIRD, title: "Tabla", description: "Todos los productos con su cambio en unidades y en dinero. Busca un producto con el filtro de la columna.", side: "top" },
       ],
     },
   },
@@ -402,6 +436,29 @@ export const REPORT_GUIDES: Record<ReportPageKey, ReportGuide> = {
         MONTH_STORE_HEADER.vendedor,
         { target: FIRST, title: "Avance de tu tienda", description: "Ticket promedio a la fecha, meta del mes y alcance de la meta de tu tienda.", side: "bottom" },
         { target: SECOND, title: "Mes contra mes", description: "El ticket promedio de cada día del mes elegido junto al de los dos meses anteriores.", side: "top" },
+      ],
+    },
+  },
+
+  ordenes: {
+    title: "Órdenes",
+    icon: ReceiptText,
+    roles: ALL_ROLES,
+    brief: { staff: "Cada orden de caja, a detalle.", vendedor: "Cada orden de tu tienda, a detalle." },
+    intro: {
+      staff: "Todas las órdenes de caja del rango de fechas, con su tienda, cajero, cliente, productos y pago. Abre una para ver qué se compró, los impuestos y el cambio.",
+      vendedor: "Las órdenes de caja de tu tienda en el rango de fechas, con su cajero, cliente, productos y pago. Abre una para ver qué se compró, los impuestos y el cambio.",
+    },
+    steps: {
+      staff: [
+        DATE_STORE_HEADER.staff,
+        { target: FIRST, title: "Totales", description: "Órdenes, venta total y ticket promedio de todo el filtro, no solo de la página.", side: "bottom" },
+        { target: SECOND, title: "Lista de órdenes", description: "Busca por número de orden, recibo o cliente y ordena por fecha o total. Toca una orden o «Ver detalle» para abrirla.", side: "top" },
+      ],
+      vendedor: [
+        DATE_STORE_HEADER.vendedor,
+        { target: FIRST, title: "Totales", description: "Órdenes, venta total y ticket promedio de tu tienda en el rango.", side: "bottom" },
+        { target: SECOND, title: "Lista de órdenes", description: "Busca por número de orden, recibo o cliente y ordena por fecha o total. Toca una orden o «Ver detalle» para abrirla.", side: "top" },
       ],
     },
   },

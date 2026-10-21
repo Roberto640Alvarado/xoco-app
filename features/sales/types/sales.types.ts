@@ -28,19 +28,48 @@ export interface TopProductByWeight {
   totalRevenue: number;
 }
 
-export interface ProductMonthPeriod {
-  dateFrom: string;
+// Comparación de productos entre dos períodos libres — mismo shape que
+// ProductComparisonDoc en xoco-api (SalesService.findProductComparison).
+// "A" es el período principal y "B" contra el que se compara.
+export interface ComparisonPeriodRange {
+  dateFrom: string; // YYYY-MM-DD
   dateTo: string;
+}
+
+export interface ProductComparisonPeriods {
+  a: ComparisonPeriodRange;
+  b: ComparisonPeriodRange;
+}
+
+export interface ProductComparisonPeriodTotals extends ComparisonPeriodRange {
+  quantity: number;
+  revenue: number;
+  productCount: number;
+}
+
+export interface ProductComparisonValues {
   quantity: number;
   revenue: number;
 }
 
-export interface ProductMonthlyComparison {
+export interface ProductComparisonItem {
   productId: number;
   productName: string;
-  currentMonth: ProductMonthPeriod;
-  previousMonth: ProductMonthPeriod;
+  periodA: ProductComparisonValues;
+  periodB: ProductComparisonValues;
 }
+
+export interface ProductComparison {
+  periodA: ProductComparisonPeriodTotals;
+  periodB: ProductComparisonPeriodTotals;
+  items: ProductComparisonItem[];
+}
+
+/** Qué se grafica y con qué se mide el cambio: unidades o ingresos ($). */
+export type ProductComparisonMetric = "quantity" | "revenue";
+
+/** Orden de la gráfica y la tabla (se calcula en el cliente, sin volver a pedir datos). */
+export type ProductComparisonSort = "periodA" | "growth" | "decline";
 
 // "kg" para productos a granel (ej. Crocks); "unidad" para el resto — ver
 // SalesService.findTopProductsByCategory en xoco-api. `quantity` viene en
