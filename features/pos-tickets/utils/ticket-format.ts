@@ -1,6 +1,6 @@
 import type { InfoBadgeTone } from "@/design-system/components/info-badge";
 import { formatCurrency, formatKg } from "@/lib/format";
-import type { PosTicketLine } from "../types/pos-tickets.types";
+import type { PosTicketLine, PosTicketSummary } from "../types/pos-tickets.types";
 
 // Estados de pos.order en Odoo (las canceladas no llegan a esta pantalla).
 const STATE_INFO: Record<string, { label: string; tone: InfoBadgeTone }> = {
@@ -69,4 +69,24 @@ export function splitTicketTime(date: string, time: string): { clock: string; pe
   const formatted = formatTicketTime(date, time);
   const match = formatted.match(/^(\S+)\s*(.*)$/);
   return { clock: match?.[1] ?? formatted, period: match?.[2] ?? "" };
+}
+
+type TicketSaleFigures = Pick<PosTicketSummary, "lineCount" | "unitCount" | "amountUntaxed" | "amountTax" | "amountTotal">;
+
+function cents(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+/** Conteos y montos de la orden SIN la propina, para el Excel (en pantalla
+ * la propina se sigue mostrando como un producto más). */
+export function ticketWithoutTip(ticket: PosTicketSummary): TicketSaleFigures {
+  const { tip } = ticket;
+  if (!tip) return ticket;
+  return {
+    lineCount: ticket.lineCount - tip.lineCount,
+    unitCount: ticket.unitCount - tip.unitCount,
+    amountUntaxed: cents(ticket.amountUntaxed - tip.amountUntaxed),
+    amountTax: cents(ticket.amountTax - tip.amountTax),
+    amountTotal: cents(ticket.amountTotal - tip.amountTotal),
+  };
 }

@@ -20,7 +20,7 @@ import { addDaysIso, isIsoDate, todayLocalIso } from "@/lib/local-date";
 import { useDebouncedValue } from "../hooks/use-debounced-value";
 import { usePosTickets } from "../hooks/use-pos-tickets";
 import type { PosTicketSort, PosTicketSummary } from "../types/pos-tickets.types";
-import { ticketNumber, ticketState } from "../utils/ticket-format";
+import { ticketNumber, ticketState, ticketWithoutTip } from "../utils/ticket-format";
 import { TicketDetailDialog } from "./ticket-detail-dialog";
 import { TicketsList } from "./tickets-list";
 
@@ -109,23 +109,28 @@ export function PosTicketsView() {
           sheets={() => [
             {
               name: "Órdenes",
-              rows: items.map((ticket) => ({
-                Orden: ticketNumber(ticket),
-                "Orden en Odoo": ticket.name,
-                Fecha: ticket.date,
-                Hora: ticket.time,
-                Estado: ticketState(ticket.state).label,
-                Tienda: ticket.store.name,
-                Cajero: ticket.cashier?.name ?? "",
-                Cliente: ticket.customer?.name ?? "Consumidor final",
-                Productos: ticket.lineCount,
-                Unidades: ticket.unitCount,
-                "Subtotal sin IVA": ticket.amountUntaxed,
-                Impuestos: ticket.amountTax,
-                Total: ticket.amountTotal,
-                Pagado: ticket.amountPaid,
-                "Métodos de pago": ticket.paymentMethods.join(", "),
-              })),
+              // La propina no cuenta como venta en el Excel (en pantalla sí
+              // se ve como producto). "Pagado" queda tal cual lo cobró Odoo.
+              rows: items.map((ticket) => {
+                const sale = ticketWithoutTip(ticket);
+                return {
+                  Orden: ticketNumber(ticket),
+                  "Orden en Odoo": ticket.name,
+                  Fecha: ticket.date,
+                  Hora: ticket.time,
+                  Estado: ticketState(ticket.state).label,
+                  Tienda: ticket.store.name,
+                  Cajero: ticket.cashier?.name ?? "",
+                  Cliente: ticket.customer?.name ?? "Consumidor final",
+                  Productos: sale.lineCount,
+                  Unidades: sale.unitCount,
+                  "Subtotal sin IVA": sale.amountUntaxed,
+                  Impuestos: sale.amountTax,
+                  Total: sale.amountTotal,
+                  Pagado: ticket.amountPaid,
+                  "Métodos de pago": ticket.paymentMethods.join(", "),
+                };
+              }),
             },
           ]}
         />

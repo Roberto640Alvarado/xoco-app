@@ -27,6 +27,16 @@ export interface PosTicketSummary {
   amountPaid: number;
   amountReturn: number;
   paymentMethods: string[];
+  /** Parte de la orden que es propina (ya incluida arriba). null si no lleva. */
+  tip: PosTicketTip | null;
+}
+
+export interface PosTicketTip {
+  lineCount: number;
+  unitCount: number;
+  amountUntaxed: number;
+  amountTax: number;
+  amountTotal: number;
 }
 
 export interface PosTicketsTotals {
