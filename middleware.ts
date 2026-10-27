@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AUTH_COOKIE_NAME, decodeToken } from "@/lib/auth/decode-token";
+import { PLANTA_HOME_PATH, getDashboardPath } from "@/features/auth/utils/get-dashboard-path";
 
 const AUTH_ROUTES = ["/login"];
 
@@ -23,12 +24,25 @@ const VENDEDOR_PREFIX_PATHS = [
   "/dashboard/inventario",
 ];
 
+// PLANTA (despacho) solo ve Inventario → Solicitudes: su inicio ES esa
+// pantalla, así que cualquier otra ruta del panel la regresa ahí.
+const PLANTA_PREFIX_PATHS = [PLANTA_HOME_PATH];
+
+function normalizePath(pathname: string): string {
+  return pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+}
+
 function isVendedorAllowedRoute(pathname: string): boolean {
-  const path = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+  const path = normalizePath(pathname);
   return (
     VENDEDOR_EXACT_PATHS.includes(path) ||
     VENDEDOR_PREFIX_PATHS.some((allowed) => path === allowed || path.startsWith(`${allowed}/`))
   );
+}
+
+function isPlantaAllowedRoute(pathname: string): boolean {
+  const path = normalizePath(pathname);
+  return PLANTA_PREFIX_PATHS.some((allowed) => path === allowed || path.startsWith(`${allowed}/`));
 }
 
 // Rutas reales de la app (fuera de /dashboard, que ya se cubre por
@@ -64,7 +78,7 @@ export function middleware(request: NextRequest) {
 
   // Ya con sesión activa: no tiene sentido ver login de nuevo.
   if (isAuthRoute && decoded?.role) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL(getDashboardPath(decoded.role), request.url));
   }
 
   if (isDashboardRoute) {
@@ -78,7 +92,7 @@ export function middleware(request: NextRequest) {
     // FINANZAS con sesión válida pero intentando entrar a una zona de
     // administración exclusiva de SUPER_ADMIN: lo regresamos a su panel.
     if (isAdminRoute && decoded.role !== "SUPER_ADMIN") {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      return NextResponse.redirect(new URL(getDashboardPath(decoded.role), request.url));
     }
 
     // VENDEDOR solo puede entrar a sus pantallas (ver arriba) —
@@ -86,6 +100,11 @@ export function middleware(request: NextRequest) {
     // cubierta arriba) lo regresa a su panel.
     if (decoded.role === "VENDEDOR" && !isVendedorAllowedRoute(pathname)) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+
+    // PLANTA solo entra a Solicitudes (ver arriba).
+    if (decoded.role === "PLANTA" && !isPlantaAllowedRoute(pathname)) {
+      return NextResponse.redirect(new URL(PLANTA_HOME_PATH, request.url));
     }
   }
 

@@ -27,6 +27,7 @@ const ROLE_OPTIONS: Array<{ value: CreateUserFormValues["role"]; label: string }
   { value: "FINANZAS", label: "Finanzas" },
   { value: "SUPER_ADMIN", label: "Super admin" },
   { value: "VENDEDOR", label: "Vendedor" },
+  { value: "PLANTA", label: "Planta" },
 ];
 
 const DEFAULT_VALUES: CreateUserFormValues = {

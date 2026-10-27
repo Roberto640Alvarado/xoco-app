@@ -1,11 +1,9 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { ArrowDownToLine, Check, CheckCircle2, ChevronRight, Cookie, Gift, PackageX, Truck, X } from "lucide-react";
-import { cn } from "cn";
+import { ArrowDownToLine, Check, ChevronRight, Cookie, Gift, PackageX, X } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/design-system/components/data-table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -22,8 +20,6 @@ import { InfoBadge, type InfoBadgeTone } from "@/design-system/components/info-b
 import { ChartErrorState } from "@/components/ui/chart-error-state";
 import { formatDateTime, formatKg, formatInteger } from "@/lib/format";
 import { useResolveInventoryMovement } from "../hooks/use-resolve-inventory-movement";
-import { useReceiveInventoryMovement } from "../hooks/use-receive-inventory-movement";
-import { useAcceptInventoryMovement } from "../hooks/use-accept-inventory-movement";
 import type { InventoryMovement, InventoryMovementStatus, InventoryMovementType } from "../types/inventory-movement.types";
 import type { ApiError } from "@/lib/api/client";
 
@@ -55,9 +51,8 @@ const STATUS_LABEL: Record<InventoryMovementStatus, string> = {
   RECHAZADO: "Rechazado",
 };
 
-// Cada paso del flujo de ENTRADA tiene su propio tono (ver InfoBadge):
-// PENDIENTE (ámbar, falta que Admin/Finanzas responda), EN_CAMINO (violeta,
-// ya aceptada), RECIBIDO (cielo, falta la confirmación final).
+// Tono de cada estado (ver InfoBadge). EN_CAMINO y RECIBIDO son del flujo
+// viejo de solicitudes: solo aparecen en datos históricos.
 const STATUS_TONE: Record<InventoryMovementStatus, InfoBadgeTone> = {
   PENDIENTE: "warning",
   EN_CAMINO: "violet",
@@ -74,27 +69,12 @@ function StatusPill({ status }: { status: InventoryMovementStatus }) {
   );
 }
 
-// Una línea que explica en qué paso está y qué sigue, según quién mira —
-// el Vendedor necesita saber que "Recibido" todavía no suma al stock.
+// Una línea que explica en qué paso está y qué sigue, según quién mira.
 function statusHint(movement: InventoryMovement, isAdmin: boolean): string | null {
-  const isEntrada = movement.type === "ENTRADA";
-  switch (movement.status) {
-    case "PENDIENTE":
-      if (isEntrada) return isAdmin ? "Solicitud nueva: acéptala o recházala." : "Esperando respuesta de Admin o Finanzas.";
-      return isAdmin ? "Falta confirmar o rechazar." : "Pendiente de confirmación de Admin o Finanzas.";
-    case "EN_CAMINO":
-      return isAdmin
-        ? "Aceptada, esperando que la tienda la reciba."
-        : "Aceptada y en camino. Márcala como recibida cuando llegue.";
-    case "RECIBIDO":
-      return isAdmin
-        ? "La tienda ya la recibió. Confirma para sumarla al stock."
-        : "En proceso de aprobación. Se sumará al stock cuando Admin o Finanzas confirme.";
-    case "CONFIRMADO":
-      return isEntrada ? "Sumada al stock de la tienda." : null;
-    default:
-      return null;
+  if (movement.status === "PENDIENTE") {
+    return isAdmin ? "Falta confirmar o rechazar." : "Pendiente de confirmación de Admin o Finanzas.";
   }
+  return null;
 }
 
 function formatQuantity(quantity: number): string {
@@ -103,97 +83,6 @@ function formatQuantity(quantity: number): string {
   // formatea como número simple; el tipo (Merma/Regalía/Degustación/
   // Entrada) y la nota ya dan el contexto que importa.
   return Number.isInteger(quantity) ? formatInteger(quantity) : formatKg(quantity);
-}
-
-interface ReceiveMovementDialogProps {
-  movement: InventoryMovement | null;
-  onOpenChange: (open: boolean) => void;
-}
-
-// Modal de "Marcar como recibido" — exclusivo de ENTRADA. A diferencia de
-// ConfirmDialog (que es un sí/no sin datos), acá hace falta capturar la
-// cantidad real que llegó, así que es su propio Dialog. Arranca con el
-// input ya lleno con la cantidad solicitada (el caso más común es que
-// llegue completo) — el Vendedor solo lo cambia si no fue así.
-function ReceiveMovementDialog({ movement, onOpenChange }: ReceiveMovementDialogProps) {
-  const receive = useReceiveInventoryMovement();
-  const [value, setValue] = useState("");
-  const [lastId, setLastId] = useState<string | null>(null);
-
-  // Mismo criterio de "ajuste de estado durante el render" que el resto
-  // del proyecto — al abrir para un movimiento nuevo, reinicia el input
-  // a la cantidad solicitada y la mutación anterior.
-  if (movement && movement.id !== lastId) {
-    setLastId(movement.id);
-    setValue(String(movement.quantity));
-    receive.reset();
-  }
-
-  const numericValue = Number(value);
-  const invalid = value.trim() === "" || Number.isNaN(numericValue) || numericValue < 0;
-
-  function handleConfirm() {
-    if (!movement || invalid) return;
-    receive.mutate(
-      { id: movement.id, receivedQuantity: numericValue },
-      { onSuccess: () => setTimeout(() => onOpenChange(false), 1200) },
-    );
-  }
-
-  return (
-    <Dialog open={movement !== null} onOpenChange={(next) => !receive.isPending && onOpenChange(next)}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle className="text-lg font-bold text-foreground">Marcar como recibido</DialogTitle>
-          <DialogDescription className="pt-1 leading-relaxed">
-            {movement && (
-              <>
-                ¿Cuánto llegó de <span className="font-medium text-foreground">{movement.productName}</span>? Se
-                solicitaron {formatQuantity(movement.quantity)}.
-              </>
-            )}
-          </DialogDescription>
-        </DialogHeader>
-
-        {receive.isSuccess ? (
-          <div className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/10 px-4 py-4 text-sm font-medium text-primary">
-            <CheckCircle2 className="h-5 w-5 shrink-0" aria-hidden="true" />
-            Recepción registrada. Está en proceso de aprobación y se sumará al stock cuando Admin o Finanzas confirme.
-          </div>
-        ) : (
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="received-quantity">Cantidad recibida</Label>
-            <Input
-              id="received-quantity"
-              type="number"
-              min={0}
-              step="0.01"
-              inputMode="decimal"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              aria-invalid={invalid}
-              autoFocus
-            />
-          </div>
-        )}
-
-        {receive.isError && (
-          <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
-            {(receive.error as ApiError).message}
-          </div>
-        )}
-
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={receive.isPending}>
-            Cancelar
-          </Button>
-          <Button type="button" onClick={handleConfirm} disabled={receive.isPending || invalid || receive.isSuccess}>
-            Marcar recibido
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
 }
 
 interface RejectMovementDialogProps {
@@ -229,7 +118,7 @@ function RejectMovementDialog({ movement, onOpenChange }: RejectMovementDialogPr
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold text-foreground">
-            {movement?.type === "ENTRADA" ? "Rechazar solicitud" : "Rechazar movimiento"}
+            Rechazar movimiento
           </DialogTitle>
           <DialogDescription className="pt-1 leading-relaxed">
             {movement && (
@@ -247,7 +136,7 @@ function RejectMovementDialog({ movement, onOpenChange }: RejectMovementDialogPr
             id="reject-reason"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Ej. no hay existencia en planta esta semana..."
+            placeholder="Ej. la cantidad no coincide con lo que se vendió..."
             maxLength={300}
             autoFocus
           />
@@ -277,7 +166,7 @@ interface MovementDetailDialogProps {
   onOpenChange: (open: boolean) => void;
   storeName?: string;
   isAdmin: boolean;
-  /** Botones de gestión (aceptar / confirmar / rechazar / marcar recibido). */
+  /** Botones de gestión (confirmar / rechazar). */
   actions: ReactNode;
 }
 
@@ -304,7 +193,7 @@ function MovementDetailDialog({ movement, onOpenChange, storeName, isAdmin, acti
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-lg font-bold text-foreground">
                 <Icon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
-                {movement.type === "ENTRADA" ? "Solicitud de stock" : TYPE_LABEL[movement.type]}
+                {TYPE_LABEL[movement.type]}
               </DialogTitle>
               <DialogDescription className="pt-1 leading-relaxed">
                 <span className="font-medium text-foreground">{movement.productName}</span>
@@ -325,33 +214,11 @@ function MovementDetailDialog({ movement, onOpenChange, storeName, isAdmin, acti
               <DetailRow label="Cantidad">
                 <span className="tabular-nums">{formatQuantity(movement.quantity)}</span>
               </DetailRow>
-              <DetailRow label="Cantidad recibida">
-                {movement.receivedQuantity != null ? (
-                  <span
-                    className={cn(
-                      "tabular-nums",
-                      movement.receivedQuantity !== movement.quantity && "text-destructive",
-                    )}
-                  >
-                    {formatQuantity(movement.receivedQuantity)}
-                  </span>
-                ) : (
-                  "—"
-                )}
-              </DetailRow>
               <DetailRow label="Fecha">{formatDateTime(movement.occurredAt)}</DetailRow>
               <DetailRow label="Registrado por">
                 {movement.registeredByEmail}
                 <span className="block text-[11px] text-muted-foreground">{ROLE_LABEL[movement.registeredByRole]}</span>
               </DetailRow>
-              {movement.acceptedByEmail && (
-                <DetailRow label="Aceptada por">
-                  {movement.acceptedByEmail}
-                  {movement.acceptedAt && (
-                    <span className="block text-[11px] text-muted-foreground">{formatDateTime(movement.acceptedAt)}</span>
-                  )}
-                </DetailRow>
-              )}
               {movement.resolvedByEmail && (
                 <DetailRow label={movement.status === "RECHAZADO" ? "Rechazada por" : "Resuelta por"}>
                   {movement.resolvedByEmail}
@@ -378,19 +245,16 @@ interface MovementsTableProps {
   isLoading: boolean;
   isError: boolean;
   errorMessage?: string;
-  /** Solo Admin/Finanzas puede aceptar/confirmar/rechazar (ver @Roles en
+  /** Solo Admin/Finanzas puede confirmar/rechazar (ver @Roles en
    * el backend) — el Vendedor ve la misma tabla sin esos botones.
-   * "Marcar recibido" (ENTRADA en camino) sí se ofrece a cualquiera que
-   * vea la pantalla — el backend valida la tienda, no hace falta
-   * duplicar esa regla acá. */
+   */
   canResolve: boolean;
   /** Si viene, se agrega la columna "Tienda" (bandeja de todas las tiendas). */
   storeNames?: Map<number, string>;
   emptyMessage?: string;
-  /** Qué explica el ⓘ junto a "Estado" (solicitudes vs. movimientos). */
+  /** Qué explica el ⓘ junto a "Estado". */
   statusInfo?: InfoTopic;
-  /** Filtros por columna en el encabezado (por defecto sí). Solicitudes los
-   * apaga porque filtra arriba, en la card. */
+  /** Filtros por columna en el encabezado (por defecto sí). */
   columnFilters?: boolean;
 }
 
@@ -406,37 +270,22 @@ export function MovementsTable({
   columnFilters = true,
 }: MovementsTableProps) {
   const resolve = useResolveInventoryMovement();
-  const accept = useAcceptInventoryMovement();
-  const [target, setTarget] = useState<{ movement: InventoryMovement; action: "confirm" | "accept" } | null>(null);
+  const [target, setTarget] = useState<InventoryMovement | null>(null);
   const [rejectTarget, setRejectTarget] = useState<InventoryMovement | null>(null);
-  const [receiveTarget, setReceiveTarget] = useState<InventoryMovement | null>(null);
   const [detailTarget, setDetailTarget] = useState<InventoryMovement | null>(null);
 
   function handleConfirmDialog() {
     if (!target) return;
-    if (target.action === "accept") {
-      accept.mutate({ id: target.movement.id }, { onSuccess: () => setTarget(null) });
-      return;
-    }
-    resolve.mutate({ id: target.movement.id, action: "confirm" }, { onSuccess: () => setTarget(null) });
+    resolve.mutate({ id: target.id, action: "confirm" }, { onSuccess: () => setTarget(null) });
   }
 
   if (isError) return <ChartErrorState message={errorMessage} />;
 
-  const activeMutation = target?.action === "accept" ? accept : resolve;
-
-  // Qué puede hacer quien mira con este movimiento. Admin/Finanzas: una
-  // ENTRADA se acepta (PENDIENTE) y luego se confirma (RECIBIDO); lo demás se
-  // confirma directo desde PENDIENTE. Rechazar vale mientras siga abierto.
-  // El Vendedor solo puede marcar recibida una ENTRADA en camino.
+  // Qué puede hacer quien mira: solo Admin/Finanzas, y mientras siga
+  // pendiente (confirmar suma/resta del stock; rechazar pide motivo).
   function actionState(movement: InventoryMovement) {
-    const isEntrada = movement.type === "ENTRADA";
-    const receive = isEntrada && movement.status === "EN_CAMINO";
-    const accept = canResolve && isEntrada && movement.status === "PENDIENTE";
-    const confirm = canResolve && (isEntrada ? movement.status === "RECIBIDO" : movement.status === "PENDIENTE");
-    const reject =
-      canResolve && (movement.status === "PENDIENTE" || movement.status === "EN_CAMINO" || movement.status === "RECIBIDO");
-    return { receive, accept, confirm, reject, any: receive || accept || confirm || reject };
+    const open = canResolve && movement.status === "PENDIENTE";
+    return { confirm: open, reject: open, any: open };
   }
 
   // Cierra el detalle antes de abrir el diálogo de la acción elegida.
@@ -450,20 +299,8 @@ export function MovementsTable({
     if (!state.any) return null;
     return (
       <div className="flex flex-wrap gap-2">
-        {state.receive && (
-          <Button type="button" size="sm" onClick={() => startAction(() => setReceiveTarget(movement))}>
-            <ArrowDownToLine className="h-3.5 w-3.5" aria-hidden="true" />
-            Marcar recibido
-          </Button>
-        )}
-        {state.accept && (
-          <Button type="button" size="sm" onClick={() => startAction(() => setTarget({ movement, action: "accept" }))}>
-            <Truck className="h-3.5 w-3.5" aria-hidden="true" />
-            Aceptar
-          </Button>
-        )}
         {state.confirm && (
-          <Button type="button" size="sm" onClick={() => startAction(() => setTarget({ movement, action: "confirm" }))}>
+          <Button type="button" size="sm" onClick={() => startAction(() => setTarget(movement))}>
             <Check className="h-3.5 w-3.5" aria-hidden="true" />
             Confirmar
           </Button>
@@ -543,19 +380,7 @@ export function MovementsTable({
       id: "quantity",
       header: "Cantidad",
       label: "Cantidad",
-      cell: (movement) => {
-        const hasDiscrepancy = movement.receivedQuantity != null && movement.receivedQuantity !== movement.quantity;
-        return (
-          <span className="tabular-nums">
-            {formatQuantity(movement.quantity)}
-            {movement.receivedQuantity != null && (
-              <span className={cn("block text-[11px]", hasDiscrepancy ? "text-destructive" : "text-muted-foreground")}>
-                recibido: {formatQuantity(movement.receivedQuantity)}
-              </span>
-            )}
-          </span>
-        );
-      },
+      cell: (movement) => <span className="tabular-nums">{formatQuantity(movement.quantity)}</span>,
       align: "right",
       nowrap: true,
     },
@@ -622,26 +447,15 @@ export function MovementsTable({
       <ConfirmDialog
         open={target !== null}
         onOpenChange={(next) => !next && setTarget(null)}
-        title={
-          target?.action === "accept"
-            ? "Aceptar solicitud"
-            : target?.movement.type === "ENTRADA"
-              ? "Confirmar entrada"
-              : "Confirmar movimiento"
-        }
-        description={
-          target?.action === "accept"
-            ? `Vas a aceptar la solicitud de ${target.movement.productName}: la tienda la verá como "en camino". Todavía no se suma al stock. Eso pasa cuando confirmes la recepción.`
-            : `Vas a confirmar esta ${target ? TYPE_LABEL[target.movement.type].toLowerCase() : ""} de ${target?.movement.productName}. ${target?.movement.type === "ENTRADA" ? "Se sumará" : "Se restará"} del inventario estimado de la tienda.`
-        }
-        confirmLabel={target?.action === "accept" ? "Aceptar" : "Confirmar"}
+        title="Confirmar movimiento"
+        description={`Vas a confirmar esta ${target ? TYPE_LABEL[target.type].toLowerCase() : ""} de ${target?.productName}. Se restará del inventario estimado de la tienda.`}
+        confirmLabel="Confirmar"
         onConfirm={handleConfirmDialog}
-        isLoading={activeMutation.isPending}
-        errorMessage={(activeMutation.error as ApiError | null)?.message}
+        isLoading={resolve.isPending}
+        errorMessage={(resolve.error as ApiError | null)?.message}
       />
 
       <RejectMovementDialog movement={rejectTarget} onOpenChange={(next) => !next && setRejectTarget(null)} />
-      <ReceiveMovementDialog movement={receiveTarget} onOpenChange={(next) => !next && setReceiveTarget(null)} />
     </>
   );
 }

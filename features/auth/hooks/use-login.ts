@@ -27,9 +27,9 @@ export function useLogin() {
       setSession(accessToken, user);
       return user;
     },
-    onSuccess: () => {
+    onSuccess: (user) => {
       const redirect = searchParams.get("redirect");
-      router.push(redirect && redirect.startsWith("/") ? redirect : getDashboardPath());
+      router.push(redirect && redirect.startsWith("/") ? redirect : getDashboardPath(user.role));
       router.refresh();
     },
   });

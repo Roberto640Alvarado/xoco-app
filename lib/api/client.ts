@@ -137,6 +137,14 @@ export function apiPost<T>(
   return apiClient.post<T>(url, data, config).then((res) => res.data);
 }
 
+export function apiPut<T>(
+  url: string,
+  data?: unknown,
+  config?: Parameters<typeof apiClient.put>[2],
+): Promise<T> {
+  return apiClient.put<T>(url, data, config).then((res) => res.data);
+}
+
 export function apiPatch<T>(
   url: string,
   data?: unknown,

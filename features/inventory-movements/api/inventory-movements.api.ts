@@ -3,7 +3,6 @@ import type {
   CreateInventoryMovementPayload,
   InventoryMovement,
   InventoryMovementNotifications,
-  MovementsInboxKind,
 } from "../types/inventory-movement.types";
 
 export function fetchInventoryMovements(posConfigId: number) {
@@ -23,23 +22,11 @@ export function rejectInventoryMovement(id: string, reason: string) {
   return apiPatch<InventoryMovement>(`/inventory/movements/${id}/reject`, { reason });
 }
 
-// Solicitud de stock (ENTRADA): Admin/Finanzas la acepta y pasa a EN_CAMINO.
-export function acceptInventoryMovement(id: string) {
-  return apiPatch<InventoryMovement>(`/inventory/movements/${id}/accept`);
+// Bandeja de Admin/Finanzas: merma/regalía/degustación abiertas de TODAS las tiendas.
+export function fetchMovementsInbox() {
+  return apiGet<InventoryMovement[]>("/inventory/movements/inbox");
 }
 
-// Bandeja de Admin/Finanzas: lo abierto de TODAS las tiendas.
-export function fetchMovementsInbox(kind: MovementsInboxKind) {
-  return apiGet<InventoryMovement[]>("/inventory/movements/inbox", { params: { kind } });
-}
-
-// Exclusivo del flujo ENTRADA: el Vendedor marca que el envío llegó e
-// ingresa la cantidad real (puede diferir de lo solicitado) — todavía
-// necesita que Admin/Finanzas lo confirme o rechace después.
-export function receiveInventoryMovement(id: string, receivedQuantity: number) {
-  return apiPatch<InventoryMovement>(`/inventory/movements/${id}/receive`, { receivedQuantity });
-}
-
-export function fetchMovementNotifications(params: { sinceMovements?: string; sinceRequests?: string }) {
+export function fetchMovementNotifications(params: { sinceMovements?: string }) {
   return apiGet<InventoryMovementNotifications>("/inventory/movements/notifications", { params });
 }

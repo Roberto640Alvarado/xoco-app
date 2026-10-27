@@ -12,9 +12,10 @@ export const ROLE_NAME: Record<UserRole, string> = {
   SUPER_ADMIN: "Super admin",
   FINANZAS: "Finanzas",
   VENDEDOR: "Vendedor",
+  PLANTA: "Planta",
 };
 
-const ALL_ROLES: UserRole[] = ["SUPER_ADMIN", "FINANZAS", "VENDEDOR"];
+const ALL_ROLES: UserRole[] = ["SUPER_ADMIN", "FINANZAS", "VENDEDOR", "PLANTA"];
 
 interface ModuleDetailProps {
   moduleKey: ModuleKey;
@@ -63,16 +64,20 @@ export function ModuleDetail({ moduleKey, role, row, rowsByRole, availableKeys, 
           </p>
         </div>
 
-        {info.includes && (
+        {(info.includes || info.note || (role === "VENDEDOR" && info.vendedorNote)) && (
           <div className="flex flex-col gap-2">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Pantallas que incluye</p>
-            <div className="flex flex-wrap gap-1.5">
-              {info.includes.map((screen) => (
-                <InfoBadge key={screen} tone="info" size="sm">
-                  {screen}
-                </InfoBadge>
-              ))}
-            </div>
+            {info.includes && (
+              <>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Pantallas que incluye</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {info.includes.map((screen) => (
+                    <InfoBadge key={screen} tone="info" size="sm">
+                      {screen}
+                    </InfoBadge>
+                  ))}
+                </div>
+              </>
+            )}
             {info.note && <p className="text-xs text-muted-foreground">{info.note}</p>}
             {role === "VENDEDOR" && info.vendedorNote && <p className="text-xs text-muted-foreground">{info.vendedorNote}</p>}
           </div>

@@ -2,11 +2,12 @@ import { Check, X } from "lucide-react";
 import { cn } from "cn";
 import type { InfoBadgeTone } from "@/design-system/components/info-badge";
 
-/** Tono del badge de cada rol: Admin violeta, Finanzas azul, Vendedor ámbar. */
-export const ROLE_TONE: Record<"admin" | "finanzas" | "vendedor", InfoBadgeTone> = {
+/** Tono del badge de cada rol: Admin violeta, Finanzas azul, Vendedor ámbar, Planta verde. */
+export const ROLE_TONE: Record<"admin" | "finanzas" | "vendedor" | "planta", InfoBadgeTone> = {
   admin: "violet",
   finanzas: "info",
   vendedor: "warning",
+  planta: "success",
 };
 
 interface RolePermissionsProps {

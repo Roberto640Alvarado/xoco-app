@@ -32,7 +32,7 @@ export function InventoryMovementsView() {
   const userEmail = user?.email;
   useEffect(() => {
     if (!userEmail) return;
-    markSeen(userEmail, "movements");
+    markSeen(userEmail);
     queryClient.invalidateQueries({ queryKey: ["inventory", "notifications"] });
   }, [userEmail, queryClient]);
 
@@ -50,15 +50,12 @@ export function InventoryMovementsView() {
   }
 
   const movements = useInventoryMovements(allStoresPending ? undefined : posConfigId);
-  const inbox = useMovementsInbox("movements", canResolve && allStoresPending);
+  const inbox = useMovementsInbox(canResolve && allStoresPending);
   const selectedStore = stores?.find((store) => store.id === posConfigId);
   const storeNames = useMemo(() => new Map((stores ?? []).map((store) => [store.id, store.name])), [stores]);
 
   const source = allStoresPending ? inbox : movements;
-  const rows = useMemo(
-    () => (source.data ?? []).filter((movement) => movement.type !== "ENTRADA"),
-    [source.data],
-  );
+  const rows = useMemo(() => source.data ?? [], [source.data]);
 
   return (
     <div className="flex flex-col gap-4">

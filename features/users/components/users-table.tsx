@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Panel } from "@/design-system/components/panel";
-import { InfoBadge } from "@/design-system/components/info-badge";
+import { InfoBadge, type InfoBadgeTone } from "@/design-system/components/info-badge";
 import { cn } from "cn";
 import { KeyRound, Pencil, ShieldCheck, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -38,12 +38,20 @@ const ROLE_LABEL: Record<UserRole, string> = {
   SUPER_ADMIN: "Super admin",
   FINANZAS: "Finanzas",
   VENDEDOR: "Vendedor",
+  PLANTA: "Planta",
+};
+
+const ROLE_TONE: Record<UserRole, InfoBadgeTone> = {
+  SUPER_ADMIN: "violet",
+  FINANZAS: "info",
+  VENDEDOR: "warning",
+  PLANTA: "success",
 };
 
 function RolePill({ role }: { role: UserRole }) {
   const isSuperAdmin = role === "SUPER_ADMIN";
   return (
-    <InfoBadge tone={isSuperAdmin ? "violet" : role === "FINANZAS" ? "info" : "warning"} icon={isSuperAdmin ? ShieldCheck : undefined}>
+    <InfoBadge tone={ROLE_TONE[role]} icon={isSuperAdmin ? ShieldCheck : undefined}>
       {ROLE_LABEL[role]}
     </InfoBadge>
   );

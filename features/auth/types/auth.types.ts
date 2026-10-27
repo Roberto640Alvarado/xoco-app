@@ -1,4 +1,4 @@
-export type UserRole = "SUPER_ADMIN" | "FINANZAS" | "VENDEDOR";
+export type UserRole = "SUPER_ADMIN" | "FINANZAS" | "VENDEDOR" | "PLANTA";
 
 export interface AuthUser {
   id: string;
@@ -6,7 +6,8 @@ export interface AuthUser {
   name: string | null;
   role: UserRole;
   isActive: boolean;
-  // Tienda asignada — solo presente (no null) para role=VENDEDOR, ese
+  // Tienda asignada — solo presente (no null) para role=VENDEDOR (Planta
+  // no tiene tienda), ese
   // usuario solo ve datos de esta tienda (forzado también en el
   // servidor, esto es solo para la UI).
   posConfigId: number | null;

@@ -14,7 +14,8 @@ export function useInventoryAccess() {
   return useQuery({
     queryKey: ["inventory", "access"],
     queryFn: fetchInventoryAccess,
-    enabled: isHydrated && !!user,
+    // Planta no tiene este endpoint (y no lo necesita: solo ve Solicitudes).
+    enabled: isHydrated && !!user && user.role !== "PLANTA",
     staleTime: 60_000,
     refetchOnWindowFocus: true,
   });

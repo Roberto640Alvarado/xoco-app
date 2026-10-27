@@ -1,11 +1,12 @@
+// ENTRADA ya no se registra a mano: la crea el sistema (ya CONFIRMADA) cuando
+// la tienda confirma una solicitud recibida (Inventario → Solicitudes). Puede
+// aparecer en listados históricos, pero no se crea ni resuelve desde aquí.
 export type InventoryMovementType = "MERMA" | "REGALIA" | "DEGUSTACION" | "ENTRADA";
 
-// Flujo de ENTRADA (solicitud de stock de un Vendedor):
-// PENDIENTE (el Vendedor pidió) -> EN_CAMINO (Admin/Finanzas aceptó) ->
-// RECIBIDO (el Vendedor marcó que llegó, con la cantidad real) ->
-// CONFIRMADO (Admin/Finanzas lo da por bueno y recién ahí se suma al
-// stock). Antes de CONFIRMADO se puede pasar a RECHAZADO con motivo.
-// Los demás tipos van directo de PENDIENTE a CONFIRMADO/RECHAZADO.
+// Merma/regalía/degustación: PENDIENTE (lo reportó un Vendedor) ->
+// CONFIRMADO o RECHAZADO (con motivo) por Admin/Finanzas. EN_CAMINO y
+// RECIBIDO son del flujo viejo de solicitudes y solo existen en datos
+// históricos.
 export type InventoryMovementStatus = "PENDIENTE" | "EN_CAMINO" | "RECIBIDO" | "CONFIRMADO" | "RECHAZADO";
 
 // Lo que devuelven POST/GET /inventory/stores/:posConfigId/movements
@@ -21,9 +22,7 @@ export interface InventoryMovement {
   productName: string;
   type: InventoryMovementType;
   quantity: number;
-  // Solo ENTRADA la usa: la cantidad real que el Vendedor confirmó
-  // haber recibido (ver useReceiveInventoryMovement) — puede diferir de
-  // `quantity` si no llegó completo. null hasta que se marca RECIBIDO.
+  // Dato histórico del flujo viejo de solicitudes; no se usa en pantalla nueva.
   receivedQuantity: number | null;
   note: string | null;
   occurredAt: string;
@@ -32,7 +31,6 @@ export interface InventoryMovement {
   registeredByRole: "SUPER_ADMIN" | "FINANZAS" | "VENDEDOR";
   resolvedByEmail: string | null;
   resolvedAt: string | null;
-  // Solo ENTRADA: quién/cuándo aceptó la solicitud (pasó a EN_CAMINO).
   acceptedByEmail: string | null;
   acceptedAt: string | null;
   // Motivo con el que Admin/Finanzas rechazó (null si no está rechazado).
@@ -48,14 +46,10 @@ export interface CreateInventoryMovementPayload {
 }
 
 // Lo que devuelve GET /inventory/movements/notifications (ver
-// InventoryMovementNotificationsDoc en xoco-api): un contador por pantalla.
+// InventoryMovementNotificationsDoc en xoco-api).
 export interface InventoryMovementNotifications {
   total: number;
   /** Globo de Inventario → Movimientos. */
   movements: number;
-  /** Globo de Inventario → Solicitudes. */
-  requests: number;
 }
 
-/** Qué bandeja pide Admin/Finanzas: solicitudes de stock o merma/regalía/degustación. */
-export type MovementsInboxKind = "requests" | "movements";

@@ -1,6 +1,6 @@
 export const AUTH_COOKIE_NAME = "xoco_token";
 
-export type Role = "SUPER_ADMIN" | "FINANZAS" | "VENDEDOR";
+export type Role = "SUPER_ADMIN" | "FINANZAS" | "VENDEDOR" | "PLANTA";
 
 export interface DecodedToken {
   role?: Role;

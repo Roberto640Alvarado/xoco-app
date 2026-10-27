@@ -84,6 +84,7 @@ const ROLE_LABEL: Record<UserRole, string> = {
   SUPER_ADMIN: "Super admin",
   FINANZAS: "Finanzas",
   VENDEDOR: "Vendedor",
+  PLANTA: "Planta",
 };
 
 // Orden fijo de las secciones del sidebar, independiente del orden en que
@@ -113,7 +114,9 @@ function findActiveNavItem<T extends { href: string }>(
 }
 
 function canSeeItem(item: DashboardNavLeafBase, user: AuthUser | null): boolean {
-  const roleAllowed = !item.roles || (!!user && item.roles.includes(user.role));
+  // Un ítem sin `roles` lo ven Admin, Finanzas y Vendedor; PLANTA (despacho)
+  // solo ve lo que la nombra explícitamente en `roles`.
+  const roleAllowed = item.roles ? !!user && item.roles.includes(user.role) : user?.role !== "PLANTA";
   if (!roleAllowed) return false;
 
   // Sin moduleKey (ej. Administración), no pasa por el panel de Permisos.

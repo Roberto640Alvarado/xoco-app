@@ -57,7 +57,7 @@ export default function NotFound() {
         </p>
       </div>
 
-      <Button render={<Link href={getDashboardPath()} />}>
+      <Button render={<Link href={getDashboardPath(user.role)} />}>
         <Home className="h-4 w-4" aria-hidden="true" />
         Ir al inicio
       </Button>

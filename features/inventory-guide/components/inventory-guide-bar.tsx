@@ -36,13 +36,15 @@ function pageFromPath(pathname: string): GuidePage {
 }
 
 const PAGE_ORDER: GuidePage[] = ["conteo", "solicitudes", "movimientos", "registro"];
+// Planta solo tiene Solicitudes.
+const PLANTA_PAGES: GuidePage[] = ["solicitudes"];
 
 // Card del tour guiado, común a todas las pantallas de Inventario (se monta
 // en app/dashboard/inventario/layout.tsx y en Administración → Inventario):
 // "Iniciar tour" lanza el recorrido de la pantalla actual y el botón ⓘ abre
 // un modal con el flujo completo, qué hace cada pantalla y qué puede (y qué
 // no) hacer el rol de quien mira. El contenido depende del rol: Admin,
-// Finanzas o Vendedor.
+// Finanzas, Vendedor o Planta.
 export function InventoryGuideBar() {
   const pathname = usePathname();
   const user = useAuthStore((state) => state.user);
@@ -54,7 +56,7 @@ export function InventoryGuideBar() {
   if (!user) return null;
   const flow = FLOW[role];
   const permissions = PERMISSIONS[role];
-  const pages = role === "admin" ? [...PAGE_ORDER, "habilitacion" as GuidePage] : PAGE_ORDER;
+  const pages = role === "admin" ? [...PAGE_ORDER, "habilitacion" as GuidePage] : role === "planta" ? PLANTA_PAGES : PAGE_ORDER;
 
   return (
     <>

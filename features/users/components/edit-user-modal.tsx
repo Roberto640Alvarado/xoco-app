@@ -27,6 +27,7 @@ const ROLE_OPTIONS: Array<{ value: UpdateUserFormValues["role"]; label: string }
   { value: "FINANZAS", label: "Finanzas" },
   { value: "SUPER_ADMIN", label: "Super admin" },
   { value: "VENDEDOR", label: "Vendedor" },
+  { value: "PLANTA", label: "Planta" },
 ];
 
 interface EditUserModalProps {

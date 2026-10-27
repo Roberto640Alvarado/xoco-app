@@ -269,6 +269,14 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
       mobile: "title",
     },
     {
+      id: "category",
+      header: "Categoría",
+      label: "Categoría",
+      cell: (item) => <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">{item.categoryName}</span>,
+      accessor: (item) => item.categoryName,
+      filter: "select",
+    },
+    {
       id: "unit",
       header: "Unidad",
       label: "Unidad",

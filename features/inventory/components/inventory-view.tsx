@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Warehouse } from "lucide-react";
 import { SectionCard } from "@/design-system/components/section-card";
 import { StoreSelect } from "@/components/filters/store-select";
@@ -31,7 +31,15 @@ export function InventoryView() {
   }
 
   const inventory = useInventoryItems(posConfigId);
-  const items = inventory.data ?? [];
+  // Por categoría y, dentro de cada una, por nombre: así los productos de
+  // una misma categoría quedan juntos, como en el formato de envío.
+  const items = useMemo(
+    () =>
+      [...(inventory.data ?? [])].sort(
+        (a, b) => a.categoryName.localeCompare(b.categoryName, "es") || a.productName.localeCompare(b.productName, "es"),
+      ),
+    [inventory.data],
+  );
   const selectedStore = stores?.find((store) => store.id === posConfigId);
 
   return (
@@ -39,7 +47,7 @@ export function InventoryView() {
       <SectionCard
         icon={Warehouse}
         title="Conteo"
-        description={isVendedor ? "Existencia de tu tienda, solo lectura." : "Captura el conteo físico de cada tienda."}
+        description={isVendedor ? "Existencia de tu tienda por categoría, solo lectura." : "Actualiza el inventario real de cada tienda, por categoría."}
       >
         <StoreSelect
           stores={stores}
@@ -58,6 +66,7 @@ export function InventoryView() {
             {
               name: "Inventario",
               rows: items.map((item) => ({
+                Categoría: item.categoryName,
                 Producto: item.productName,
                 Unidad: item.unit === "kg" ? "Kg" : "Unidad",
                 "Existencia estimada": item.estimatedQuantity ?? "",

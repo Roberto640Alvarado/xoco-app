@@ -8,6 +8,7 @@ import {
   ListOrdered,
   Package,
   PackageMinus,
+  PackagePlus,
   Receipt,
   ReceiptText,
   Search,
@@ -44,6 +45,7 @@ export const MODULE_ICON: Record<ModuleKey, LucideIcon> = {
   "dashboard.cierre-mes": CalendarCheck2,
   "dashboard.inventario": Warehouse,
   "dashboard.inventario-movimientos": PackageMinus,
+  "dashboard.inventario-solicitudes": PackagePlus,
 };
 
 export interface ModuleGroup {
@@ -72,6 +74,9 @@ export const MODULE_GROUPS: ModuleGroup[] = [
   },
   { label: "Mayoreo", moduleKeys: ["dashboard.ventas-mayoreo", "dashboard.buscar-compradores"] },
   { label: "Tickets", moduleKeys: ["dashboard.ticket-promedio", "dashboard.ticket-detallado", "dashboard.ordenes"] },
-  { label: "Inventario", moduleKeys: ["dashboard.inventario", "dashboard.inventario-movimientos"] },
+  {
+    label: "Inventario",
+    moduleKeys: ["dashboard.inventario", "dashboard.inventario-solicitudes", "dashboard.inventario-movimientos"],
+  },
   { label: "Otros", moduleKeys: ["dashboard.cierre-mes"] },
 ];

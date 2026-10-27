@@ -5,11 +5,12 @@
 // de verdad (ver plan-history de Inventario): si el flujo cambia, se
 // actualiza acá.
 //
-// Tres roles: Admin (SUPER_ADMIN), Finanzas y Vendedor. Admin y Finanzas
-// comparten casi todo; la diferencia es que solo el Admin habilita Inventario
-// por tienda (Administración → Inventario por tienda).
+// Cuatro roles: Admin (SUPER_ADMIN), Finanzas, Vendedor (la tienda) y Planta.
+// Admin y Finanzas comparten casi todo; la diferencia es que solo el Admin
+// habilita Inventario por tienda (Administración → Inventario por tienda).
+// Planta solo ve Solicitudes.
 
-export type GuideRole = "admin" | "finanzas" | "vendedor";
+export type GuideRole = "admin" | "finanzas" | "vendedor" | "planta";
 export type GuidePage = "conteo" | "solicitudes" | "movimientos" | "registro" | "habilitacion";
 
 export interface GuideStep {
@@ -39,6 +40,7 @@ export const ROLE_LABEL: Record<GuideRole, string> = {
   admin: "Admin",
   finanzas: "Finanzas",
   vendedor: "Vendedor",
+  planta: "Planta",
 };
 
 // ── Qué puede y qué no puede hacer cada rol ───────────────────────────────
@@ -46,8 +48,8 @@ export const ROLE_LABEL: Record<GuideRole, string> = {
 export const PERMISSIONS: Record<GuideRole, { can: string[]; cannot: string[] }> = {
   admin: {
     can: [
-      "Capturar el conteo físico de cualquier tienda.",
-      "Aceptar, confirmar o rechazar solicitudes de stock.",
+      "Actualizar el inventario de cualquier tienda directamente (Conteo).",
+      "Ver el seguimiento de todas las solicitudes de stock y cancelarlas si hace falta.",
       "Confirmar o rechazar mermas, regalías y degustaciones.",
       "Registrar movimientos directamente (quedan confirmados).",
       "Ver el Registro de todas las tiendas y exportar a Excel.",
@@ -57,24 +59,41 @@ export const PERMISSIONS: Record<GuideRole, { can: string[]; cannot: string[] }>
   },
   finanzas: {
     can: [
-      "Capturar el conteo físico de cualquier tienda.",
-      "Aceptar, confirmar o rechazar solicitudes de stock.",
+      "Actualizar el inventario de cualquier tienda directamente (Conteo).",
+      "Ver el seguimiento de todas las solicitudes de stock y cancelarlas si hace falta.",
       "Confirmar o rechazar mermas, regalías y degustaciones.",
       "Registrar movimientos directamente (quedan confirmados).",
       "Ver el Registro de todas las tiendas y exportar a Excel.",
     ],
-    cannot: ["Habilitar Inventario por tienda: solo lo hace el Admin."],
+    cannot: [
+      "Habilitar Inventario por tienda: solo lo hace el Admin.",
+      "Responder ni despachar solicitudes: eso lo hace Planta.",
+    ],
+  },
+  planta: {
+    can: [
+      "Ver las solicitudes de stock de todas las tiendas.",
+      "Marcar qué productos sí hay, cuáles no y cuánto envías de cada uno.",
+      "Agregar productos que la tienda no pidió.",
+      "Despachar el envío (completo o parcial) y descargar el formato en PDF.",
+      "Cancelar una solicitud con motivo antes de despacharla.",
+    ],
+    cannot: [
+      "Ver Conteo, Movimientos ni Registro: tu acceso es solo Solicitudes.",
+      "Cambiar el inventario de las tiendas: se actualiza cuando la tienda confirma lo recibido.",
+    ],
   },
   vendedor: {
     can: [
       "Ver la existencia de tu tienda (solo lectura).",
-      "Solicitar más stock y marcar como recibido lo que llegue.",
+      "Solicitar stock a planta y confirmar lo que llega.",
       "Reportar mermas, regalías y degustaciones.",
       "Ver el Registro de tu tienda y exportar a Excel.",
     ],
     cannot: [
       "Capturar o cambiar el conteo físico: lo hace Finanzas o Admin.",
-      "Aceptar, confirmar o rechazar nada: lo hace Finanzas o Admin.",
+      "Confirmar o rechazar mermas, regalías y degustaciones: lo hace Finanzas o Admin.",
+      "Cambiar lo que planta envía: solo confirmas lo que de verdad llegó.",
       "Ver otras tiendas.",
       "Entrar a Inventario antes de que el Admin habilite tu tienda.",
     ],
@@ -104,12 +123,12 @@ const ADMIN_FLOW: { intro: string; steps: GuideStep[] } = {
       body: "El Vendedor las reporta en Movimientos y quedan pendientes. Tú las confirmas (se restan del stock) o las rechazas con un motivo. Si las registras tú, quedan confirmadas de una vez.",
     },
     {
-      title: "5. Solicitudes de stock",
-      body: "Cuando una tienda pide más stock, te llega a Solicitudes (y ves un globo en el menú). Acepta la solicitud: queda \"en camino\" y tú gestionas el envío por tu proceso manual. O recházala indicando el motivo; el Vendedor lo verá.",
+      title: "5. Solicitudes de stock (solo seguimiento)",
+      body: "Las tiendas piden stock a Planta en Solicitudes. Tú no aceptas ni confirmas nada: ves en qué paso va cada solicitud de todas las tiendas (solicitada, en preparación, en camino, recibida) y puedes cancelarla con motivo si hace falta.",
     },
     {
-      title: "6. Recepción y confirmación",
-      body: "Cuando el pedido llega, el Vendedor lo marca como recibido con la cantidad real. Tú lo confirmas y recién ahí se suma al stock. Si llegó una cantidad distinta a la pedida, verás la diferencia en rojo.",
+      title: "6. Recepción y ajustes",
+      body: "Cuando Planta despacha, la tienda recibe el aviso, confirma lo que llegó y recién ahí el inventario de la tienda sube. Si algo no cuadra, puedes corregir el inventario directamente en Conteo.",
     },
     {
       title: "7. Registro",
@@ -132,27 +151,27 @@ const FINANZAS_FLOW: { intro: string; steps: GuideStep[] } = {
 
 const VENDEDOR_FLOW: { intro: string; steps: GuideStep[] } = {
   intro:
-    "Inventario te muestra el stock de tu tienda y te deja reportar movimientos y pedir más stock. Lo que cambia el stock siempre lo confirma Admin o Finanzas.",
+    "Inventario te muestra el stock de tu tienda, te deja reportar movimientos y pedir stock a planta. Planta prepara y despacha; tú solo confirmas lo que llega.",
   steps: [
     {
       title: "1. Consulta el stock",
-      body: "En Conteo ves la existencia estimada de cada producto de tu tienda, solo para leer. Baja con las ventas y con las mermas y regalías confirmadas, y sube cuando se confirma un envío.",
+      body: "En Conteo ves la existencia estimada de cada producto de tu tienda, solo para leer. Baja con las ventas y con las mermas y regalías confirmadas, y sube cuando confirmas un envío recibido.",
     },
     {
       title: "2. Reporta mermas, regalías y degustaciones",
       body: "En Movimientos registra lo que salió de la tienda sin venderse (con una nota si hace falta). Queda pendiente y se resta del stock cuando Admin o Finanzas lo confirma; si lo rechazan, verás el motivo.",
     },
     {
-      title: "3. Solicita más stock",
-      body: "En Solicitudes usa \"Solicitar stock\": elige el producto y la cantidad que necesitas. Admin o Finanzas la recibe en su bandeja.",
+      title: "3. Pide stock a planta",
+      body: "En Solicitudes usa \"Nueva solicitud\": eliges los productos por categoría (como en el formato de envío a sucursales) y la cantidad de cada uno. Planta la recibe al instante.",
     },
     {
-      title: "4. Sigue tu solicitud",
-      body: "Pendiente: esperando respuesta. En camino: la aceptaron y viene el envío. Rechazada: verás el motivo. Cada fila te dice qué sigue.",
+      title: "4. Planta responde y despacha",
+      body: "Planta marca qué productos sí hay y cuáles no, puede agregar otros y despacha. Tú ves el avance: Solicitada, En preparación, En camino. Cuando sale el envío recibes un aviso en el menú.",
     },
     {
-      title: "5. Marca como recibido",
-      body: "Cuando llegue el pedido, abre su detalle y pulsa \"Marcar recibido\" con la cantidad real que llegó. Queda en proceso de aprobación y se sumará al stock cuando Admin o Finanzas confirme, no antes.",
+      title: "5. Confirma lo que llegó",
+      body: "Abre la solicitud en camino: cada producto viene con la cantidad que envió planta. Si todo llegó bien, confirma. Si algo no coincide, cambia la cantidad y anota qué pasó. Recién al confirmar se suma al stock de tu tienda.",
     },
     {
       title: "6. Registro",
@@ -161,10 +180,42 @@ const VENDEDOR_FLOW: { intro: string; steps: GuideStep[] } = {
   ],
 };
 
+const PLANTA_FLOW: { intro: string; steps: GuideStep[] } = {
+  intro:
+    "Aquí recibes lo que piden las tiendas, marcas qué hay y qué no, y despachas. La tienda confirma lo que llega y su inventario se actualiza solo.",
+  steps: [
+    {
+      title: "1. Llega una solicitud",
+      body: "Cuando una tienda pide stock ves un aviso en el menú y la solicitud aparece en Solicitudes, resaltada y primero en la lista.",
+    },
+    {
+      title: "2. Respóndela",
+      body: "Ábrela: los productos vienen por categoría. Para cada uno indica cuánto envías (\"Todo\", una cantidad menor o \"No hay\"). Puedes agregar productos que la tienda no pidió y dejar una nota. Con \"Guardar avance\" la solicitud pasa a En preparación y puedes seguir después.",
+    },
+    {
+      title: "3. Despacha",
+      body: "Cuando todos los productos estén respondidos, pulsa \"Despachar\". El envío puede ser completo o parcial. La tienda recibe el aviso de que viene en camino.",
+    },
+    {
+      title: "4. Descarga el formato",
+      body: "En cualquier momento puedes bajar el formato de envío a sucursales en PDF, con lo pedido, enviado y recibido por categoría y espacio para firmas.",
+    },
+    {
+      title: "5. La tienda confirma",
+      body: "La tienda indica lo que de verdad recibió. Si hay diferencias, quedan anotadas en la solicitud. Tú no tienes que confirmar nada más.",
+    },
+    {
+      title: "Si no puedes surtirla",
+      body: "Si no tienes nada de lo pedido, cancela la solicitud indicando el motivo; la tienda lo verá.",
+    },
+  ],
+};
+
 export const FLOW: Record<GuideRole, { intro: string; steps: GuideStep[] }> = {
   admin: ADMIN_FLOW,
   finanzas: FINANZAS_FLOW,
   vendedor: VENDEDOR_FLOW,
+  planta: PLANTA_FLOW,
 };
 
 // ── Qué hace cada pantalla ────────────────────────────────────────────────
@@ -172,7 +223,8 @@ export const FLOW: Record<GuideRole, { intro: string; steps: GuideStep[] }> = {
 const CONTEO_STAFF =
   "Captura el conteo físico de cada producto por tienda (columna \"Inventario nuevo\") y guarda en lote. La existencia estimada se calcula sola desde el último conteo.";
 const SOLICITUDES_STAFF =
-  "Bandeja con las solicitudes de stock abiertas de todas las tiendas. Acepta (en camino), rechaza con motivo o, cuando la tienda ya la recibió, confirma para sumarla al stock.";
+  "Seguimiento de las solicitudes de stock de todas las tiendas: quién pidió, qué respondió planta y si ya llegó. Solo observas (y puedes cancelar); planta despacha y la tienda confirma.";
+const NOT_FOR_PLANTA = "Esta pantalla no está disponible para Planta: tu acceso es solo Solicitudes.";
 const MOVIMIENTOS_STAFF =
   "Mermas, regalías y degustaciones. Elige una tienda o mira los pendientes de todas; confirma o rechaza (con motivo) lo que reportan los Vendedores, o registra uno tú directamente.";
 const REGISTRO_STAFF =
@@ -184,30 +236,36 @@ export const PAGE_INTRO: Record<GuidePage, Record<GuideRole, string>> = {
     finanzas: CONTEO_STAFF,
     vendedor:
       "Aquí ves la existencia estimada de cada producto de tu tienda. Es solo lectura: el conteo físico lo captura Finanzas o Admin.",
+    planta: NOT_FOR_PLANTA,
   },
   solicitudes: {
     admin: SOLICITUDES_STAFF,
     finanzas: SOLICITUDES_STAFF,
     vendedor:
-      "Aquí pides más stock y sigues cada solicitud hasta que llega. Cuando llegue, márcala como recibida con la cantidad real. Aceptar, confirmar y rechazar lo hace Admin o Finanzas.",
+      "Aquí pides stock a planta y sigues cada solicitud hasta que llega. Cuando llegue, confirmas lo que recibiste y el inventario de tu tienda se actualiza.",
+    planta:
+      "Aquí llegan las solicitudes de las tiendas. Marca qué productos hay y cuáles no, agrega los que falten y despacha. La tienda recibe el aviso y confirma lo que llegue.",
   },
   movimientos: {
     admin: MOVIMIENTOS_STAFF,
     finanzas: MOVIMIENTOS_STAFF,
     vendedor:
       "Registra mermas, regalías y degustaciones de tu tienda. Quedan pendientes hasta que Admin o Finanzas las confirme; tú no puedes confirmarlas.",
+    planta: NOT_FOR_PLANTA,
   },
   registro: {
     admin: REGISTRO_STAFF,
     finanzas: REGISTRO_STAFF,
     vendedor:
       "Línea de tiempo de tu tienda con fecha y hora: ventas, movimientos y conteos. Puedes filtrar por fechas, producto o tipo, y exportar a Excel.",
+    planta: NOT_FOR_PLANTA,
   },
   habilitacion: {
     admin:
       "Decide en qué tiendas los Vendedores ya pueden usar Inventario. Se recomienda cargar el stock de la tienda en Conteo antes de habilitarla.",
     finanzas: "Esta pantalla es solo del Admin.",
     vendedor: "Esta pantalla es solo del Admin.",
+    planta: "Esta pantalla es solo del Admin.",
   },
 };
 
@@ -273,28 +331,21 @@ function staffSteps(role: "admin" | "finanzas"): Record<GuidePage, TourStep[]> {
       {
         target: '[data-tour="req-filters"]',
         title: "Filtros",
-        description: "Filtra las solicitudes por rango de fechas, tienda y estado. Por defecto ves lo que va del año.",
+        description: "Filtra por rango de fechas y por tienda. Por defecto ves lo que va del año.",
         side: "bottom",
       },
       {
-        target: '[data-tour="movements-table"]',
-        title: "Bandeja de solicitudes",
-        description: "Todas las solicitudes abiertas de todas las tiendas, las más recientes primero.",
+        target: '[data-tour="req-status"]',
+        title: "Estados",
+        description: "Cada botón filtra por estado y muestra cuántas hay. Pulsa ⓘ para entender cada estado.",
+        side: "bottom",
+      },
+      {
+        target: '[data-tour="req-board"]',
+        title: "Tablero de solicitudes",
+        description:
+          "Una tarjeta por solicitud con su avance (Solicitada, En preparación, En camino, Recibida). Ábrela para ver los productos por categoría, el seguimiento y descargar el PDF; ahí también puedes cancelarla con motivo.",
         side: "top",
-      },
-      {
-        target: '[data-tour="status"]',
-        title: "Estado y qué sigue",
-        description:
-          "Pendiente, En camino, Recibido y Confirmado. Pulsa una fila para ver el detalle y qué toca hacer, o ⓘ para entender cada estado.",
-        side: "bottom",
-      },
-      {
-        target: '[data-tour="actions"]',
-        title: "Gestionar",
-        description:
-          "Abre el detalle. Ahí puedes Aceptar (queda en camino), Rechazar (con motivo) y, cuando la tienda ya la recibió, Confirmar: recién ahí se suma al stock.",
-        side: "left",
       },
     ],
     movimientos: [
@@ -368,33 +419,27 @@ const VENDEDOR_STEPS: Record<GuidePage, TourStep[]> = {
     {
       target: '[data-tour="req-filters"]',
       title: "Filtros",
-      description: "Filtra tus solicitudes por rango de fechas y estado. La tienda es la tuya y no se puede cambiar. Por defecto ves lo que va del año.",
+      description: "Filtra tus solicitudes por rango de fechas. La tienda es la tuya. Por defecto ves lo que va del año.",
       side: "bottom",
     },
     {
       target: '[data-tour="req-new"]',
-      title: "Solicitar stock",
-      description: "Pide más de un producto: elige cuál y cuánto necesitas. Admin o Finanzas la recibe de inmediato.",
+      title: "Nueva solicitud",
+      description: "Elige los productos por categoría y la cantidad de cada uno. Planta la recibe de inmediato.",
       side: "bottom",
     },
     {
-      target: '[data-tour="movements-table"]',
+      target: '[data-tour="req-status"]',
+      title: "Estados",
+      description: "\"Por confirmar\" te muestra los envíos que ya van en camino y esperan tu confirmación. Pulsa ⓘ para entender cada estado.",
+      side: "bottom",
+    },
+    {
+      target: '[data-tour="req-board"]',
       title: "Tus solicitudes",
-      description: "Aquí queda el historial de lo que has pedido, con su estado actual.",
-      side: "top",
-    },
-    {
-      target: '[data-tour="status"]',
-      title: "Estado y qué sigue",
       description:
-        "Pendiente: esperando respuesta. En camino: aceptada. Recibido: en proceso de aprobación, se suma al stock cuando Admin o Finanzas confirme. Tú no confirmas ni rechazas. Pulsa ⓘ para el detalle.",
-      side: "bottom",
-    },
-    {
-      target: '[data-tour="actions"]',
-      title: "Marcar recibido",
-      description: "Cuando llegue un pedido en camino, abre su detalle (\"Gestionar\") y pulsa \"Marcar recibido\" con la cantidad real que llegó.",
-      side: "left",
+        "Cada tarjeta muestra su avance. Cuando una esté En camino, ábrela, revisa la cantidad de cada producto y confirma lo que llegó; si algo no coincide, cámbialo y anota qué pasó.",
+      side: "top",
     },
   ],
   movimientos: [
@@ -440,6 +485,35 @@ const VENDEDOR_STEPS: Record<GuidePage, TourStep[]> = {
   habilitacion: [],
 };
 
+const PLANTA_STEPS: Record<GuidePage, TourStep[]> = {
+  conteo: [],
+  solicitudes: [
+    WELCOME("solicitudes", "planta"),
+    {
+      target: '[data-tour="req-filters"]',
+      title: "Filtros",
+      description: "Filtra por rango de fechas y por tienda. Por defecto ves lo que va del año.",
+      side: "bottom",
+    },
+    {
+      target: '[data-tour="req-status"]',
+      title: "Por responder",
+      description: "Este botón junta lo que espera tu respuesta o despacho. Las nuevas aparecen primero y resaltadas.",
+      side: "bottom",
+    },
+    {
+      target: '[data-tour="req-board"]',
+      title: "Responder y despachar",
+      description:
+        "Abre una solicitud: marca para cada producto cuánto envías (Todo, menos o No hay), agrega productos que la tienda no pidió y despacha cuando todo esté respondido. También puedes descargar el PDF del formato.",
+      side: "top",
+    },
+  ],
+  movimientos: [],
+  registro: [],
+  habilitacion: [],
+};
+
 // La pantalla de habilitación es solo del Admin.
 ADMIN_STEPS.habilitacion = [
   WELCOME("habilitacion", "admin"),
@@ -471,11 +545,21 @@ ADMIN_STEPS.habilitacion = [
 ];
 
 export const TOURS: Record<GuidePage, Record<GuideRole, TourStep[]>> = {
-  conteo: { admin: ADMIN_STEPS.conteo, finanzas: FINANZAS_STEPS.conteo, vendedor: VENDEDOR_STEPS.conteo },
-  solicitudes: { admin: ADMIN_STEPS.solicitudes, finanzas: FINANZAS_STEPS.solicitudes, vendedor: VENDEDOR_STEPS.solicitudes },
-  movimientos: { admin: ADMIN_STEPS.movimientos, finanzas: FINANZAS_STEPS.movimientos, vendedor: VENDEDOR_STEPS.movimientos },
-  registro: { admin: ADMIN_STEPS.registro, finanzas: FINANZAS_STEPS.registro, vendedor: VENDEDOR_STEPS.registro },
-  habilitacion: { admin: ADMIN_STEPS.habilitacion, finanzas: [], vendedor: [] },
+  conteo: { admin: ADMIN_STEPS.conteo, finanzas: FINANZAS_STEPS.conteo, vendedor: VENDEDOR_STEPS.conteo, planta: PLANTA_STEPS.conteo },
+  solicitudes: {
+    admin: ADMIN_STEPS.solicitudes,
+    finanzas: FINANZAS_STEPS.solicitudes,
+    vendedor: VENDEDOR_STEPS.solicitudes,
+    planta: PLANTA_STEPS.solicitudes,
+  },
+  movimientos: {
+    admin: ADMIN_STEPS.movimientos,
+    finanzas: FINANZAS_STEPS.movimientos,
+    vendedor: VENDEDOR_STEPS.movimientos,
+    planta: PLANTA_STEPS.movimientos,
+  },
+  registro: { admin: ADMIN_STEPS.registro, finanzas: FINANZAS_STEPS.registro, vendedor: VENDEDOR_STEPS.registro, planta: PLANTA_STEPS.registro },
+  habilitacion: { admin: ADMIN_STEPS.habilitacion, finanzas: [], vendedor: [], planta: [] },
 };
 
 // ── Textos de los ⓘ ───────────────────────────────────────────────────────
@@ -502,20 +586,21 @@ export const INFO: Record<InfoTopic, InfoContent> = {
       "Parte del último conteo guardado.",
       "Resta las ventas de Odoo desde ese conteo (efectivo y tarjeta, sin órdenes canceladas).",
       "Resta las mermas, regalías y degustaciones ya confirmadas.",
-      "Suma las entradas (envíos de planta) ya confirmadas.",
+      "Suma las entradas ya confirmadas (lo que la tienda recibió de planta).",
       "Si un producto aún no se ha contado, aparece \"—\": no hay de dónde partir.",
     ],
   },
   "estados-solicitud": {
     title: "Estados de una solicitud de stock",
-    paragraphs: ["Cada solicitud avanza por estos pasos. Solo al llegar a Confirmado se suma al stock."],
+    paragraphs: [
+      "Cada solicitud avanza por estos pasos. El inventario de la tienda solo sube cuando la tienda confirma lo recibido.",
+    ],
     bullets: [
-      "Pendiente: la tienda la pidió; espera respuesta de Admin o Finanzas.",
-      "En camino: Admin o Finanzas la aceptó y el envío va hacia la tienda.",
-      "Recibido: la tienda marcó que llegó, con la cantidad real. Está en proceso de aprobación: todavía no suma al stock.",
-      "Confirmado: Admin o Finanzas lo dio por bueno y la cantidad se sumó al stock.",
-      "Rechazado: no se aprobó. El motivo aparece en la fila y el stock no cambia.",
-      "Si la cantidad recibida es distinta a la pedida, se muestra en rojo para que se note la diferencia.",
+      "Solicitada: la tienda la pidió; planta aún no la toma.",
+      "En preparación: planta la está respondiendo (qué hay, qué no, qué agrega).",
+      "En camino: planta despachó. Puede ser un envío completo o parcial, y la tienda recibe el aviso.",
+      "Recibida: la tienda confirmó lo que llegó y su inventario ya se actualizó. Si hubo diferencias, quedan anotadas (columna DIF).",
+      "Cancelada: se canceló con un motivo y el inventario no cambia.",
     ],
   },
   "estados-movimiento": {
@@ -536,16 +621,17 @@ export const INFO: Record<InfoTopic, InfoContent> = {
     bullets: [
       "Venta (−): una línea por producto vendido en el POS de Odoo.",
       "Merma, Regalía, Degustación (−): salidas reportadas a mano; muestran su estado (pendiente, confirmado, rechazado).",
-      "Entrada (+): un envío de planta a la tienda; muestra la cantidad recibida cuando ya llegó.",
+      "Entrada (+): lo que la tienda confirmó haber recibido de una solicitud a planta.",
       "Conteo (sin signo): un conteo físico; la cantidad es la contada y el detalle muestra cuánto había antes.",
       "Pendientes y rechazados aparecen, pero solo los confirmados afectan la existencia estimada.",
     ],
   },
 };
 
-/** Rol de la sesión (SUPER_ADMIN / FINANZAS / VENDEDOR) -> rol de las guías. */
+/** Rol de la sesión (SUPER_ADMIN / FINANZAS / VENDEDOR / PLANTA) -> rol de las guías. */
 export function guideRoleFor(role: string | undefined): GuideRole {
   if (role === "SUPER_ADMIN") return "admin";
   if (role === "FINANZAS") return "finanzas";
+  if (role === "PLANTA") return "planta";
   return "vendedor";
 }

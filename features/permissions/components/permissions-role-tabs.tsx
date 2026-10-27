@@ -7,6 +7,7 @@ const ROLE_OPTIONS: Array<{ value: UserRole; label: string }> = [
   { value: "SUPER_ADMIN", label: "Super admin" },
   { value: "FINANZAS", label: "Finanzas" },
   { value: "VENDEDOR", label: "Vendedor" },
+  { value: "PLANTA", label: "Planta" },
 ];
 
 interface PermissionsRoleTabsProps {

@@ -6,7 +6,7 @@ Aquí vive todo lo visual del panel: qué componentes existen, cuándo usar cada
 
 ## Dónde vive cada cosa
 
-- `design-system/components/`: los componentes propios del panel (SectionCard, Panel, TourGuideCard, NoticeCard, InfoBadge, ChangeIndicator, ComparisonStat, SegmentedControl, ValueBox, DataTable). Se importan con `@/design-system/components/<nombre>`.
+- `design-system/components/`: los componentes propios del panel (SectionCard, Panel, TourGuideCard, NoticeCard, InfoBadge, ChangeIndicator, ComparisonStat, SegmentedControl, QuantityStepper, ProgressSteps, ValueBox, DataTable). Se importan con `@/design-system/components/<nombre>`.
 - `components/ui/`: los componentes base de shadcn/ui (Button, Input, Select, Dialog...), instalados con la CLI.
 - `design-system/showcase.tsx`: catálogo en vivo de todo lo anterior.
 
@@ -29,7 +29,12 @@ Tamaños: `lg`, `default`, `sm`, `xs` y los `icon*`. Los botones de las cards us
 
 ## Badges (`design-system/components/info-badge.tsx`)
 
-`InfoBadge` con `tone`: `warning` (espera algo), `info` (en curso), `success` (listo), `danger` (rechazado o error), `violet` (en tránsito), `neutral` (sin énfasis). Con `dot` para estados, con `icon` para avisos. Roles: Admin `violet`, Finanzas `info`, Vendedor `warning`.
+`InfoBadge` con `tone`: `warning` (espera algo), `info` (en curso), `success` (listo), `danger` (rechazado o error), `violet` (en tránsito), `neutral` (sin énfasis). Con `dot` para estados, con `icon` para avisos. Roles: Admin `violet`, Finanzas `info`, Vendedor `warning`, Planta `success`.
+
+## Cantidades y avance de procesos
+
+- `QuantityStepper` (`design-system/components/quantity-stepper.tsx`): cantidad con botones − / + y campo editable (`step` 1 para piezas, 0.5 para kg). `value={null}` es "sin responder": campo vacío. Es el control de cantidad de Inventario → Solicitudes (pedir, responder y recibir).
+- `ProgressSteps` (`design-system/components/progress-steps.tsx`): línea de pasos de un proceso (hechos en verde, actual resaltado, pendientes en gris; `failed` marca el actual en rojo; `compact` para tarjetas). Repite el estado con número, ✓ o ✕ para no depender del color. La usa el avance de las solicitudes de stock.
 
 ## Comparación de períodos
 

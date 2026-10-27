@@ -10,6 +10,8 @@ import { DataTable, type DataTableColumn } from "@/design-system/components/data
 import { ComparisonStat } from "@/design-system/components/comparison-stat";
 import { InfoBadge, type InfoBadgeTone } from "@/design-system/components/info-badge";
 import { SegmentedControl } from "@/design-system/components/segmented-control";
+import { QuantityStepper } from "@/design-system/components/quantity-stepper";
+import { ProgressSteps } from "@/design-system/components/progress-steps";
 import { Input } from "@/components/ui/input";
 import { Panel } from "@/design-system/components/panel";
 import { NoticeCard } from "@/design-system/components/notice-card";
@@ -186,6 +188,9 @@ function BadgesSection() {
           ))}
         </Specimen>
         <Specimen label="Roles (tamaño sm)">
+          <InfoBadge tone="success" size="sm">
+            Planta
+          </InfoBadge>
           <InfoBadge tone="violet" size="sm">
             Admin
           </InfoBadge>
@@ -203,6 +208,44 @@ function BadgesSection() {
           <InfoBadge tone="warning">Atención</InfoBadge>
           <InfoBadge tone="danger">Error</InfoBadge>
           <InfoBadge tone="violet">En tránsito</InfoBadge>
+        </Specimen>
+        <Specimen label="ProgressSteps: avance de un proceso (hecho, actual, pendiente)">
+          <div className="w-full max-w-md">
+            <ProgressSteps
+              steps={[
+                { key: "a", label: "Solicitada" },
+                { key: "b", label: "En preparación" },
+                { key: "c", label: "En camino" },
+                { key: "d", label: "Recibida" },
+              ]}
+              currentIndex={2}
+            />
+          </div>
+        </Specimen>
+        <Specimen label="ProgressSteps: compacto y cancelado">
+          <div className="flex w-full max-w-md flex-col gap-3">
+            <ProgressSteps
+              compact
+              steps={[
+                { key: "a", label: "Solicitada" },
+                { key: "b", label: "En preparación" },
+                { key: "c", label: "En camino" },
+                { key: "d", label: "Recibida" },
+              ]}
+              currentIndex={1}
+            />
+            <ProgressSteps
+              compact
+              failed
+              steps={[
+                { key: "a", label: "Solicitada" },
+                { key: "b", label: "En preparación" },
+                { key: "c", label: "En camino" },
+                { key: "d", label: "Recibida" },
+              ]}
+              currentIndex={1}
+            />
+          </div>
         </Specimen>
         <Specimen label="ChangeIndicator: cambio entre dos períodos">
           <ChangeIndicator diff={12} pct={0.153} />
@@ -227,6 +270,7 @@ function ComparisonSection() {
         <ComparisonStat icon={Package} label="Unidades vendidas" value="1,284" compareValue="1,120" valueLabel="Octubre 2026 (al 20)" compareLabel="Septiembre 2026" change={{ diff: 164, pct: 0.146 }} />
         <ComparisonStat icon={DollarSign} label="Ingresos" value="$2,410.50" compareValue="$2,655.00" valueLabel="Octubre 2026 (al 20)" compareLabel="Septiembre 2026" change={{ diff: -244.5, pct: -0.092 }} />
       </div>
+      <QuantitySpecimen />
       <Specimen label="SegmentedControl: 2-3 opciones excluyentes">
         <SegmentedControl
           ariaLabel="Medir por"
@@ -239,6 +283,21 @@ function ComparisonSection() {
         />
       </Specimen>
     </Section>
+  );
+}
+
+function QuantitySpecimen() {
+  const [pieces, setPieces] = useState<number | null>(12);
+  const [kilos, setKilos] = useState<number | null>(null);
+  return (
+    <>
+      <Specimen label="QuantityStepper: piezas">
+        <QuantityStepper value={pieces} onChange={setPieces} ariaLabel="Cantidad de ejemplo" />
+      </Specimen>
+      <Specimen label="QuantityStepper: kg, sin responder (null)">
+        <QuantityStepper value={kilos} onChange={setKilos} step={0.5} suffix="kg" ariaLabel="Kilos de ejemplo" />
+      </Specimen>
+    </>
   );
 }
 

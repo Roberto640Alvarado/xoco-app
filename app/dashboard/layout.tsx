@@ -4,6 +4,8 @@ import { Building2, CalendarCheck2, CalendarClock, ClipboardList, DollarSign, Gi
 import { useMemo } from "react";
 import { DashboardShell, type DashboardNavItem } from "@/components/layout/dashboard-shell";
 import { useMovementNotifications } from "@/features/inventory-movements/hooks/use-movement-notifications";
+import { useStockRequestNotifications } from "@/features/stock-requests/hooks/use-stock-requests";
+import { getDashboardPath } from "@/features/auth/utils/get-dashboard-path";
 import { useAuthStore } from "@/store/auth-store";
 import { useCanUseInventory } from "@/features/inventory-access/hooks/use-inventory-access";
 
@@ -77,9 +79,9 @@ const NAV_ITEMS: DashboardNavItem[] = [
   // - Movimientos: merma, regalías y degustaciones. Todos los roles; el
   //   Vendedor registra las de su tienda y solo Admin/Finanzas confirma o
   //   rechaza (con motivo).
-  // - Solicitudes: pedidos de stock a planta (entradas). El Vendedor pide
-  //   y sigue el estado; Admin/Finanzas atiende desde una bandeja con todas
-  //   las tiendas. Comparte moduleKey con Movimientos.
+  // - Solicitudes: la tienda pide stock, Planta responde y despacha, la
+  //   tienda confirma lo que llega. Admin/Finanzas solo hacen seguimiento
+  //   (y cancelan). Planta SOLO ve esta pantalla. Tiene su propio moduleKey.
   // - Registro: línea de tiempo de entradas y salidas con fecha y hora; el
   //   Vendedor ve solo la de su tienda. Comparte moduleKey con Conteo.
   {
@@ -88,7 +90,7 @@ const NAV_ITEMS: DashboardNavItem[] = [
     group: "",
     children: [
       { label: "Conteo", href: "/dashboard/inventario", icon: Warehouse, roles: ["SUPER_ADMIN", "FINANZAS", "VENDEDOR"], moduleKey: "dashboard.inventario" },
-      { label: "Solicitudes", href: "/dashboard/inventario/solicitudes", icon: PackagePlus, roles: ["SUPER_ADMIN", "FINANZAS", "VENDEDOR"], moduleKey: "dashboard.inventario-movimientos" },
+      { label: "Solicitudes", href: "/dashboard/inventario/solicitudes", icon: PackagePlus, roles: ["SUPER_ADMIN", "FINANZAS", "VENDEDOR", "PLANTA"], moduleKey: "dashboard.inventario-solicitudes" },
       { label: "Movimientos", href: "/dashboard/inventario/movimientos", icon: PackageMinus, roles: ["SUPER_ADMIN", "FINANZAS", "VENDEDOR"], moduleKey: "dashboard.inventario-movimientos" },
       { label: "Registro", href: "/dashboard/inventario/registro", icon: ClipboardList, roles: ["SUPER_ADMIN", "FINANZAS", "VENDEDOR"], moduleKey: "dashboard.inventario" },
     ],
@@ -98,9 +100,11 @@ const NAV_ITEMS: DashboardNavItem[] = [
 ];
 
 // Texto del globo según el rol: Admin/Finanzas ven lo que falta por atender;
-// el Vendedor, novedades de lo suyo (envíos por recibir, cosas resueltas).
+// el Vendedor, novedades de lo suyo (envíos por recibir, cosas resueltas);
+// Planta, solicitudes por responder o despachar.
 function badgeLabel(role: string | undefined, count: number): string {
   if (role === "VENDEDOR") return `${count} novedad${count === 1 ? "" : "es"}`;
+  if (role === "PLANTA") return `${count} por responder`;
   return `${count} por atender`;
 }
 
@@ -112,20 +116,24 @@ const BADGE_HREF = {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const role = useAuthStore((state) => state.user?.role);
-  const { data: notifications } = useMovementNotifications();
+  const { data: movementNotifications } = useMovementNotifications();
+  const { data: requestNotifications } = useStockRequestNotifications();
   // El Vendedor solo ve la sección Inventario si habilitaron su tienda
-  // (Administración → Inventario); Admin/Finanzas siempre la ven.
+  // (Administración → Inventario); Admin/Finanzas/Planta siempre la ven.
   const { canUse: canUseInventory } = useCanUseInventory();
+
+  const movementCount = movementNotifications?.movements ?? 0;
+  const requestCount = requestNotifications?.pending ?? 0;
 
   // Mismo NAV_ITEMS, solo con los globos de Movimientos y Solicitudes
   // inyectados — se recalcula únicamente cuando cambian los contadores o
   // el rol.
   const navItems = useMemo<DashboardNavItem[]>(() => {
     const baseItems = canUseInventory ? NAV_ITEMS : NAV_ITEMS.filter((item) => item.label !== "Inventario");
-    if (!notifications || notifications.total === 0) return baseItems;
+    if (movementCount + requestCount === 0) return baseItems;
     const countByHref: Record<string, number> = {
-      [BADGE_HREF.movements]: notifications.movements,
-      [BADGE_HREF.requests]: notifications.requests,
+      [BADGE_HREF.movements]: movementCount,
+      [BADGE_HREF.requests]: requestCount,
     };
     return baseItems.map((item) =>
       "children" in item
@@ -138,10 +146,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           }
         : item,
     );
-  }, [notifications, role, canUseInventory]);
+  }, [movementCount, requestCount, role, canUseInventory]);
 
   return (
-    <DashboardShell navItems={navItems} dashboardHref="/dashboard">
+    <DashboardShell navItems={navItems} dashboardHref={getDashboardPath(role)}>
       {children}
     </DashboardShell>
   );

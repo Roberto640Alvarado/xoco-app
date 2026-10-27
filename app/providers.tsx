@@ -7,7 +7,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useSessionHydration } from "@/features/auth/hooks/use-session-hydration";
+import { getDashboardPath } from "@/features/auth/utils/get-dashboard-path";
 import { setModuleDisabledHandler, setUnauthorizedHandler } from "@/lib/api/client";
+import { useAuthStore } from "@/store/auth-store";
 
 function AuthHydrator() {
   useSessionHydration();
@@ -42,7 +44,7 @@ function ModuleDisabledRedirector() {
   const router = useRouter();
 
   useEffect(() => {
-    setModuleDisabledHandler(() => router.push("/dashboard"));
+    setModuleDisabledHandler(() => router.push(getDashboardPath(useAuthStore.getState().user?.role)));
     return () => setModuleDisabledHandler(null);
   }, [router]);
 

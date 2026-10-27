@@ -7,21 +7,22 @@ import { readLastSeen } from "../lib/last-seen";
 
 const MODULE_KEY = "dashboard.inventario-movimientos";
 
-// Contadores de los globos del menú (Inventario → Movimientos y Solicitudes). Se vuelve a
+// Contadores de los globos del menú (Inventario → Movimientos). Se vuelve a
 // consultar cada minuto y al volver a la pestaña; las altas y cambios de
 // estado hechos desde esta misma app lo invalidan al instante (ver
 // hooks de mutación). No consulta si el usuario no tiene el módulo.
 export function useMovementNotifications() {
   const user = useAuthStore((state) => state.user);
   const isHydrated = useAuthStore((state) => state.isHydrated);
-  const hasModule = user?.permissions?.[MODULE_KEY] !== false;
+  // Planta solo ve Solicitudes: no tiene Movimientos ni su aviso.
+  const hasModule = user?.role !== "PLANTA" && user?.permissions?.[MODULE_KEY] !== false;
 
   return useQuery({
     queryKey: ["inventory", "notifications", user?.email],
     queryFn: () =>
       fetchMovementNotifications(
         user?.role === "VENDEDOR"
-          ? { sinceMovements: readLastSeen(user.email, "movements"), sinceRequests: readLastSeen(user.email, "requests") }
+          ? { sinceMovements: readLastSeen(user.email) }
           : {},
       ),
     enabled: isHydrated && !!user && hasModule,

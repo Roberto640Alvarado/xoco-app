@@ -2,14 +2,14 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { fetchMovementsInbox } from "../api/inventory-movements.api";
-import type { MovementsInboxKind } from "../types/inventory-movement.types";
 
-// Bandeja de Admin/Finanzas: lo abierto de TODAS las tiendas. `enabled`
-// deja que el Vendedor (que no tiene este endpoint) nunca lo consulte.
-export function useMovementsInbox(kind: MovementsInboxKind, enabled: boolean) {
+// Bandeja de Admin/Finanzas: merma/regalía/degustación abiertas de TODAS
+// las tiendas. `enabled` deja que el Vendedor (que no tiene este endpoint)
+// nunca lo consulte.
+export function useMovementsInbox(enabled: boolean) {
   return useQuery({
-    queryKey: ["inventory", "inbox", kind],
-    queryFn: () => fetchMovementsInbox(kind),
+    queryKey: ["inventory", "inbox"],
+    queryFn: fetchMovementsInbox,
     enabled,
     refetchInterval: 60_000,
   });
