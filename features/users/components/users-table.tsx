@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Panel } from "@/design-system/components/panel";
 import { InfoBadge, type InfoBadgeTone } from "@/design-system/components/info-badge";
 import { cn } from "cn";
-import { KeyRound, Pencil, ShieldCheck, Users } from "lucide-react";
+import { KeyRound, Pencil, ShieldCheck, Users, Warehouse } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -53,6 +53,16 @@ function RolePill({ role }: { role: UserRole }) {
   return (
     <InfoBadge tone={ROLE_TONE[role]} icon={isSuperAdmin ? ShieldCheck : undefined}>
       {ROLE_LABEL[role]}
+    </InfoBadge>
+  );
+}
+
+// Solo para Vendedores: indica si tienen acceso individual a Inventario.
+function InventoryAccessPill({ user }: { user: AppUser }) {
+  if (user.role !== "VENDEDOR" || !user.inventoryEnabled) return null;
+  return (
+    <InfoBadge tone="success" icon={Warehouse}>
+      Inventario
     </InfoBadge>
   );
 }
@@ -215,7 +225,10 @@ export function UsersTable({ createOpen, onCreateOpenChange }: UsersTableProps) 
                       </div>
                     </TableCell>
                     <TableCell>
-                      <RolePill role={user.role} />
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <RolePill role={user.role} />
+                        <InventoryAccessPill user={user} />
+                      </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {formatLongDate(user.createdAt.slice(0, 10))}
@@ -277,7 +290,10 @@ export function UsersTable({ createOpen, onCreateOpenChange }: UsersTableProps) 
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-                  <RolePill role={user.role} />
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <RolePill role={user.role} />
+                    <InventoryAccessPill user={user} />
+                  </div>
                   <span>Creado {formatLongDate(user.createdAt.slice(0, 10))}</span>
                 </div>
 

@@ -24,9 +24,11 @@ const VENDEDOR_PREFIX_PATHS = [
   "/dashboard/inventario",
 ];
 
-// PLANTA (despacho) solo ve Inventario → Solicitudes: su inicio ES esa
-// pantalla, así que cualquier otra ruta del panel la regresa ahí.
+// PLANTA (despacho) ve Inventario → Solicitudes (su inicio) y el Conteo de
+// cada tienda en solo lectura (ruta exacta: no Movimientos ni Registro).
+// Cualquier otra ruta del panel la regresa a Solicitudes.
 const PLANTA_PREFIX_PATHS = [PLANTA_HOME_PATH];
+const PLANTA_EXACT_PATHS = ["/dashboard/inventario"];
 
 function normalizePath(pathname: string): string {
   return pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
@@ -42,7 +44,10 @@ function isVendedorAllowedRoute(pathname: string): boolean {
 
 function isPlantaAllowedRoute(pathname: string): boolean {
   const path = normalizePath(pathname);
-  return PLANTA_PREFIX_PATHS.some((allowed) => path === allowed || path.startsWith(`${allowed}/`));
+  return (
+    PLANTA_EXACT_PATHS.includes(path) ||
+    PLANTA_PREFIX_PATHS.some((allowed) => path === allowed || path.startsWith(`${allowed}/`))
+  );
 }
 
 // Rutas reales de la app (fuera de /dashboard, que ya se cubre por
@@ -102,7 +107,7 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
-    // PLANTA solo entra a Solicitudes (ver arriba).
+    // PLANTA solo entra a Solicitudes y al Conteo (ver arriba).
     if (decoded.role === "PLANTA" && !isPlantaAllowedRoute(pathname)) {
       return NextResponse.redirect(new URL(PLANTA_HOME_PATH, request.url));
     }

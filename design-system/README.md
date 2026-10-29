@@ -6,7 +6,7 @@ Aquí vive todo lo visual del panel: qué componentes existen, cuándo usar cada
 
 ## Dónde vive cada cosa
 
-- `design-system/components/`: los componentes propios del panel (SectionCard, Panel, TourGuideCard, NoticeCard, InfoBadge, ChangeIndicator, ComparisonStat, SegmentedControl, QuantityStepper, ProgressSteps, ValueBox, DataTable). Se importan con `@/design-system/components/<nombre>`.
+- `design-system/components/`: los componentes propios del panel (SectionCard, Panel, TourGuideCard, NoticeCard, InfoBadge, ChangeIndicator, ComparisonStat, SegmentedControl, QuantityStepper, ProgressSteps, HelpSteps, PreviewSheet, DeliveryTruck, SuccessCelebration, ValueBox, DataTable). Se importan con `@/design-system/components/<nombre>`.
 - `components/ui/`: los componentes base de shadcn/ui (Button, Input, Select, Dialog...), instalados con la CLI.
 - `design-system/showcase.tsx`: catálogo en vivo de todo lo anterior.
 
@@ -33,8 +33,17 @@ Tamaños: `lg`, `default`, `sm`, `xs` y los `icon*`. Los botones de las cards us
 
 ## Cantidades y avance de procesos
 
-- `QuantityStepper` (`design-system/components/quantity-stepper.tsx`): cantidad con botones − / + y campo editable (`step` 1 para piezas, 0.5 para kg). `value={null}` es "sin responder": campo vacío. Es el control de cantidad de Inventario → Solicitudes (pedir, responder y recibir).
+- `QuantityStepper` (`design-system/components/quantity-stepper.tsx`): cantidad con botones − / + y campo editable (`step` 1 para piezas, 0.5 para kg). `value={null}` es "sin responder": campo vacío. `size="lg"` para formularios de tienda y planta (botones grandes). Es el control de cantidad de Inventario → Solicitudes (pedir, responder y recibir).
 - `ProgressSteps` (`design-system/components/progress-steps.tsx`): línea de pasos de un proceso (hechos en verde, actual resaltado, pendientes en gris; `failed` marca el actual en rojo; `compact` para tarjetas). Repite el estado con número, ✓ o ✕ para no depender del color. La usa el avance de las solicitudes de stock.
+
+## Formularios guiados (tienda y planta)
+
+Para personas que casi no usan computadora: una sola cosa por paso, botones grandes y lo que se va a enviar siempre a la vista.
+
+- `HelpSteps` (`design-system/components/help-steps.tsx`): "qué hago ahora" en 3 pasos grandes con número, ícono y una frase; el actual resaltado y los hechos con ✓. En móvil solo se ve el paso actual. Va arriba de Nueva solicitud y de la respuesta de planta.
+- `PreviewSheet` (`design-system/components/preview-sheet.tsx`): hoja de papel con borde punteado y un listón "Solo es una vista previa de cómo va quedando. Todavía no se ha enviado nada." Muestra en vivo lo que recibirá el otro lado mientras se llena el formulario.
+- `SuccessCelebration` (`design-system/components/success-celebration.tsx`): pantalla breve de "¡Listo!" (✓ con rebote y confeti, o un dibujo propio en `visual`) tras enviar una solicitud o despachar. `role="status"`.
+- `DeliveryTruck` (`design-system/components/delivery-truck.tsx`): camión animado con la tableta de chocolate en la caja. `mode="road"` rueda en su lugar sobre la carretera (envío EN_CAMINO en tarjeta y detalle); `mode="depart"` arranca y sale (al despachar). `size` sm, md o lg. Todo respeta `prefers-reduced-motion`.
 
 ## Comparación de períodos
 

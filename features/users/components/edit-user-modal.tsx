@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { StoreSelect } from "@/components/filters/store-select";
 import { useStores } from "@/features/sales/hooks/use-stores";
 import { useUpdateUser } from "../hooks/use-update-user";
@@ -53,7 +54,7 @@ export function EditUserModal({ user, isSelf, onOpenChange }: EditUserModalProps
     formState: { errors },
   } = useForm<UpdateUserFormValues>({
     resolver: zodResolver(updateUserSchema),
-    defaultValues: { email: "", name: "", role: "FINANZAS", posConfigId: undefined },
+    defaultValues: { email: "", name: "", role: "FINANZAS", posConfigId: undefined, inventoryEnabled: false },
   });
 
   const { data: stores, isLoading: storesLoading } = useStores();
@@ -66,7 +67,13 @@ export function EditUserModal({ user, isSelf, onOpenChange }: EditUserModalProps
   // modales de este proyecto (ver TicketGoalPercentModal).
   if (open && !wasOpen && user) {
     setWasOpen(true);
-    reset({ email: user.email, name: user.name ?? "", role: user.role, posConfigId: user.posConfigId ?? undefined });
+    reset({
+      email: user.email,
+      name: user.name ?? "",
+      role: user.role,
+      posConfigId: user.posConfigId ?? undefined,
+      inventoryEnabled: user.inventoryEnabled,
+    });
     updateUser.reset();
   } else if (!open && wasOpen) {
     setWasOpen(false);
@@ -79,7 +86,13 @@ export function EditUserModal({ user, isSelf, onOpenChange }: EditUserModalProps
   function onSubmit(values: UpdateUserFormValues) {
     if (!user) return;
     updateUser.mutate(
-      { id: user.id, ...values, name: values.name?.trim() || undefined },
+      {
+        id: user.id,
+        ...values,
+        name: values.name?.trim() || undefined,
+        // Solo los Vendedores tienen acceso individual a Inventario.
+        inventoryEnabled: values.role === "VENDEDOR" ? values.inventoryEnabled : undefined,
+      },
       { onSuccess: () => setTimeout(() => onOpenChange(false), 1200) },
     );
   }
@@ -100,7 +113,7 @@ export function EditUserModal({ user, isSelf, onOpenChange }: EditUserModalProps
             </div>
           </div>
           <DialogDescription className="pt-1 leading-relaxed">
-            Cambia el correo, el nombre o el rol de esta cuenta.
+            Cambia el correo, el nombre, el rol o el acceso a Inventario de esta cuenta.
           </DialogDescription>
         </DialogHeader>
 
@@ -172,6 +185,29 @@ export function EditUserModal({ user, isSelf, onOpenChange }: EditUserModalProps
                   )}
                 />
                 {errors.posConfigId && <p className="text-xs text-destructive">{errors.posConfigId.message}</p>}
+              </div>
+            )}
+
+            {role === "VENDEDOR" && (
+              <div className="flex items-start justify-between gap-3 rounded-lg border border-border bg-muted/40 px-3 py-2.5">
+                <div className="flex flex-col gap-0.5">
+                  <Label htmlFor="edit-inventoryEnabled">Acceso a Inventario</Label>
+                  <p id="edit-inventoryEnabled-hint" className="text-xs text-muted-foreground">
+                    Solo entra si además su tienda está habilitada en Administración → Inventario.
+                  </p>
+                </div>
+                <Controller
+                  control={control}
+                  name="inventoryEnabled"
+                  render={({ field }) => (
+                    <Switch
+                      id="edit-inventoryEnabled"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      aria-describedby="edit-inventoryEnabled-hint"
+                    />
+                  )}
+                />
               </div>
             )}
 

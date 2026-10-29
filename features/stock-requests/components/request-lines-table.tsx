@@ -1,6 +1,7 @@
 import { cn } from "cn";
 import { InfoBadge } from "@/design-system/components/info-badge";
 import { formatLineQuantity, groupByCategory } from "../lib/group-by-category";
+import { replacedName, substitutesOf } from "../lib/substitution";
 import type { StockRequest } from "../types/stock-request.types";
 
 // Vista de solo lectura del formato: por categoría, con lo pedido, enviado,
@@ -31,15 +32,26 @@ export function RequestLinesTable({ request }: { request: StockRequest }) {
                   const noStock = showSent && line.sentQuantity === 0;
                   const partial = showSent && !line.addedByPlant && line.sentQuantity !== null && line.sentQuantity > 0 && line.sentQuantity < line.requestedQuantity;
                   const notes = [line.plantNote ? `Planta: ${line.plantNote}` : null, line.storeNote ? `Tienda: ${line.storeNote}` : null].filter(Boolean);
+                  const replaces = replacedName(line, request.lines);
+                  const subs = substitutesOf(line.productId, request.lines);
                   return (
                     <tr key={line.productId} className={cn(noStock && "bg-destructive/5")}>
                       <td className="px-3 py-2 align-top">
                         <span className={cn("font-medium text-foreground", noStock && "line-through decoration-destructive/60")}>{line.productName}</span>
                         <span className="ml-1.5 inline-flex flex-wrap gap-1 align-middle">
-                          {line.addedByPlant && <InfoBadge tone="violet" size="sm">Agregado por planta</InfoBadge>}
+                          {line.addedByPlant && (
+                            <InfoBadge tone="violet" size="sm">
+                              {replaces ? `En lugar de ${replaces}` : "Agregado por planta"}
+                            </InfoBadge>
+                          )}
                           {noStock && <InfoBadge tone="danger" size="sm">No hay</InfoBadge>}
                           {partial && <InfoBadge tone="warning" size="sm">Parcial</InfoBadge>}
                         </span>
+                        {subs.length > 0 && (
+                          <p className="text-xs font-medium text-violet-700 dark:text-violet-300">
+                            Va {subs.map((sub) => sub.productName).join(" y ")} en su lugar
+                          </p>
+                        )}
                         {notes.map((note) => (
                           <p key={note} className="text-xs text-muted-foreground">
                             {note}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { DollarSign, Eye, Loader2, Package, PackagePlus, Plus, Save, Trash2, Warehouse } from "lucide-react";
+import { ClipboardCheck, DollarSign, Eye, Loader2, MousePointerClick, Package, PackagePlus, Plus, Save, Send, Trash2, Warehouse } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChangeIndicator } from "@/design-system/components/change-indicator";
 import { ChocolateBreak } from "@/design-system/components/chocolate-break";
@@ -12,6 +12,10 @@ import { InfoBadge, type InfoBadgeTone } from "@/design-system/components/info-b
 import { SegmentedControl } from "@/design-system/components/segmented-control";
 import { QuantityStepper } from "@/design-system/components/quantity-stepper";
 import { ProgressSteps } from "@/design-system/components/progress-steps";
+import { DeliveryTruck } from "@/design-system/components/delivery-truck";
+import { HelpSteps } from "@/design-system/components/help-steps";
+import { PreviewSheet } from "@/design-system/components/preview-sheet";
+import { SuccessCelebration } from "@/design-system/components/success-celebration";
 import { Input } from "@/components/ui/input";
 import { Panel } from "@/design-system/components/panel";
 import { NoticeCard } from "@/design-system/components/notice-card";
@@ -526,12 +530,72 @@ function TablesSection() {
   );
 }
 
+function GuidedFormsSection() {
+  const [step, setStep] = useState(1);
+  const [truckKey, setTruckKey] = useState(0);
+  const [celebrateKey, setCelebrateKey] = useState(0);
+  const [qty, setQty] = useState<number | null>(6);
+  return (
+    <Section
+      id="formularios-guiados"
+      title="Formularios guiados"
+      description="Para tienda y planta: pasos grandes, vista previa en vivo y animaciones de envío."
+    >
+      <Specimen label="HelpSteps: qué hago ahora">
+        <div className="flex w-full flex-col gap-2">
+          <HelpSteps
+            currentIndex={step}
+            steps={[
+              { icon: MousePointerClick, title: "Elige", text: "Toca “Agregar” en cada producto." },
+              { icon: ClipboardCheck, title: "Revisa", text: "Mira la vista previa." },
+              { icon: Send, title: "Envía", text: "Pulsa “Enviar a planta”." },
+            ]}
+          />
+          <Button type="button" size="sm" variant="outline" className="self-start" onClick={() => setStep((current) => (current + 1) % 3)}>
+            Siguiente paso
+          </Button>
+        </div>
+      </Specimen>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Specimen label="PreviewSheet + QuantityStepper lg">
+          <PreviewSheet title="Así va tu pedido" subtitle="Tienda Ramblas · hoy" className="w-full" footer={<p className="text-sm font-medium">1 producto</p>}>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-medium">Brownie</span>
+              <QuantityStepper value={qty} onChange={setQty} size="lg" ariaLabel="Cantidad de Brownie" />
+            </div>
+          </PreviewSheet>
+        </Specimen>
+        <div className="flex flex-col gap-4">
+          <Specimen label="DeliveryTruck: road (en camino) y depart (al despachar)">
+            <div className="flex w-full flex-col gap-3">
+              <DeliveryTruck size="sm" />
+              <DeliveryTruck key={truckKey} mode="depart" size="md" label="Despachado" />
+              <Button type="button" size="sm" variant="outline" className="self-start" onClick={() => setTruckKey((current) => current + 1)}>
+                Repetir salida
+              </Button>
+            </div>
+          </Specimen>
+          <Specimen label="SuccessCelebration">
+            <div className="flex w-full flex-col items-center">
+              <SuccessCelebration key={celebrateKey} title="¡Pedido enviado!" description="Planta ya lo puede ver." className="py-4" />
+              <Button type="button" size="sm" variant="outline" onClick={() => setCelebrateKey((current) => current + 1)}>
+                Repetir
+              </Button>
+            </div>
+          </Specimen>
+        </div>
+      </div>
+    </Section>
+  );
+}
+
 export function DesignSystemShowcase() {
   return (
     <div className="flex flex-col gap-4">
       <ReportHeader page="admin-diseno" />
       <ButtonsSection />
       <BadgesSection />
+      <GuidedFormsSection />
       <ComparisonSection />
       <CardsSection />
       <TablesSection />

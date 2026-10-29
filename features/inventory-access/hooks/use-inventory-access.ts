@@ -21,14 +21,19 @@ export function useInventoryAccess() {
   });
 }
 
+export type InventoryBlockReason = "user" | "store" | null;
+
 /** ¿Este usuario puede usar Inventario? Admin/Finanzas siempre; el Vendedor
- * solo si habilitaron su tienda. `isLoading` evita parpadeos mientras llega
- * la respuesta (mientras tanto el Vendedor se trata como "no habilitado"). */
-export function useCanUseInventory(): { canUse: boolean; isLoading: boolean } {
+ * solo si tiene acceso individual (`inventoryEnabled`) Y habilitaron su
+ * tienda. `isLoading` evita parpadeos mientras llega la respuesta (mientras
+ * tanto el Vendedor se trata como "no habilitado"). `blockedBy` dice cuál de
+ * las dos condiciones falta, para el mensaje del gate. */
+export function useCanUseInventory(): { canUse: boolean; isLoading: boolean; blockedBy: InventoryBlockReason } {
   const user = useAuthStore((state) => state.user);
   const { data, isLoading } = useInventoryAccess();
-  if (!user) return { canUse: false, isLoading };
-  if (user.role !== "VENDEDOR") return { canUse: true, isLoading: false };
-  const enabled = user.posConfigId != null && (data?.enabledPosConfigIds.includes(user.posConfigId) ?? false);
-  return { canUse: enabled, isLoading };
+  if (!user) return { canUse: false, isLoading, blockedBy: null };
+  if (user.role !== "VENDEDOR") return { canUse: true, isLoading: false, blockedBy: null };
+  if (!user.inventoryEnabled) return { canUse: false, isLoading: false, blockedBy: "user" };
+  const storeEnabled = user.posConfigId != null && (data?.enabledPosConfigIds.includes(user.posConfigId) ?? false);
+  return { canUse: storeEnabled, isLoading, blockedBy: storeEnabled ? null : "store" };
 }

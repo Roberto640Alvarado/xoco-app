@@ -9,6 +9,8 @@ export interface AppUser {
   createdAt: string;
   // Tienda asignada — solo presente (no null) para role="VENDEDOR".
   posConfigId: number | null;
+  // Acceso individual a Inventario — solo aplica a role="VENDEDOR".
+  inventoryEnabled: boolean;
 }
 
 export interface CreateUserPayload {
@@ -30,4 +32,5 @@ export interface UpdateUserPayload {
   name?: string;
   role: UserRole;
   posConfigId?: number;
+  inventoryEnabled?: boolean;
 }

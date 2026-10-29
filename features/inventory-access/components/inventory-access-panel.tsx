@@ -65,7 +65,7 @@ export function InventoryAccessPanel() {
         tourId="access-note"
         icon={Info}
         title="Carga el stock primero"
-        description="Habilita una tienda solo después de contarla. Ocultarla no borra nada."
+        description="Habilita una tienda solo después de contarla. Ocultarla no borra nada. Además, cada Vendedor necesita su propio acceso (Usuarios → Editar)."
         action={
           <Link href="/dashboard/inventario" className={buttonVariants({ variant: "outline", size: "sm" })}>
             <Warehouse className="size-4" aria-hidden="true" />

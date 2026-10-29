@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { parseAsInteger, useQueryState } from "nuqs";
 import { PackagePlus, Truck } from "lucide-react";
 import { cn } from "cn";
 import { DateRangeFilter, type DateRangeValue } from "@/components/filters/date-range-filter";
@@ -17,6 +19,7 @@ import { needsMyAction, STATUS_LABEL, STATUS_ORDER } from "../lib/request-status
 import { NewRequestDialog } from "./new-request-dialog";
 import { RequestCard } from "./request-card";
 import { RequestDetailDialog } from "./request-detail-dialog";
+import { StoreTabs, type StoreTab } from "./store-tabs";
 import type { StockRequest, StockRequestStatus } from "../types/stock-request.types";
 
 const ALL = "all";
@@ -45,13 +48,19 @@ function descriptionFor(role: string | undefined): string {
 // - Admin/Finanzas: solo seguimiento (y cancelar).
 export function StockRequestsView() {
   const user = useAuthStore((state) => state.user);
+  const reduceMotion = useReducedMotion() ?? false;
   const role = user?.role;
   const isStore = role === "VENDEDOR";
-  const canFilterStores = !isStore;
+  const isPlant = role === "PLANTA";
+  // Admin/Finanzas filtran con un select; Despacho ve una pestaña por tienda.
+  const canFilterStores = !isStore && !isPlant;
 
   const [range, setRange] = useState<DateRangeValue>(defaultRange);
   const [status, setStatus] = useState<StatusFilter>(ALL);
-  const [storeId, setStoreId] = useState<number | undefined>(undefined);
+  // La tienda elegida vive en la URL (?tienda=), así se conserva al recargar.
+  const [storeParam, setStoreParam] = useQueryState("tienda", parseAsInteger);
+  const storeId = storeParam ?? undefined;
+  const setStoreId = (next: number | undefined) => void setStoreParam(next ?? null);
   const [newOpen, setNewOpen] = useState(false);
   const [selected, setSelected] = useState<StockRequest | null>(null);
 
@@ -63,6 +72,17 @@ export function StockRequestsView() {
     for (const request of all) map.set(request.posConfigId, request.storeName);
     return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1], "es"));
   }, [all]);
+
+  const storeTabs = useMemo<StoreTab[]>(() => {
+    const tally = (list: StockRequest[]) => ({
+      total: list.length,
+      pending: list.filter((request) => needsMyAction(role, request)).length,
+    });
+    return [
+      { id: undefined, name: "Todas", ...tally(all) },
+      ...stores.map(([id, name]) => ({ id, name, ...tally(all.filter((request) => request.posConfigId === id)) })),
+    ];
+  }, [all, stores, role]);
 
   const byStore = useMemo(() => (storeId === undefined ? all : all.filter((request) => request.posConfigId === storeId)), [all, storeId]);
 
@@ -127,6 +147,8 @@ export function StockRequestsView() {
         )}
       </SectionCard>
 
+      {isPlant && stores.length > 0 && <StoreTabs tabs={storeTabs} value={storeId} onChange={setStoreId} />}
+
       <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrar por estado" data-tour="req-status">
         <InfoHint topic="estados-solicitud" />
         {chips.map((chip) => {
@@ -171,8 +193,16 @@ export function StockRequestsView() {
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" data-tour="req-board">
-          {visible.map((request) => (
-            <RequestCard key={request.id} request={request} role={role} onOpen={setSelected} />
+          {visible.map((request, index) => (
+            <motion.div
+              key={request.id}
+              initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, delay: Math.min(index, 8) * 0.04, ease: "easeOut" }}
+              className="flex"
+            >
+              <RequestCard request={request} role={role} onOpen={setSelected} />
+            </motion.div>
           ))}
         </div>
       )}

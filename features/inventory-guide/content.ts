@@ -190,11 +190,15 @@ const PLANTA_FLOW: { intro: string; steps: GuideStep[] } = {
     },
     {
       title: "2. Respóndela",
-      body: "Ábrela: los productos vienen por categoría. Para cada uno indica cuánto envías (\"Todo\", una cantidad menor o \"No hay\"). Puedes agregar productos que la tienda no pidió y dejar una nota. Con \"Guardar avance\" la solicitud pasa a En preparación y puedes seguir después.",
+      body: "Ábrela: los productos vienen por categoría. Para cada uno indica cuánto envías (\"Todo\", una cantidad menor o \"No hay\") y, si quieres, deja un comentario a la par (\"No hay\", \"Se acabó\"...). Si no hay un producto puedes \"Mandar otro en su lugar\" (ej. piden tiramisú y mandas brownie). A la derecha ves la vista previa de cómo le llega a la tienda. Con \"Guardar avance\" puedes seguir después.",
     },
     {
       title: "3. Despacha",
       body: "Cuando todos los productos estén respondidos, pulsa \"Despachar\". El envío puede ser completo o parcial. La tienda recibe el aviso de que viene en camino.",
+    },
+    {
+      title: "Mira el inventario de la tienda",
+      body: "En Inventario → Conteo eliges cualquier tienda y ves cuánto tiene de cada producto (solo lectura). Desde una solicitud, \"Ver inventario de la tienda\" te lleva directo.",
     },
     {
       title: "4. Descarga el formato",
@@ -224,7 +228,7 @@ const CONTEO_STAFF =
   "Captura el conteo físico de cada producto por tienda (columna \"Inventario nuevo\") y guarda en lote. La existencia estimada se calcula sola desde el último conteo.";
 const SOLICITUDES_STAFF =
   "Seguimiento de las solicitudes de stock de todas las tiendas: quién pidió, qué respondió planta y si ya llegó. Solo observas (y puedes cancelar); planta despacha y la tienda confirma.";
-const NOT_FOR_PLANTA = "Esta pantalla no está disponible para Planta: tu acceso es solo Solicitudes.";
+const NOT_FOR_PLANTA = "Esta pantalla no está disponible para Planta: tu acceso es Solicitudes y el Conteo (solo lectura).";
 const MOVIMIENTOS_STAFF =
   "Mermas, regalías y degustaciones. Elige una tienda o mira los pendientes de todas; confirma o rechaza (con motivo) lo que reportan los Vendedores, o registra uno tú directamente.";
 const REGISTRO_STAFF =
@@ -236,7 +240,8 @@ export const PAGE_INTRO: Record<GuidePage, Record<GuideRole, string>> = {
     finanzas: CONTEO_STAFF,
     vendedor:
       "Aquí ves la existencia estimada de cada producto de tu tienda. Es solo lectura: el conteo físico lo captura Finanzas o Admin.",
-    planta: NOT_FOR_PLANTA,
+    planta:
+      "Aquí ves cuánto tiene cada tienda de cada producto, para saber qué mandar. Elige la tienda arriba. Es solo lectura.",
   },
   solicitudes: {
     admin: SOLICITUDES_STAFF,
@@ -486,13 +491,29 @@ const VENDEDOR_STEPS: Record<GuidePage, TourStep[]> = {
 };
 
 const PLANTA_STEPS: Record<GuidePage, TourStep[]> = {
-  conteo: [],
+  conteo: [
+    WELCOME("conteo", "planta"),
+    { target: '[data-tour="inv-store"]', title: "Elige la tienda", description: "Cambia de tienda para ver su inventario.", side: "bottom" },
+    COUNT_FILTER_STEP,
+    {
+      target: '[data-tour="inv-estimated"]',
+      title: "Existencia estimada",
+      description: "Lo que debería haber hoy en esa tienda. \"—\" significa que el producto aún no se ha contado.",
+      side: "bottom",
+    },
+  ],
   solicitudes: [
     WELCOME("solicitudes", "planta"),
     {
       target: '[data-tour="req-filters"]',
       title: "Filtros",
-      description: "Filtra por rango de fechas y por tienda. Por defecto ves lo que va del año.",
+      description: "Filtra por rango de fechas. Por defecto ves lo que va del año.",
+      side: "bottom",
+    },
+    {
+      target: '[data-tour="req-store-tabs"]',
+      title: "Una pestaña por tienda",
+      description: "Toca una tienda para ver solo sus solicitudes. El número amarillo dice cuántas tiene nuevas por responder.",
       side: "bottom",
     },
     {

@@ -12,6 +12,7 @@ import { InfoBadge } from "@/design-system/components/info-badge";
 import { QuantityStepper } from "@/design-system/components/quantity-stepper";
 import { useReceiveStockRequest } from "../hooks/use-stock-request-actions";
 import { formatLineQuantity, groupByCategory } from "../lib/group-by-category";
+import { replacedName } from "../lib/substitution";
 import type { StockRequest } from "../types/stock-request.types";
 
 interface ReceiveLine {
@@ -24,6 +25,8 @@ interface ReceiveLine {
   received: number;
   note: string;
   plantNote: string | null;
+  /** Nombre del producto pedido al que sustituye (planta lo mandó "en su lugar"). */
+  replaces: string | null;
 }
 
 interface ReceiveEditorProps {
@@ -49,6 +52,7 @@ export function ReceiveEditor({ request, onDone }: ReceiveEditorProps) {
         received: line.sentQuantity ?? 0,
         note: "",
         plantNote: line.plantNote,
+        replaces: replacedName(line, request.lines),
       })),
   );
   const [note, setNote] = useState("");
@@ -127,7 +131,7 @@ export function ReceiveEditor({ request, onDone }: ReceiveEditorProps) {
                           Pediste {formatLineQuantity(line.requested, line.unit)} · Planta envió {formatLineQuantity(line.sent, line.unit)}
                           {line.requested === 0 && (
                             <InfoBadge tone="violet" size="sm" className="ml-1.5">
-                              Agregado por planta
+                              {line.replaces ? `En lugar de ${line.replaces}` : "Agregado por planta"}
                             </InfoBadge>
                           )}
                         </p>

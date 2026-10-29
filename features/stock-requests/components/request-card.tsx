@@ -1,6 +1,7 @@
 import { ArrowRight, Boxes, Clock, Store } from "lucide-react";
 import { cn } from "cn";
 import { formatDateTime } from "@/lib/format";
+import { DeliveryTruck } from "@/design-system/components/delivery-truck";
 import { needsMyAction, statusHint } from "../lib/request-status";
 import { RequestProgress, RequestStatusBadge } from "./request-status-badge";
 import type { StockRequest } from "../types/stock-request.types";
@@ -23,7 +24,7 @@ export function RequestCard({ request, role, onOpen }: RequestCardProps) {
       type="button"
       onClick={() => onOpen(request)}
       className={cn(
-        "group flex flex-col gap-3 rounded-2xl border bg-card p-4 text-left shadow-xs transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+        "group flex w-full flex-col gap-3 rounded-2xl border bg-card p-4 text-left shadow-xs transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
         action ? "border-primary/60 ring-1 ring-primary/20" : "border-border",
       )}
     >
@@ -39,6 +40,8 @@ export function RequestCard({ request, role, onOpen }: RequestCardProps) {
       </div>
 
       <RequestProgress request={request} compact />
+
+      {request.status === "EN_CAMINO" && <DeliveryTruck size="sm" label={`Envío en camino a ${request.storeName}`} />}
 
       <p className="line-clamp-2 min-h-10 text-sm text-foreground/80">{statusHint(role, request)}</p>
 

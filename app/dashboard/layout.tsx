@@ -81,7 +81,8 @@ const NAV_ITEMS: DashboardNavItem[] = [
   //   rechaza (con motivo).
   // - Solicitudes: la tienda pide stock, Planta responde y despacha, la
   //   tienda confirma lo que llega. Admin/Finanzas solo hacen seguimiento
-  //   (y cancelan). Planta SOLO ve esta pantalla. Tiene su propio moduleKey.
+  //   (y cancelan). Tiene su propio moduleKey. Planta ve esta pantalla y el
+  //   Conteo de cualquier tienda en solo lectura (para saber qué mandar).
   // - Registro: línea de tiempo de entradas y salidas con fecha y hora; el
   //   Vendedor ve solo la de su tienda. Comparte moduleKey con Conteo.
   {
@@ -89,7 +90,7 @@ const NAV_ITEMS: DashboardNavItem[] = [
     icon: Warehouse,
     group: "",
     children: [
-      { label: "Conteo", href: "/dashboard/inventario", icon: Warehouse, roles: ["SUPER_ADMIN", "FINANZAS", "VENDEDOR"], moduleKey: "dashboard.inventario" },
+      { label: "Conteo", href: "/dashboard/inventario", icon: Warehouse, roles: ["SUPER_ADMIN", "FINANZAS", "VENDEDOR", "PLANTA"], moduleKey: "dashboard.inventario" },
       { label: "Solicitudes", href: "/dashboard/inventario/solicitudes", icon: PackagePlus, roles: ["SUPER_ADMIN", "FINANZAS", "VENDEDOR", "PLANTA"], moduleKey: "dashboard.inventario-solicitudes" },
       { label: "Movimientos", href: "/dashboard/inventario/movimientos", icon: PackageMinus, roles: ["SUPER_ADMIN", "FINANZAS", "VENDEDOR"], moduleKey: "dashboard.inventario-movimientos" },
       { label: "Registro", href: "/dashboard/inventario/registro", icon: ClipboardList, roles: ["SUPER_ADMIN", "FINANZAS", "VENDEDOR"], moduleKey: "dashboard.inventario" },

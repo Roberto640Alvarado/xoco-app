@@ -11,6 +11,10 @@ export interface AuthUser {
   // usuario solo ve datos de esta tienda (forzado también en el
   // servidor, esto es solo para la UI).
   posConfigId: number | null;
+  // Acceso individual a Inventario — solo cuenta para VENDEDOR: además de
+  // que su tienda esté habilitada, Super admin le da acceso a él en
+  // particular (Usuarios → Editar). El servidor lo valida igual (403).
+  inventoryEnabled: boolean;
   createdAt: string;
   // Permisos efectivos por moduleKey (panel "Permisos", Fase 3 de RBAC) —
   // solo trae los módulos dentro del techo de rol de este usuario. Una

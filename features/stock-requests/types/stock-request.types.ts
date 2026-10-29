@@ -19,6 +19,8 @@ export interface StockRequestLine {
   /** Recibido menos enviado (columna DIF del formato). */
   difference: number | null;
   addedByPlant: boolean;
+  /** Solo en líneas agregadas por planta: el producto pedido al que sustituye ("en lugar de"). */
+  replacesProductId: number | null;
   plantNote: string | null;
   storeNote: string | null;
 }
@@ -79,6 +81,8 @@ export interface PlantLinePayload {
   sentQuantity: number | null;
   note?: string | null;
   added?: boolean;
+  /** Producto pedido al que sustituye (solo con `added`). */
+  replacesProductId?: number | null;
 }
 
 export interface SavePlantResponsePayload {

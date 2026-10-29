@@ -2,6 +2,7 @@ import { formatDateTime } from "@/lib/format";
 import { formatLineQuantity, groupByCategory } from "./group-by-category";
 import { STATUS_LABEL } from "./request-status";
 import type { StockRequest } from "../types/stock-request.types";
+import { replacedName, substitutesOf } from "./substitution";
 
 const BROWN: [number, number, number] = [74, 44, 29];
 const CREAM: [number, number, number] = [245, 237, 228];
@@ -88,7 +89,16 @@ export async function downloadRequestPdf(request: StockRequest): Promise<void> {
       { content: group.category.toUpperCase(), colSpan: 6, styles: { fillColor: CREAM, fontStyle: "bold", textColor: BROWN } },
     ]);
     for (const line of group.items) {
-      const observation = [line.addedByPlant ? "Agregado por planta" : null, line.plantNote, line.storeNote].filter(Boolean).join(" · ");
+      const replaces = replacedName(line, request.lines);
+      const subs = substitutesOf(line.productId, request.lines);
+      const observation = [
+        line.addedByPlant ? (replaces ? `En lugar de ${replaces}` : "Agregado por planta") : null,
+        subs.length > 0 ? `Va ${subs.map((sub) => sub.productName).join(" y ")} en su lugar` : null,
+        line.plantNote,
+        line.storeNote,
+      ]
+        .filter(Boolean)
+        .join(" · ");
       body.push([
         line.productName,
         qty(line.addedByPlant ? null : line.requestedQuantity, line.unit),

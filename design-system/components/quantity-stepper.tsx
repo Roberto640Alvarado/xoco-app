@@ -16,6 +16,8 @@ interface QuantityStepperProps {
   disabled?: boolean;
   /** Nombre para lectores de pantalla (ej. "Cantidad de Brownie"). */
   ariaLabel: string;
+  /** `lg`: botones y número más grandes, para quien casi no usa computadora. */
+  size?: "md" | "lg";
   className?: string;
 }
 
@@ -36,9 +38,17 @@ export function QuantityStepper({
   suffix,
   disabled = false,
   ariaLabel,
+  size = "md",
   className,
 }: QuantityStepperProps) {
+  const large = size === "lg";
   const clamp = (next: number) => Math.min(max ?? Infinity, Math.max(min, round(next)));
+
+  const buttonClass = cn(
+    "flex items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40",
+    large ? "size-11" : "size-8",
+  );
+  const iconClass = large ? "size-5" : "size-3.5";
 
   return (
     <div
@@ -53,9 +63,9 @@ export function QuantityStepper({
         aria-label={`Quitar ${step} a ${ariaLabel}`}
         disabled={disabled || value == null || value <= min}
         onClick={() => onChange(clamp((value ?? 0) - step))}
-        className="flex size-8 items-center justify-center rounded-l-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+        className={cn(buttonClass, "rounded-l-lg")}
       >
-        <Minus className="size-3.5" aria-hidden="true" />
+        <Minus className={iconClass} aria-hidden="true" />
       </button>
       <input
         type="number"
@@ -73,7 +83,10 @@ export function QuantityStepper({
           const parsed = Number(raw);
           if (!Number.isNaN(parsed)) onChange(clamp(parsed));
         }}
-        className="h-8 w-14 border-x border-border bg-transparent text-center text-sm tabular-nums outline-none [appearance:textfield] focus-visible:bg-muted/50 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        className={cn(
+          "border-x border-border bg-transparent text-center tabular-nums outline-none [appearance:textfield] focus-visible:bg-muted/50 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+          large ? "h-11 w-16 text-lg font-semibold" : "h-8 w-14 text-sm",
+        )}
       />
       {suffix && <span className="pl-1.5 text-xs text-muted-foreground">{suffix}</span>}
       <button
@@ -81,9 +94,9 @@ export function QuantityStepper({
         aria-label={`Agregar ${step} a ${ariaLabel}`}
         disabled={disabled || (max != null && value != null && value >= max)}
         onClick={() => onChange(clamp((value ?? 0) + step))}
-        className="flex size-8 items-center justify-center rounded-r-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+        className={cn(buttonClass, "rounded-r-lg")}
       >
-        <Plus className="size-3.5" aria-hidden="true" />
+        <Plus className={iconClass} aria-hidden="true" />
       </button>
     </div>
   );

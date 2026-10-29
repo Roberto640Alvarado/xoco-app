@@ -1,12 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { parseAsInteger, useQueryState } from "nuqs";
 import { Warehouse } from "lucide-react";
 import { SectionCard } from "@/design-system/components/section-card";
 import { StoreSelect } from "@/components/filters/store-select";
 import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { useStores } from "@/features/sales/hooks/use-stores";
 import { useVendedorStoreFilter } from "@/features/sales/hooks/use-vendedor-store-filter";
+import { useAuthStore } from "@/store/auth-store";
 import { useInventoryItems } from "../hooks/use-inventory-items";
 import { InventoryTable } from "./inventory-table";
 
@@ -21,7 +23,12 @@ export function InventoryView() {
   // Vendedor: solo lectura y forzado a su propia tienda (ver InventoryTable
   // readOnly + StoreSelect lockedToSingleStore); Admin/Finanzas capturan.
   const { isVendedor, defaultPosConfigId } = useVendedorStoreFilter();
-  const [posConfigId, setPosConfigId] = useState<number | undefined>(defaultPosConfigId);
+  // Planta (despacho) mira el stock de cualquier tienda para saber qué
+  // mandar, en solo lectura. Desde una solicitud llega con ?tienda=<id>.
+  const isPlanta = useAuthStore((state) => state.user?.role === "PLANTA");
+  const readOnly = isVendedor || isPlanta;
+  const [storeParam] = useQueryState("tienda", parseAsInteger);
+  const [posConfigId, setPosConfigId] = useState<number | undefined>(defaultPosConfigId ?? storeParam ?? undefined);
 
   // Autoselección de la primera tienda (Admin/Finanzas; el Vendedor ya
   // arranca en la suya) — ajuste de estado durante el render (mismo
@@ -47,7 +54,13 @@ export function InventoryView() {
       <SectionCard
         icon={Warehouse}
         title="Conteo"
-        description={isVendedor ? "Existencia de tu tienda por categoría, solo lectura." : "Actualiza el inventario real de cada tienda, por categoría."}
+        description={
+          isVendedor
+            ? "Existencia de tu tienda por categoría, solo lectura."
+            : isPlanta
+              ? "Mira cuánto tiene cada tienda antes de despachar. Solo lectura."
+              : "Actualiza el inventario real de cada tienda, por categoría."
+        }
       >
         <StoreSelect
           stores={stores}
@@ -91,7 +104,7 @@ export function InventoryView() {
           isLoading={inventory.isLoading}
           isError={inventory.isError}
           errorMessage={inventory.error?.message}
-          readOnly={isVendedor}
+          readOnly={readOnly}
         />
       )}
     </div>

@@ -19,6 +19,8 @@ interface CategoryProductPickerProps {
   isLoading?: boolean;
   /** Texto del botón de cada producto sin elegir. */
   addLabel?: string;
+  /** Categoría que se muestra primero (ej. la del producto que se reemplaza). */
+  defaultCategory?: string;
   className?: string;
 }
 
@@ -34,10 +36,11 @@ export function CategoryProductPicker({
   excludeIds,
   isLoading = false,
   addLabel = "Agregar",
+  defaultCategory,
   className,
 }: CategoryProductPickerProps) {
   const [search, setSearch] = useState("");
-  const [active, setActive] = useState<string | null>(null);
+  const [active, setActive] = useState<string | null>(defaultCategory ?? null);
 
   const groups = useMemo(() => groupByCategory(items.filter((item) => !excludeIds?.has(item.productId))), [items, excludeIds]);
   const term = search.trim().toLowerCase();
@@ -63,9 +66,9 @@ export function CategoryProductPicker({
         <Input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Buscar un producto en todas las categorías..."
+          placeholder="Escribe el nombre del producto para buscarlo..."
           aria-label="Buscar producto"
-          className="h-10 pl-9"
+          className="h-12 pl-9 text-base"
         />
       </div>
 
@@ -92,7 +95,7 @@ export function CategoryProductPicker({
                   onClick={() => setActive(group.category)}
                   aria-current={isActive ? "true" : undefined}
                   className={cn(
-                    "flex shrink-0 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors",
+                    "flex min-h-11 shrink-0 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors",
                     isActive ? "border-primary bg-primary/10 font-semibold text-foreground" : "border-border bg-card text-muted-foreground hover:text-foreground",
                   )}
                 >
@@ -121,30 +124,32 @@ export function CategoryProductPicker({
                       const quantity = quantities[item.productId] ?? 0;
                       const chosen = quantity > 0;
                       return (
-                        <li key={item.productId} className={cn("flex items-center gap-3 px-3 py-2.5 transition-colors", chosen && "bg-primary/5")}>
-                          <span className="min-w-0 flex-1">
-                            <span className="block text-sm font-medium text-foreground">{item.productName}</span>
+                        <li key={item.productId} className={cn("flex flex-wrap items-center gap-3 px-3 py-3 transition-colors", chosen && "bg-emerald-500/5")}>
+                          <span className="min-w-0 flex-1 basis-40">
+                            <span className="block text-base font-medium text-foreground">{item.productName}</span>
                             <span className="block text-xs text-muted-foreground">{item.unit === "kg" ? "Se pide por kg" : "Se pide por pieza"}</span>
                           </span>
                           {chosen ? (
                             <span className="flex items-center gap-2">
-                              <Check className="size-4 text-emerald-600" aria-hidden="true" />
+                              <Check className="size-5 text-emerald-600" aria-label="Agregado" />
                               <QuantityStepper
                                 value={quantity}
                                 onChange={(next) => onQuantityChange(item, next)}
                                 step={item.unit === "kg" ? 0.5 : 1}
                                 ariaLabel={`Cantidad de ${item.productName}`}
+                                size="lg"
                               />
                             </span>
                           ) : (
                             <Button
                               type="button"
-                              size="sm"
+                              size="lg"
                               variant="outline"
+                              className="min-w-32"
                               onClick={() => onQuantityChange(item, item.unit === "kg" ? 0.5 : 1)}
                               aria-label={`${addLabel} ${item.productName}`}
                             >
-                              <Plus className="size-3.5" aria-hidden="true" />
+                              <Plus className="size-4" aria-hidden="true" />
                               {addLabel}
                             </Button>
                           )}
