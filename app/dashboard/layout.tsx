@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, CalendarCheck2, CalendarClock, ClipboardList, DollarSign, GitCompareArrows, LayoutDashboard, ListOrdered, Package, PackageMinus, PackagePlus, Receipt, ReceiptText, Search, Settings, Store, Tags, TrendingUp, Users, Wallet, Warehouse } from "lucide-react";
+import { BookOpenCheck, Building2, CalendarCheck2, CalendarClock, ClipboardList, DollarSign, GitCompareArrows, LayoutDashboard, ListOrdered, Package, PackageMinus, PackagePlus, Receipt, ReceiptText, Search, Settings, Store, Tags, TrendingUp, Users, Wallet, Warehouse } from "lucide-react";
 import { useMemo } from "react";
 import { DashboardShell, type DashboardNavItem } from "@/components/layout/dashboard-shell";
 import { useMovementNotifications } from "@/features/inventory-movements/hooks/use-movement-notifications";
@@ -94,6 +94,9 @@ const NAV_ITEMS: DashboardNavItem[] = [
       { label: "Solicitudes", href: "/dashboard/inventario/solicitudes", icon: PackagePlus, roles: ["SUPER_ADMIN", "FINANZAS", "VENDEDOR", "PLANTA"], moduleKey: "dashboard.inventario-solicitudes" },
       { label: "Movimientos", href: "/dashboard/inventario/movimientos", icon: PackageMinus, roles: ["SUPER_ADMIN", "FINANZAS", "VENDEDOR"], moduleKey: "dashboard.inventario-movimientos" },
       { label: "Registro", href: "/dashboard/inventario/registro", icon: ClipboardList, roles: ["SUPER_ADMIN", "FINANZAS", "VENDEDOR"], moduleKey: "dashboard.inventario" },
+      // Kardex: saldo inicial, entradas, salidas y saldo final por producto,
+      // descargable en PDF/Excel. El Vendedor solo el de su tienda.
+      { label: "Kardex", href: "/dashboard/inventario/kardex", icon: BookOpenCheck, roles: ["SUPER_ADMIN", "FINANZAS", "VENDEDOR"], moduleKey: "dashboard.inventario" },
     ],
   },
 

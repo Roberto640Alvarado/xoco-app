@@ -72,6 +72,8 @@ export interface StockRequestFilters {
 }
 
 export interface CreateStockRequestPayload {
+  /** Solo cuando pide el Admin: la tienda elegida (el Vendedor siempre pide para la suya). */
+  posConfigId?: number;
   note?: string;
   lines: { productId: number; quantity: number }[];
 }

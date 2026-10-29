@@ -11,7 +11,7 @@
 // Planta solo ve Solicitudes.
 
 export type GuideRole = "admin" | "finanzas" | "vendedor" | "planta";
-export type GuidePage = "conteo" | "solicitudes" | "movimientos" | "registro" | "habilitacion";
+export type GuidePage = "conteo" | "solicitudes" | "movimientos" | "registro" | "kardex" | "habilitacion";
 
 export interface GuideStep {
   title: string;
@@ -33,6 +33,7 @@ export const PAGE_LABEL: Record<GuidePage, string> = {
   solicitudes: "Solicitudes",
   movimientos: "Movimientos",
   registro: "Registro",
+  kardex: "Kardex",
   habilitacion: "Habilitación por tienda",
 };
 
@@ -177,6 +178,10 @@ const VENDEDOR_FLOW: { intro: string; steps: GuideStep[] } = {
       title: "6. Registro",
       body: "En Registro ves todo lo que pasó en tu tienda con fecha y hora: ventas, movimientos y conteos.",
     },
+    {
+      title: "7. Kardex",
+      body: "En Kardex ves, por producto, con cuánto empezó el período, cada entrada y salida con el saldo que deja y con cuánto terminó. Lo descargas en PDF o Excel.",
+    },
   ],
 };
 
@@ -227,8 +232,10 @@ export const FLOW: Record<GuideRole, { intro: string; steps: GuideStep[] }> = {
 const CONTEO_STAFF =
   "Captura el conteo físico de cada producto por tienda (columna \"Inventario nuevo\") y guarda en lote. La existencia estimada se calcula sola desde el último conteo.";
 const SOLICITUDES_STAFF =
-  "Seguimiento de las solicitudes de stock de todas las tiendas: quién pidió, qué respondió planta y si ya llegó. Solo observas (y puedes cancelar); planta despacha y la tienda confirma.";
+  "Seguimiento de las solicitudes de stock de todas las tiendas: quién pidió, qué respondió planta y si ya llegó. Puedes cancelar, y el Admin también puede pedir stock para una tienda con \"Nueva solicitud\" (eligiendo la tienda); planta despacha y la tienda confirma.";
 const NOT_FOR_PLANTA = "Esta pantalla no está disponible para Planta: tu acceso es Solicitudes y el Conteo (solo lectura).";
+const KARDEX_STAFF =
+  "Kardex por tienda: elige la tienda y el período y ve, por producto, el saldo inicial, cada entrada, salida y ajuste por conteo con su saldo, y el saldo final. Descárgalo en PDF (con firmas) o Excel.";
 const MOVIMIENTOS_STAFF =
   "Mermas, regalías y degustaciones. Elige una tienda o mira los pendientes de todas; confirma o rechaza (con motivo) lo que reportan los Vendedores, o registra uno tú directamente.";
 const REGISTRO_STAFF =
@@ -263,6 +270,13 @@ export const PAGE_INTRO: Record<GuidePage, Record<GuideRole, string>> = {
     finanzas: REGISTRO_STAFF,
     vendedor:
       "Línea de tiempo de tu tienda con fecha y hora: ventas, movimientos y conteos. Puedes filtrar por fechas, producto o tipo, y exportar a Excel.",
+    planta: NOT_FOR_PLANTA,
+  },
+  kardex: {
+    admin: KARDEX_STAFF,
+    finanzas: KARDEX_STAFF,
+    vendedor:
+      "El kardex de tu tienda: por producto, con cuánto empezó el período, cada entrada y salida con el saldo que deja, y con cuánto terminó. Descárgalo en PDF para imprimirlo o en Excel.",
     planta: NOT_FOR_PLANTA,
   },
   habilitacion: {
@@ -398,6 +412,13 @@ function staffSteps(role: "admin" | "finanzas"): Record<GuidePage, TourStep[]> {
       },
       LEDGER_TYPE_STEP,
     ],
+    kardex: [
+      WELCOME("kardex", role),
+      { target: '[data-tour="kardex-filters"]', title: "Tienda y período", description: "Elige la tienda y el rango de fechas; el kardex se genera solo.", side: "bottom" },
+      { target: '[data-tour="kardex-download"]', title: "Descargar", description: "\"Descargar PDF\" arma el kardex listo para imprimir y firmar; \"Excel\" trae el resumen y el detalle en dos hojas.", side: "bottom" },
+      { target: '[data-tour="kardex-totals"]', title: "Totales", description: "Cuántos productos tuvieron movimiento y cuánto entró y salió (piezas y kg por separado).", side: "bottom" },
+      { target: '[data-tour="kardex-list"]', title: "Cada producto", description: "Inicial → entradas, salidas y ajustes → final. Toca un producto para ver su kardex línea por línea con el saldo.", side: "top" },
+    ],
     habilitacion: [],
   };
 }
@@ -487,6 +508,13 @@ const VENDEDOR_STEPS: Record<GuidePage, TourStep[]> = {
     },
     LEDGER_TYPE_STEP,
   ],
+  kardex: [
+    WELCOME("kardex", "vendedor"),
+    { target: '[data-tour="kardex-filters"]', title: "Tienda y período", description: "La tienda es la tuya. Elige el rango de fechas; por defecto, lo que va del mes.", side: "bottom" },
+    { target: '[data-tour="kardex-download"]', title: "Descargar", description: "\"Descargar PDF\" arma el kardex listo para imprimir y firmar; \"Excel\" trae el resumen y el detalle en dos hojas.", side: "bottom" },
+    { target: '[data-tour="kardex-totals"]', title: "Totales", description: "Cuántos productos tuvieron movimiento y cuánto entró y salió (piezas y kg por separado).", side: "bottom" },
+    { target: '[data-tour="kardex-list"]', title: "Cada producto", description: "Inicial → entradas, salidas y ajustes → final. Toca un producto para ver su kardex línea por línea con el saldo.", side: "top" },
+  ],
   habilitacion: [],
 };
 
@@ -532,6 +560,7 @@ const PLANTA_STEPS: Record<GuidePage, TourStep[]> = {
   ],
   movimientos: [],
   registro: [],
+  kardex: [],
   habilitacion: [],
 };
 
@@ -580,6 +609,7 @@ export const TOURS: Record<GuidePage, Record<GuideRole, TourStep[]>> = {
     planta: PLANTA_STEPS.movimientos,
   },
   registro: { admin: ADMIN_STEPS.registro, finanzas: FINANZAS_STEPS.registro, vendedor: VENDEDOR_STEPS.registro, planta: PLANTA_STEPS.registro },
+  kardex: { admin: ADMIN_STEPS.kardex, finanzas: FINANZAS_STEPS.kardex, vendedor: VENDEDOR_STEPS.kardex, planta: [] },
   habilitacion: { admin: ADMIN_STEPS.habilitacion, finanzas: [], vendedor: [], planta: [] },
 };
 

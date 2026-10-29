@@ -32,10 +32,11 @@ function pageFromPath(pathname: string): GuidePage {
   if (pathname.startsWith("/dashboard/inventario/solicitudes")) return "solicitudes";
   if (pathname.startsWith("/dashboard/inventario/movimientos")) return "movimientos";
   if (pathname.startsWith("/dashboard/inventario/registro")) return "registro";
+  if (pathname.startsWith("/dashboard/inventario/kardex")) return "kardex";
   return "conteo";
 }
 
-const PAGE_ORDER: GuidePage[] = ["conteo", "solicitudes", "movimientos", "registro"];
+const PAGE_ORDER: GuidePage[] = ["conteo", "solicitudes", "movimientos", "registro", "kardex"];
 // Planta solo tiene Solicitudes.
 const PLANTA_PAGES: GuidePage[] = ["solicitudes"];
 

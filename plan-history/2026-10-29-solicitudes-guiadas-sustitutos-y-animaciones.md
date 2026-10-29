@@ -17,3 +17,6 @@ Pedido de Don Mario y del usuario: menos fricción para usuarios poco técnicos 
 
 ## Resultado final
 `tsc` y ESLint sin errores en los archivos tocados. Pendiente: revisión visual con sesión iniciada y `npm run build`.
+
+## Ajuste: el Admin también pide stock
+- `NewRequestDialog` con `chooseStore`: el Super admin elige la tienda (primer paso de la guía, select resaltado hasta elegirla); envía `posConfigId`. El botón "Nueva solicitud" aparece para Vendedor y Super admin. La tienda confirma la recepción como siempre.

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowLeft, ClipboardCheck, Eye, Loader2, MousePointerClick, PackagePlus, Send, Trash2 } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, Eye, Loader2, MousePointerClick, PackagePlus, Send, Store, Trash2 } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { cn } from "cn";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -13,6 +13,8 @@ import { PreviewSheet } from "@/design-system/components/preview-sheet";
 import { QuantityStepper } from "@/design-system/components/quantity-stepper";
 import { SuccessCelebration } from "@/design-system/components/success-celebration";
 import { formatDateTime } from "@/lib/format";
+import { StoreSelect } from "@/components/filters/store-select";
+import { useStores } from "@/features/sales/hooks/use-stores";
 import { useCreateStockRequest } from "../hooks/use-stock-request-actions";
 import { useStockRequestCatalog } from "../hooks/use-stock-requests";
 import { formatLineQuantity, groupByCategory } from "../lib/group-by-category";
@@ -23,8 +25,16 @@ interface NewRequestDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   storeName?: string;
+  /** Admin: elige para qué tienda pide (el Vendedor siempre pide para la suya). */
+  chooseStore?: boolean;
   onCreated?: (id: string) => void;
 }
+
+const ADMIN_HELP = [
+  { icon: Store, title: "Elige la tienda", text: "Arriba, la tienda para la que pides el stock." },
+  { icon: MousePointerClick, title: "Elige los productos", text: "Pulsa “Agregar” y pon cuántos quieres." },
+  { icon: Send, title: "Envía a planta", text: "Revisa la vista previa y pulsa “Enviar a planta”." },
+];
 
 const HELP = [
   { icon: MousePointerClick, title: "Elige los productos", text: "Busca o toca una categoría y pulsa “Agregar”." },
@@ -43,8 +53,11 @@ const SUCCESS_MS = 2200;
 // pedido") que deja claro que todavía no se envía nada. Al enviar, una
 // pantalla de "¡Listo!" confirma que planta ya lo recibió. En móvil son dos
 // vistas: elegir y vista previa.
-export function NewRequestDialog({ open, onOpenChange, storeName, onCreated }: NewRequestDialogProps) {
+export function NewRequestDialog({ open, onOpenChange, storeName: ownStoreName, chooseStore = false, onCreated }: NewRequestDialogProps) {
   const create = useCreateStockRequest();
+  const { data: stores, isLoading: storesLoading } = useStores();
+  const [posConfigId, setPosConfigId] = useState<number | undefined>(undefined);
+  const storeName = chooseStore ? stores?.find((store) => store.id === posConfigId)?.name : ownStoreName;
   const reduce = useReducedMotion() ?? false;
   const { data: catalog, isLoading } = useStockRequestCatalog(open);
   const [quantities, setQuantities] = useState<Record<number, number>>({});
@@ -60,6 +73,7 @@ export function NewRequestDialog({ open, onOpenChange, storeName, onCreated }: N
     setNote("");
     setView("elegir");
     setSentCode(null);
+    setPosConfigId(undefined);
     create.reset();
   } else if (!open && wasOpen) {
     setWasOpen(false);
@@ -72,7 +86,18 @@ export function NewRequestDialog({ open, onOpenChange, storeName, onCreated }: N
   const groups = useMemo(() => groupByCategory(chosenItems), [chosenItems]);
   const count = chosenItems.length;
   // Paso de la guía: 0 elegir, 1 ya hay productos (ajustar/revisar), 2 viendo la vista previa en móvil o con nota.
-  const stepIndex = count === 0 ? 0 : view === "revisar" || note.trim() ? 2 : 1;
+  const stepIndex = chooseStore
+    ? posConfigId === undefined
+      ? 0
+      : count === 0
+        ? 1
+        : 2
+    : count === 0
+      ? 0
+      : view === "revisar" || note.trim()
+        ? 2
+        : 1;
+  const missingStore = chooseStore && posConfigId === undefined;
 
   function handleQuantity(item: StockRequestCatalogItem, quantity: number | null) {
     setQuantities((current) => {
@@ -91,6 +116,7 @@ export function NewRequestDialog({ open, onOpenChange, storeName, onCreated }: N
     if (count === 0) return;
     create.mutate(
       {
+        posConfigId: chooseStore ? posConfigId : undefined,
         note: note.trim() || undefined,
         lines: chosenItems.map((item) => ({ productId: item.productId, quantity: quantities[item.productId] })),
       },
@@ -104,7 +130,11 @@ export function NewRequestDialog({ open, onOpenChange, storeName, onCreated }: N
     );
   }
 
-  const disabledReason = count === 0 ? "Agrega al menos un producto para poder enviar." : null;
+  const disabledReason = missingStore
+    ? "Elige la tienda para la que pides."
+    : count === 0
+      ? "Agrega al menos un producto para poder enviar."
+      : null;
 
   const preview = (
     <PreviewSheet
@@ -225,10 +255,33 @@ export function NewRequestDialog({ open, onOpenChange, storeName, onCreated }: N
               </DialogTitle>
               <DialogDescription className="leading-relaxed">
                 {storeName ? `Para ${storeName}. ` : ""}Sigue los 3 pasos. Nada se envía hasta que pulses “Enviar a planta”.
+                {chooseStore && " La tienda confirma cuando le llegue, como siempre."}
               </DialogDescription>
             </DialogHeader>
 
-            <HelpSteps steps={HELP} currentIndex={stepIndex} />
+            <HelpSteps steps={chooseStore ? ADMIN_HELP : HELP} currentIndex={stepIndex} />
+
+            {chooseStore && (
+              <div
+                className={cn(
+                  "flex flex-wrap items-center gap-3 rounded-xl border px-3 py-2.5",
+                  missingStore ? "border-amber-500/50 bg-amber-500/10" : "border-border bg-muted/30",
+                )}
+              >
+                <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Store className="size-4" aria-hidden="true" />
+                  ¿Para qué tienda es?
+                </span>
+                <StoreSelect
+                  stores={stores}
+                  isLoading={storesLoading}
+                  value={posConfigId}
+                  onChange={setPosConfigId}
+                  hideAllStoresOption
+                  className="w-full sm:w-64"
+                />
+              </div>
+            )}
 
             <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
               <section className={cn("flex min-h-0 flex-col", view === "revisar" && "hidden lg:flex")} aria-label="Productos">
@@ -281,7 +334,7 @@ export function NewRequestDialog({ open, onOpenChange, storeName, onCreated }: N
                   size="lg"
                   className={cn("min-w-44", view === "elegir" && "max-lg:hidden")}
                   onClick={handleSubmit}
-                  disabled={create.isPending || count === 0}
+                  disabled={create.isPending || count === 0 || missingStore}
                 >
                   {create.isPending ? (
                     <>

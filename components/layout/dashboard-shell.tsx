@@ -463,7 +463,9 @@ export function DashboardShell({ navItems, dashboardHref, children }: DashboardS
         <SidebarRail />
       </Sidebar>
 
-      <SidebarInset>
+      {/* min-w-0: sin esto, cualquier fila ancha con scroll horizontal (pestañas,
+          chips de categorías) estira toda la página y la corta por la derecha. */}
+      <SidebarInset className="min-w-0">
         <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/80 px-4 backdrop-blur-md">
           <SidebarTrigger />
           {activeItem && (
@@ -475,7 +477,7 @@ export function DashboardShell({ navItems, dashboardHref, children }: DashboardS
             </>
           )}
         </header>
-        <div className="px-4 pb-4 pt-2 sm:px-6 sm:pb-6 sm:pt-3 lg:px-10 lg:pb-10 lg:pt-4">
+        <div className="min-w-0 px-4 pb-4 pt-2 sm:px-6 sm:pb-6 sm:pt-3 lg:px-10 lg:pb-10 lg:pt-4">
           {isBlocked ? <RouteBlockedNotice href={fallbackHref} /> : children}
         </div>
       </SidebarInset>

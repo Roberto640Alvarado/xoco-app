@@ -36,6 +36,8 @@ function descriptionFor(role: string | undefined): string {
       return "Pide stock a planta y confirma lo que llega.";
     case "PLANTA":
       return "Responde lo que las tiendas piden y despacha.";
+    case "SUPER_ADMIN":
+      return "Sigue las de todas las tiendas o pide stock para una.";
     default:
       return "Seguimiento de las solicitudes de todas las tiendas.";
   }
@@ -51,6 +53,8 @@ export function StockRequestsView() {
   const reduceMotion = useReducedMotion() ?? false;
   const role = user?.role;
   const isStore = role === "VENDEDOR";
+  // El Admin también pide stock, eligiendo la tienda.
+  const canCreate = isStore || role === "SUPER_ADMIN";
   const isPlant = role === "PLANTA";
   // Admin/Finanzas filtran con un select; Despacho ve una pestaña por tienda.
   const canFilterStores = !isStore && !isPlant;
@@ -117,7 +121,7 @@ export function StockRequestsView() {
 
   return (
     <div className="flex flex-col gap-4">
-      <SectionCard icon={Truck} title="Solicitudes" description={descriptionFor(role)} tourId="req-filters">
+      <SectionCard icon={Truck} title="Solicitudes" description={descriptionFor(role)} tourId="req-filters" singleLineControls>
         <DateRangeFilter value={range} onChange={setRange} maxDate={todayIsoDate()} />
         {canFilterStores && (
           <Select
@@ -139,8 +143,8 @@ export function StockRequestsView() {
             </SelectContent>
           </Select>
         )}
-        {isStore && (
-          <Button type="button" data-tour="req-new" onClick={() => setNewOpen(true)} disabled={user?.posConfigId == null}>
+        {canCreate && (
+          <Button type="button" data-tour="req-new" onClick={() => setNewOpen(true)} disabled={isStore && user?.posConfigId == null}>
             <PackagePlus className="h-4 w-4" aria-hidden="true" />
             Nueva solicitud
           </Button>
@@ -207,11 +211,12 @@ export function StockRequestsView() {
         </div>
       )}
 
-      {isStore && (
+      {canCreate && (
         <NewRequestDialog
           open={newOpen}
           onOpenChange={setNewOpen}
-          storeName={all[0]?.storeName}
+          storeName={isStore ? all[0]?.storeName : undefined}
+          chooseStore={!isStore}
           onCreated={() => setStatus(ALL)}
         />
       )}

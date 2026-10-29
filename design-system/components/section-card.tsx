@@ -8,6 +8,8 @@ interface SectionCardBaseProps {
   /** Ancla para el tour guiado (data-tour). */
   tourId?: string;
   className?: string;
+  /** Fuerza los controles en una sola línea desde `lg` (el texto se acorta en vez de bajar los botones). */
+  singleLineControls?: boolean;
 }
 
 interface SectionCardWithHeaderProps extends SectionCardBaseProps {
@@ -33,7 +35,7 @@ type SectionCardProps = SectionCardWithHeaderProps | SectionCardControlsOnlyProp
  * Inventario.
  */
 export function SectionCard(props: SectionCardProps) {
-  const { children, tourId, className } = props;
+  const { children, tourId, className, singleLineControls = false } = props;
 
   if (props.controlsOnly) {
     return (
@@ -58,7 +60,7 @@ export function SectionCard(props: SectionCardProps) {
         className,
       )}
     >
-      <div className="flex min-w-0 items-center gap-3.5">
+      <div className={cn("flex min-w-0 items-center gap-3.5", singleLineControls && "lg:flex-1")}>
         <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
           <Icon className="size-5" aria-hidden="true" />
         </span>
@@ -67,7 +69,9 @@ export function SectionCard(props: SectionCardProps) {
           <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
         </div>
       </div>
-      {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
+      {children && (
+        <div className={cn("flex flex-wrap items-center gap-2", singleLineControls && "lg:shrink-0 lg:flex-nowrap")}>{children}</div>
+      )}
     </section>
   );
 }
