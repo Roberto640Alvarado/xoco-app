@@ -9,7 +9,7 @@ export const STATUS_LABEL: Record<StockRequestStatus, string> = {
   CANCELADA: "Cancelada",
 };
 
-// warning = espera a planta, info = planta trabajando, violet = en tránsito,
+// warning = espera a quien surte, info = preparándose, violet = en tránsito,
 // success = listo, danger = cancelada (mismos tonos del resto del panel).
 export const STATUS_TONE: Record<StockRequestStatus, InfoBadgeTone> = {
   SOLICITADA: "warning",
@@ -36,50 +36,78 @@ export const ROLE_LABEL: Record<StockRequestRole, string> = {
   PLANTA: "Planta",
 };
 
-/** Qué puede hacer quien mira la solicitud: responderla (planta), confirmar lo recibido (tienda) o solo verla. */
+/** Quién mira: su rol y, si es Vendedor, su tienda. */
+export interface Viewer {
+  role?: string;
+  posConfigId?: number | null;
+}
+
+export const isStoreTransfer = (request: StockRequest) => request.sourcePosConfigId !== null;
+
+/** ¿Quien mira es quien surte esta solicitud? Planta para las de planta; la tienda origen en las de entre tiendas. */
+export function isSupplier(viewer: Viewer, request: StockRequest): boolean {
+  if (!isStoreTransfer(request)) return viewer.role === "PLANTA";
+  return viewer.role === "VENDEDOR" && viewer.posConfigId === request.sourcePosConfigId;
+}
+
+/** ¿Quien mira es la tienda que pidió? */
+export function isRequester(viewer: Viewer, request: StockRequest): boolean {
+  return viewer.role === "VENDEDOR" && viewer.posConfigId === request.posConfigId;
+}
+
+/** Qué puede hacer quien mira: responderla (quien surte), confirmar lo recibido (la tienda que pidió) o solo verla. */
 export type RequestMode = "plant" | "receive" | "view";
 
-export function getRequestMode(role: string | undefined, request: StockRequest): RequestMode {
-  if (role === "PLANTA" && (request.status === "SOLICITADA" || request.status === "EN_PREPARACION")) return "plant";
-  if (role === "VENDEDOR" && request.status === "EN_CAMINO") return "receive";
+export function getRequestMode(viewer: Viewer, request: StockRequest): RequestMode {
+  if (isSupplier(viewer, request) && (request.status === "SOLICITADA" || request.status === "EN_PREPARACION")) return "plant";
+  if (isRequester(viewer, request) && request.status === "EN_CAMINO") return "receive";
   return "view";
 }
 
-export function canCancelRequest(role: string | undefined, status: StockRequestStatus): boolean {
-  if (role === "VENDEDOR") return status === "SOLICITADA";
-  if (role === "PLANTA") return status === "SOLICITADA" || status === "EN_PREPARACION";
-  if (role === "SUPER_ADMIN" || role === "FINANZAS") return status !== "RECIBIDA" && status !== "CANCELADA";
+export function canCancelRequest(viewer: Viewer, request: StockRequest): boolean {
+  const { status } = request;
+  // Entre tiendas, una vez despachada ya salió del inventario de la que surte.
+  if (isStoreTransfer(request) && status === "EN_CAMINO") return false;
+  if (isSupplier(viewer, request)) return status === "SOLICITADA" || status === "EN_PREPARACION";
+  if (viewer.role === "VENDEDOR") return status === "SOLICITADA";
+  if (viewer.role === "SUPER_ADMIN" || viewer.role === "FINANZAS") return status !== "RECIBIDA" && status !== "CANCELADA";
   return false;
 }
 
 /** ¿Esta solicitud espera algo de quien mira? (para destacarla en el tablero). */
-export function needsMyAction(role: string | undefined, request: StockRequest): boolean {
-  return getRequestMode(role, request) !== "view";
+export function needsMyAction(viewer: Viewer, request: StockRequest): boolean {
+  return getRequestMode(viewer, request) !== "view";
 }
 
 /** Una frase corta: en qué paso está y qué sigue, según quién mira. */
-export function statusHint(role: string | undefined, request: StockRequest): string {
-  const isStore = role === "VENDEDOR";
-  const isPlant = role === "PLANTA";
+export function statusHint(viewer: Viewer, request: StockRequest): string {
+  const supplier = isSupplier(viewer, request);
+  const requester = isRequester(viewer, request);
+  const from = isStoreTransfer(request) ? request.sourceName : "planta";
   switch (request.status) {
     case "SOLICITADA":
-      if (isPlant) return "Nueva: revisa qué hay y qué no.";
-      if (isStore) return "Planta aún no la toma.";
-      return "Esperando a planta.";
+      if (supplier) return isStoreTransfer(request) ? `${request.storeName} te pide productos: revisa qué tienes.` : "Nueva: revisa qué hay y qué no.";
+      if (requester) return `${capitalize(from)} aún no la toma.`;
+      return `Esperando a ${from}.`;
     case "EN_PREPARACION":
-      if (isPlant) return "La estás preparando: marca qué hay y despacha.";
-      if (isStore) return "Planta la está preparando.";
-      return "Planta la está preparando.";
+      if (supplier) return "La estás preparando: marca qué hay y despacha.";
+      return `${capitalize(from)} la está preparando.`;
     case "EN_CAMINO":
-      if (isStore)
+      if (requester)
         return request.dispatch === "PARCIAL"
           ? "Viene en camino, pero incompleto. Confirma lo que llegue."
           : "Viene en camino. Confirma cuando llegue.";
-      if (isPlant) return "Despachada: esperando que la tienda la reciba.";
-      return "En camino a la tienda.";
+      if (supplier) return `Despachada: esperando que ${request.storeName} la reciba.`;
+      return `En camino a ${request.storeName}.`;
     case "RECIBIDA":
-      return "La tienda confirmó la recepción y el inventario ya se actualizó.";
+      return isStoreTransfer(request)
+        ? `${request.storeName} confirmó la recepción: se sumó a su inventario y se restó del de ${request.sourceName}.`
+        : "La tienda confirmó la recepción y el inventario ya se actualizó.";
     case "CANCELADA":
       return request.cancelReason ? `Cancelada: ${request.cancelReason}` : "Cancelada.";
   }
+}
+
+function capitalize(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }

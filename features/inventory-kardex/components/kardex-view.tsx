@@ -46,8 +46,8 @@ function sumByUnit(products: KardexProduct[], pick: (product: KardexProduct) => 
 // Cómo se lee cada columna, en palabras simples.
 const LEGEND = [
   { label: "Inicial", text: "lo que había al empezar", dot: "bg-muted-foreground" },
-  { label: "Entró", text: "envíos recibidos de planta", dot: "bg-emerald-500" },
-  { label: "Salió", text: "ventas, mermas y regalías", dot: "bg-destructive" },
+  { label: "Entró", text: "envíos recibidos", dot: "bg-emerald-500" },
+  { label: "Salió", text: "ventas, mermas, regalías y traslados", dot: "bg-destructive" },
   { label: "Ajuste", text: "diferencia al contar", dot: "bg-sky-500" },
   { label: "Final", text: "lo que debería haber", dot: "bg-foreground" },
 ];

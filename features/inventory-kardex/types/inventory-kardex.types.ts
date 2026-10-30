@@ -2,7 +2,7 @@
 
 export type KardexUnit = "unidad" | "kg";
 
-export type KardexEntryType = "VENTA" | "MERMA" | "REGALIA" | "DEGUSTACION" | "ENTRADA" | "CONTEO";
+export type KardexEntryType = "VENTA" | "MERMA" | "REGALIA" | "DEGUSTACION" | "ENTRADA" | "TRASLADO" | "CONTEO";
 
 export interface KardexRow {
   occurredAt: string;

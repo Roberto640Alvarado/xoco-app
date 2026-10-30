@@ -170,6 +170,9 @@ function NoteField({ line, disabled, onChange }: NoteFieldProps) {
 // dicen por qué.
 export function PlantResponseEditor({ request, onDispatched }: PlantResponseEditorProps) {
   const save = useSavePlantResponse();
+  // Solicitud entre tiendas: quien responde es la tienda que surte y lo que
+  // despache se resta de su inventario.
+  const fromStore = request.sourcePosConfigId !== null;
   const dispatch = useDispatchStockRequest();
   const { data: catalog, isLoading: catalogLoading } = useStockRequestCatalog(true);
 
@@ -297,14 +300,15 @@ export function PlantResponseEditor({ request, onDispatched }: PlantResponseEdit
             <PackagePlus className="size-4" aria-hidden="true" />
             Agregar producto extra
           </Button>
+          {/* Planta mira el inventario de la tienda que pide; una tienda que surte, el suyo. */}
           <Link
-            href={`/dashboard/inventario?tienda=${request.posConfigId}`}
+            href={fromStore ? "/dashboard/inventario" : `/dashboard/inventario?tienda=${request.posConfigId}`}
             target="_blank"
             rel="noopener"
             className={buttonVariants({ variant: "ghost" })}
           >
             <Warehouse className="size-4" aria-hidden="true" />
-            Ver inventario de {request.storeName}
+            {fromStore ? "Ver mi inventario" : `Ver inventario de ${request.storeName}`}
           </Link>
         </div>
         <div
@@ -524,6 +528,7 @@ export function PlantResponseEditor({ request, onDispatched }: PlantResponseEdit
             </DialogTitle>
             <DialogDescription className="leading-relaxed">
               {request.code} · {request.storeName}. Al despachar, a la tienda le llega el aviso de que va en camino.
+              {fromStore && " Lo que envíes se resta de tu inventario."}
             </DialogDescription>
           </DialogHeader>
 

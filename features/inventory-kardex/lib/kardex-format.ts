@@ -35,6 +35,7 @@ export const TYPE_TONE: Record<KardexEntryType, string> = {
   REGALIA: "text-amber-700 dark:text-amber-300",
   DEGUSTACION: "text-amber-700 dark:text-amber-300",
   ENTRADA: "text-emerald-700 dark:text-emerald-300",
+  TRASLADO: "text-violet-700 dark:text-violet-300",
   CONTEO: "text-sky-700 dark:text-sky-300",
 };
 

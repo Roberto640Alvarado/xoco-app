@@ -1,4 +1,4 @@
-export type InventoryLedgerEntryType = "VENTA" | "MERMA" | "REGALIA" | "DEGUSTACION" | "ENTRADA" | "CONTEO";
+export type InventoryLedgerEntryType = "VENTA" | "MERMA" | "REGALIA" | "DEGUSTACION" | "ENTRADA" | "TRASLADO" | "CONTEO";
 
 // IN suma a la existencia (entrada), OUT resta (venta, merma, regalía,
 // degustación), COUNT es un conteo físico que fija la cantidad.

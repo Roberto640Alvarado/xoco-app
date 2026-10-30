@@ -1,21 +1,23 @@
-import { ArrowRight, Boxes, Clock, Store } from "lucide-react";
+import { ArrowRight, Boxes, Clock, Factory, Store } from "lucide-react";
 import { cn } from "cn";
 import { formatDateTime } from "@/lib/format";
 import { DeliveryTruck } from "@/design-system/components/delivery-truck";
-import { needsMyAction, statusHint } from "../lib/request-status";
+import { getRequestMode, isStoreTransfer, statusHint, type Viewer } from "../lib/request-status";
 import { RequestProgress, RequestStatusBadge } from "./request-status-badge";
 import type { StockRequest } from "../types/stock-request.types";
 
 interface RequestCardProps {
   request: StockRequest;
-  role: string | undefined;
+  viewer: Viewer;
   onOpen: (request: StockRequest) => void;
 }
 
 // Tarjeta del tablero. Las que esperan una acción de quien mira (responder,
 // confirmar recepción) se destacan con el borde de color y una etiqueta.
-export function RequestCard({ request, role, onOpen }: RequestCardProps) {
-  const action = needsMyAction(role, request);
+export function RequestCard({ request, viewer, onOpen }: RequestCardProps) {
+  const mode = getRequestMode(viewer, request);
+  const action = mode !== "view";
+  const SourceIcon = isStoreTransfer(request) ? Store : Factory;
   const categories = new Set(request.lines.map((line) => line.categoryName)).size;
   const lineCount = request.lines.length;
 
@@ -31,9 +33,13 @@ export function RequestCard({ request, role, onOpen }: RequestCardProps) {
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="font-mono text-sm font-bold text-foreground">{request.code}</p>
-          <p className="flex items-center gap-1 truncate text-sm text-muted-foreground">
+          {/* De quién a quién: "Planta → Tienda Ramblas" o "Centrika → Ramblas" */}
+          <p className="flex min-w-0 items-center gap-1 text-sm text-muted-foreground">
+            <SourceIcon className="size-3.5 shrink-0" aria-hidden="true" />
+            <span className="truncate">{request.sourceName}</span>
+            <ArrowRight className="size-3 shrink-0" aria-label="a" />
             <Store className="size-3.5 shrink-0" aria-hidden="true" />
-            {request.storeName}
+            <span className="truncate font-medium text-foreground">{request.storeName}</span>
           </p>
         </div>
         <RequestStatusBadge status={request.status} />
@@ -43,7 +49,7 @@ export function RequestCard({ request, role, onOpen }: RequestCardProps) {
 
       {request.status === "EN_CAMINO" && <DeliveryTruck size="sm" label={`Envío en camino a ${request.storeName}`} />}
 
-      <p className="line-clamp-2 min-h-10 text-sm text-foreground/80">{statusHint(role, request)}</p>
+      <p className="line-clamp-2 min-h-10 text-sm text-foreground/80">{statusHint(viewer, request)}</p>
 
       <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
         <span className="flex items-center gap-1">
@@ -62,7 +68,7 @@ export function RequestCard({ request, role, onOpen }: RequestCardProps) {
           action ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground group-hover:text-foreground",
         )}
       >
-        {action ? (role === "PLANTA" ? "Responder y despachar" : "Confirmar recepción") : "Ver detalle"}
+        {mode === "plant" ? "Responder y despachar" : mode === "receive" ? "Confirmar recepción" : "Ver detalle"}
         <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
       </span>
     </button>

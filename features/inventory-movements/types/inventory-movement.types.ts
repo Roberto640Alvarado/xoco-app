@@ -1,7 +1,7 @@
 // ENTRADA ya no se registra a mano: la crea el sistema (ya CONFIRMADA) cuando
 // la tienda confirma una solicitud recibida (Inventario → Solicitudes). Puede
 // aparecer en listados históricos, pero no se crea ni resuelve desde aquí.
-export type InventoryMovementType = "MERMA" | "REGALIA" | "DEGUSTACION" | "ENTRADA";
+export type InventoryMovementType = "MERMA" | "REGALIA" | "DEGUSTACION" | "ENTRADA" | "TRASLADO";
 
 // Merma/regalía/degustación: PENDIENTE (lo reportó un Vendedor) ->
 // CONFIRMADO o RECHAZADO (con motivo) por Admin/Finanzas. EN_CAMINO y

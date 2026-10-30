@@ -164,8 +164,12 @@ const VENDEDOR_FLOW: { intro: string; steps: GuideStep[] } = {
       body: "En Movimientos registra lo que salió de la tienda sin venderse (con una nota si hace falta). Queda pendiente y se resta del stock cuando Admin o Finanzas lo confirma; si lo rechazan, verás el motivo.",
     },
     {
-      title: "3. Pide stock a planta",
-      body: "En Solicitudes usa \"Nueva solicitud\": eliges los productos por categoría (como en el formato de envío a sucursales) y la cantidad de cada uno. Planta la recibe al instante.",
+      title: "3. Pide stock a planta o a otra tienda",
+      body: "En Solicitudes usa \"Nueva solicitud\": eliges a quién le pides (planta u otra tienda), los productos por categoría y la cantidad de cada uno. Le llega al instante.",
+    },
+    {
+      title: "Cuando otra tienda te pide",
+      body: "Te aparece en Solicitudes, en \"Lo que me piden\". La respondes igual que planta: marcas qué tienes, puedes mandar otro en su lugar y despachas. Lo que envías se resta de tu inventario y la otra tienda lo suma al confirmar.",
     },
     {
       title: "4. Planta responde y despacha",
@@ -255,7 +259,7 @@ export const PAGE_INTRO: Record<GuidePage, Record<GuideRole, string>> = {
     admin: SOLICITUDES_STAFF,
     finanzas: SOLICITUDES_STAFF,
     vendedor:
-      "Aquí pides stock a planta y sigues cada solicitud hasta que llega. Cuando llegue, confirmas lo que recibiste y el inventario de tu tienda se actualiza.",
+      "Aquí pides stock a planta o a otra tienda y sigues cada solicitud hasta que llega; cuando llegue, confirmas lo que recibiste. Si otra tienda te pide a ti, la respondes y despachas desde aquí (se resta de tu inventario).",
     planta:
       "Aquí llegan las solicitudes de las tiendas. Marca qué productos hay y cuáles no, agrega los que falten y despacha. La tienda recibe el aviso y confirma lo que llegue.",
   },

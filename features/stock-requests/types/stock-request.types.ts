@@ -38,8 +38,13 @@ export interface StockRequest {
   number: number;
   /** "SOL-0012": el Número de Requisición del formato. */
   code: string;
+  /** Tienda que pide y recibe. */
   posConfigId: number;
   storeName: string;
+  /** Quién surte: null = planta; un id = otra tienda (solicitud entre tiendas). */
+  sourcePosConfigId: number | null;
+  /** "Planta" o el nombre de la tienda que surte. */
+  sourceName: string;
   status: StockRequestStatus;
   note: string | null;
   createdByEmail: string;
@@ -74,6 +79,8 @@ export interface StockRequestFilters {
 export interface CreateStockRequestPayload {
   /** Solo cuando pide el Admin: la tienda elegida (el Vendedor siempre pide para la suya). */
   posConfigId?: number;
+  /** A quién se le pide: null/ausente = planta; un id = otra tienda. */
+  sourcePosConfigId?: number | null;
   note?: string;
   lines: { productId: number; quantity: number }[];
 }
@@ -95,4 +102,10 @@ export interface SavePlantResponsePayload {
 export interface ReceiveStockRequestPayload {
   note?: string;
   lines: { productId: number; receivedQuantity: number; note?: string }[];
+}
+
+/** Tienda a la que se le puede pedir (GET /inventory/requests/sources). */
+export interface StockRequestSource {
+  posConfigId: number;
+  name: string;
 }

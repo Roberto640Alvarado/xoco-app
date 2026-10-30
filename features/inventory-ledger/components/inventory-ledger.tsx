@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { ArrowDownToLine, ClipboardCheck, Cookie, Gift, PackageX, ShoppingCart } from "lucide-react";
+import { ArrowDownToLine, ArrowRightLeft, ClipboardCheck, Cookie, Gift, PackageX, ShoppingCart } from "lucide-react";
 import { cn } from "cn";
 import { SectionCard } from "@/design-system/components/section-card";
 import { DateRangeFilter, type DateRangeValue } from "@/components/filters/date-range-filter";
@@ -23,6 +23,7 @@ const TYPE_LABEL: Record<InventoryLedgerEntryType, string> = {
   REGALIA: "Regalía",
   DEGUSTACION: "Degustación",
   ENTRADA: "Entrada",
+  TRASLADO: "Traslado a otra tienda",
   CONTEO: "Conteo",
 };
 
@@ -32,6 +33,7 @@ const TYPE_ICON: Record<InventoryLedgerEntryType, typeof PackageX> = {
   REGALIA: Gift,
   DEGUSTACION: Cookie,
   ENTRADA: ArrowDownToLine,
+  TRASLADO: ArrowRightLeft,
   CONTEO: ClipboardCheck,
 };
 

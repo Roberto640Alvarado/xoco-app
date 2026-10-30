@@ -59,6 +59,7 @@ export async function downloadRequestPdf(request: StockRequest): Promise<void> {
   doc.setTextColor(30, 30, 30);
   const info: [string, string][] = [
     ["Sucursal", request.storeName],
+    ["Surte", request.sourceName],
     ["Solicitada", `${formatDateTime(request.createdAt)} · ${request.createdByEmail}`],
     ["Despachada", request.dispatchedAt ? formatDateTime(request.dispatchedAt) : "—"],
     ["Recibida", request.receivedAt ? formatDateTime(request.receivedAt) : "—"],
@@ -156,7 +157,7 @@ export async function downloadRequestPdf(request: StockRequest): Promise<void> {
   doc.line(margin + colWidth + 40, signY, pageWidth - margin, signY);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.text("Entregó (Planta)", margin + colWidth / 2, signY + 13, { align: "center" });
+  doc.text(`Entregó (${request.sourceName})`, margin + colWidth / 2, signY + 13, { align: "center" });
   doc.text(`Recibió (${request.storeName})`, margin + colWidth + 40 + colWidth / 2, signY + 13, { align: "center" });
 
   // Pie con paginación

@@ -20,3 +20,10 @@ Pedido de Don Mario y del usuario: menos fricción para usuarios poco técnicos 
 
 ## Ajuste: el Admin también pide stock
 - `NewRequestDialog` con `chooseStore`: el Super admin elige la tienda (primer paso de la guía, select resaltado hasta elegirla); envía `posConfigId`. El botón "Nueva solicitud" aparece para Vendedor y Super admin. La tienda confirma la recepción como siempre.
+
+## Ajuste: solicitudes entre tiendas
+- Al pedir se elige "¿A quién le pides?": Planta (por defecto) u otra tienda con Inventario (`GET /inventory/requests/sources`). Vista previa, botón y confirmación dicen a quién.
+- `lib/request-status.ts` ahora razona con el `Viewer` (rol + tienda): `isSupplier`/`isRequester`. La tienda que surte responde y despacha con el mismo editor de planta ("Ver mi inventario", aviso de que se resta de su inventario); la que pide confirma la recepción. Una despachada entre tiendas no se cancela.
+- Tarjetas y detalle muestran la ruta "Planta → Tienda" o "Tienda A → Tienda B"; el PDF dice quién surte y firma "Entregó (origen)".
+- Vendedor: pestañas "Todas / Lo que pedí / Lo que me piden" (cuando le han pedido algo) y chip "Por atender".
+- Registro, Movimientos y Kardex conocen el tipo TRASLADO ("Traslado a otra tienda").

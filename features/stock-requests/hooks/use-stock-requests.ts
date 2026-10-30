@@ -6,6 +6,7 @@ import {
   fetchStockRequest,
   fetchStockRequestCatalog,
   fetchStockRequestNotifications,
+  fetchStockRequestSources,
   fetchStockRequests,
 } from "../api/stock-requests.api";
 import type { StockRequestFilters } from "../types/stock-request.types";
@@ -61,5 +62,15 @@ export function useStockRequestNotifications() {
     refetchInterval: 60_000,
     refetchOnWindowFocus: true,
     staleTime: 30_000,
+  });
+}
+
+/** Tiendas a las que se les puede pedir además de planta (solo al abrir "Nueva solicitud"). */
+export function useStockRequestSources(enabled: boolean) {
+  return useQuery({
+    queryKey: ["stock-requests", "sources"],
+    queryFn: fetchStockRequestSources,
+    enabled,
+    staleTime: 60_000,
   });
 }

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { parseAsInteger, useQueryState } from "nuqs";
-import { PackagePlus, Truck } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, PackagePlus, Truck } from "lucide-react";
 import { cn } from "cn";
 import { DateRangeFilter, type DateRangeValue } from "@/components/filters/date-range-filter";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import { todayIsoDate } from "@/lib/format";
 import { InfoHint } from "@/features/inventory-guide/components/info-hint";
 import { useAuthStore } from "@/store/auth-store";
 import { useStockRequests } from "../hooks/use-stock-requests";
-import { needsMyAction, STATUS_LABEL, STATUS_ORDER } from "../lib/request-status";
+import { isRequester, isSupplier, needsMyAction, STATUS_LABEL, STATUS_ORDER, type Viewer } from "../lib/request-status";
 import { NewRequestDialog } from "./new-request-dialog";
 import { RequestCard } from "./request-card";
 import { RequestDetailDialog } from "./request-detail-dialog";
@@ -23,6 +23,9 @@ import { StoreTabs, type StoreTab } from "./store-tabs";
 import type { StockRequest, StockRequestStatus } from "../types/stock-request.types";
 
 const ALL = "all";
+// Pestañas del Vendedor: lo que su tienda pidió / lo que otras tiendas le piden.
+const DIRECTION_MINE = 1;
+const DIRECTION_TO_ME = 2;
 type StatusFilter = typeof ALL | "attention" | StockRequestStatus;
 
 // Por defecto, lo que va del año: una solicitud abierta no se esconde por antigua.
@@ -33,7 +36,7 @@ function defaultRange(): DateRangeValue {
 function descriptionFor(role: string | undefined): string {
   switch (role) {
     case "VENDEDOR":
-      return "Pide stock a planta y confirma lo que llega.";
+      return "Pide stock a planta o a otra tienda, responde lo que te piden y confirma lo que llega.";
     case "PLANTA":
       return "Responde lo que las tiendas piden y despacha.";
     case "SUPER_ADMIN":
@@ -52,6 +55,7 @@ export function StockRequestsView() {
   const user = useAuthStore((state) => state.user);
   const reduceMotion = useReducedMotion() ?? false;
   const role = user?.role;
+  const viewer: Viewer = useMemo(() => ({ role: user?.role, posConfigId: user?.posConfigId }), [user?.role, user?.posConfigId]);
   const isStore = role === "VENDEDOR";
   // El Admin también pide stock, eligiendo la tienda.
   const canCreate = isStore || role === "SUPER_ADMIN";
@@ -65,6 +69,8 @@ export function StockRequestsView() {
   const [storeParam, setStoreParam] = useQueryState("tienda", parseAsInteger);
   const storeId = storeParam ?? undefined;
   const setStoreId = (next: number | undefined) => void setStoreParam(next ?? null);
+  // Vendedor: lo que su tienda pidió o lo que otras tiendas le piden.
+  const [direction, setDirection] = useState<number | undefined>(undefined);
   const [newOpen, setNewOpen] = useState(false);
   const [selected, setSelected] = useState<StockRequest | null>(null);
 
@@ -80,42 +86,58 @@ export function StockRequestsView() {
   const storeTabs = useMemo<StoreTab[]>(() => {
     const tally = (list: StockRequest[]) => ({
       total: list.length,
-      pending: list.filter((request) => needsMyAction(role, request)).length,
+      pending: list.filter((request) => needsMyAction(viewer, request)).length,
     });
     return [
       { id: undefined, name: "Todas", ...tally(all) },
       ...stores.map(([id, name]) => ({ id, name, ...tally(all.filter((request) => request.posConfigId === id)) })),
     ];
-  }, [all, stores, role]);
+  }, [all, stores, viewer]);
 
-  const byStore = useMemo(() => (storeId === undefined ? all : all.filter((request) => request.posConfigId === storeId)), [all, storeId]);
+  const byStore = useMemo(() => {
+    if (isStore) {
+      if (direction === DIRECTION_MINE) return all.filter((request) => isRequester(viewer, request));
+      if (direction === DIRECTION_TO_ME) return all.filter((request) => isSupplier(viewer, request));
+      return all;
+    }
+    return storeId === undefined ? all : all.filter((request) => request.posConfigId === storeId);
+  }, [all, storeId, isStore, direction, viewer]);
+
+  const directionTabs = useMemo<StoreTab[]>(() => {
+    const tally = (list: StockRequest[]) => ({ total: list.length, pending: list.filter((request) => needsMyAction(viewer, request)).length });
+    return [
+      { id: undefined, name: "Todas", ...tally(all) },
+      { id: DIRECTION_MINE, name: "Lo que pedí", icon: ArrowDownLeft, ...tally(all.filter((request) => isRequester(viewer, request))) },
+      { id: DIRECTION_TO_ME, name: "Lo que me piden", icon: ArrowUpRight, ...tally(all.filter((request) => isSupplier(viewer, request))) },
+    ];
+  }, [all, viewer]);
 
   const counts = useMemo(() => {
     const result: Record<string, number> = { [ALL]: byStore.length, attention: 0 };
     for (const item of STATUS_ORDER) result[item] = 0;
     for (const request of byStore) {
       result[request.status] += 1;
-      if (needsMyAction(role, request)) result.attention += 1;
+      if (needsMyAction(viewer, request)) result.attention += 1;
     }
     return result;
-  }, [byStore, role]);
+  }, [byStore, viewer]);
 
   const visible = useMemo(() => {
     const filtered = byStore.filter((request) => {
       if (status === ALL) return true;
-      if (status === "attention") return needsMyAction(role, request);
+      if (status === "attention") return needsMyAction(viewer, request);
       return request.status === status;
     });
     // Lo que espera acción primero; luego lo más reciente.
     return [...filtered].sort((a, b) => {
-      const diff = Number(needsMyAction(role, b)) - Number(needsMyAction(role, a));
+      const diff = Number(needsMyAction(viewer, b)) - Number(needsMyAction(viewer, a));
       return diff !== 0 ? diff : b.updatedAt.localeCompare(a.updatedAt);
     });
-  }, [byStore, status, role]);
+  }, [byStore, status, viewer]);
 
   const chips: { value: StatusFilter; label: string }[] = [
     { value: ALL, label: "Todas" },
-    ...(role === "VENDEDOR" || role === "PLANTA" ? [{ value: "attention" as const, label: role === "PLANTA" ? "Por responder" : "Por confirmar" }] : []),
+    ...(role === "VENDEDOR" || role === "PLANTA" ? [{ value: "attention" as const, label: role === "PLANTA" ? "Por responder" : "Por atender" }] : []),
     ...STATUS_ORDER.map((item) => ({ value: item, label: STATUS_LABEL[item] })),
   ];
 
@@ -152,6 +174,7 @@ export function StockRequestsView() {
       </SectionCard>
 
       {isPlant && stores.length > 0 && <StoreTabs tabs={storeTabs} value={storeId} onChange={setStoreId} />}
+      {isStore && directionTabs[2].total > 0 && <StoreTabs tabs={directionTabs} value={direction} onChange={setDirection} />}
 
       <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrar por estado" data-tour="req-status">
         <InfoHint topic="estados-solicitud" />
@@ -205,7 +228,7 @@ export function StockRequestsView() {
               transition={{ duration: 0.25, delay: Math.min(index, 8) * 0.04, ease: "easeOut" }}
               className="flex"
             >
-              <RequestCard request={request} role={role} onOpen={setSelected} />
+              <RequestCard request={request} viewer={viewer} onOpen={setSelected} />
             </motion.div>
           ))}
         </div>

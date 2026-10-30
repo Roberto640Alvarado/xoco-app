@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowLeft, ClipboardCheck, Eye, Loader2, MousePointerClick, PackagePlus, Send, Store, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, ClipboardCheck, Eye, Factory, Loader2, MousePointerClick, PackagePlus, Send, Store, Trash2 } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { cn } from "cn";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -16,7 +16,7 @@ import { formatDateTime } from "@/lib/format";
 import { StoreSelect } from "@/components/filters/store-select";
 import { useStores } from "@/features/sales/hooks/use-stores";
 import { useCreateStockRequest } from "../hooks/use-stock-request-actions";
-import { useStockRequestCatalog } from "../hooks/use-stock-requests";
+import { useStockRequestCatalog, useStockRequestSources } from "../hooks/use-stock-requests";
 import { formatLineQuantity, groupByCategory } from "../lib/group-by-category";
 import { CategoryProductPicker } from "./category-product-picker";
 import type { StockRequestCatalogItem } from "../types/stock-request.types";
@@ -33,13 +33,13 @@ interface NewRequestDialogProps {
 const ADMIN_HELP = [
   { icon: Store, title: "Elige la tienda", text: "Arriba, la tienda para la que pides el stock." },
   { icon: MousePointerClick, title: "Elige los productos", text: "Pulsa “Agregar” y pon cuántos quieres." },
-  { icon: Send, title: "Envía a planta", text: "Revisa la vista previa y pulsa “Enviar a planta”." },
+  { icon: Send, title: "Envía", text: "Revisa la vista previa y pulsa “Enviar”." },
 ];
 
 const HELP = [
   { icon: MousePointerClick, title: "Elige los productos", text: "Busca o toca una categoría y pulsa “Agregar”." },
   { icon: ClipboardCheck, title: "Pon cuántos quieres", text: "Usa − y + o escribe el número. Míralo en la vista previa." },
-  { icon: Send, title: "Envía a planta", text: "Cuando esté como quieres, pulsa “Enviar a planta”." },
+  { icon: Send, title: "Envía", text: "Cuando esté como quieres, pulsa “Enviar”." },
 ];
 
 const NOTE_CHIPS = ["Es urgente", "Para el fin de semana", "Si no hay, mandar parecido"];
@@ -51,12 +51,15 @@ const SUCCESS_MS = 2200;
 // guía de 3 pasos que avanza sola; a la izquierda se eligen los productos
 // con botones grandes y a la derecha una vista previa en vivo ("así va tu
 // pedido") que deja claro que todavía no se envía nada. Al enviar, una
-// pantalla de "¡Listo!" confirma que planta ya lo recibió. En móvil son dos
+// pantalla de "¡Listo!" confirma que planta (u otra tienda) ya lo recibió. En móvil son dos
 // vistas: elegir y vista previa.
 export function NewRequestDialog({ open, onOpenChange, storeName: ownStoreName, chooseStore = false, onCreated }: NewRequestDialogProps) {
   const create = useCreateStockRequest();
   const { data: stores, isLoading: storesLoading } = useStores();
   const [posConfigId, setPosConfigId] = useState<number | undefined>(undefined);
+  // A quién se le pide: null = planta; un id = otra tienda.
+  const [sourceId, setSourceId] = useState<number | null>(null);
+  const { data: sourceStores } = useStockRequestSources(open);
   const storeName = chooseStore ? stores?.find((store) => store.id === posConfigId)?.name : ownStoreName;
   const reduce = useReducedMotion() ?? false;
   const { data: catalog, isLoading } = useStockRequestCatalog(open);
@@ -74,6 +77,7 @@ export function NewRequestDialog({ open, onOpenChange, storeName: ownStoreName, 
     setView("elegir");
     setSentCode(null);
     setPosConfigId(undefined);
+    setSourceId(null);
     create.reset();
   } else if (!open && wasOpen) {
     setWasOpen(false);
@@ -98,6 +102,11 @@ export function NewRequestDialog({ open, onOpenChange, storeName: ownStoreName, 
         ? 2
         : 1;
   const missingStore = chooseStore && posConfigId === undefined;
+  // Las tiendas a las que se puede pedir (nunca la misma que recibe).
+  const sources = (sourceStores ?? []).filter((store) => store.posConfigId !== posConfigId);
+  const sourceName = sourceId === null ? "planta" : (sources.find((store) => store.posConfigId === sourceId)?.name ?? "la tienda");
+  // Si cambian la tienda que recibe y coincide con la elegida para surtir, se vuelve a planta.
+  if (sourceId !== null && sourceId === posConfigId) setSourceId(null);
 
   function handleQuantity(item: StockRequestCatalogItem, quantity: number | null) {
     setQuantities((current) => {
@@ -117,6 +126,7 @@ export function NewRequestDialog({ open, onOpenChange, storeName: ownStoreName, 
     create.mutate(
       {
         posConfigId: chooseStore ? posConfigId : undefined,
+        sourcePosConfigId: sourceId,
         note: note.trim() || undefined,
         lines: chosenItems.map((item) => ({ productId: item.productId, quantity: quantities[item.productId] })),
       },
@@ -140,7 +150,7 @@ export function NewRequestDialog({ open, onOpenChange, storeName: ownStoreName, 
     <PreviewSheet
       className="h-full"
       title="Así va tu pedido"
-      subtitle={`${storeName ?? "Tu tienda"} · ${formatDateTime(new Date().toISOString())}`}
+      subtitle={`${storeName ?? "Tu tienda"} · pedido a ${sourceName} · ${formatDateTime(new Date().toISOString())}`}
       badge={
         <motion.span
           key={count}
@@ -154,7 +164,7 @@ export function NewRequestDialog({ open, onOpenChange, storeName: ownStoreName, 
       footer={
         <div className="flex flex-col gap-2">
           <Label htmlFor="request-note" className="text-sm">
-            ¿Algo más para planta? <span className="font-normal text-muted-foreground">(opcional)</span>
+            ¿Algo más para {sourceName}? <span className="font-normal text-muted-foreground">(opcional)</span>
           </Label>
           <div className="flex flex-wrap gap-1.5">
             {NOTE_CHIPS.map((chip) => (
@@ -174,7 +184,7 @@ export function NewRequestDialog({ open, onOpenChange, storeName: ownStoreName, 
             onChange={(event) => setNote(event.target.value)}
             maxLength={500}
             rows={2}
-            placeholder="Escribe aquí si quieres decirle algo a planta"
+            placeholder={`Escribe aquí si quieres decirle algo a ${sourceName}`}
           />
         </div>
       }
@@ -239,7 +249,7 @@ export function NewRequestDialog({ open, onOpenChange, storeName: ownStoreName, 
               title="¡Pedido enviado!"
               description={
                 <>
-                  Tu solicitud <span className="font-mono font-semibold text-foreground">{sentCode}</span> ya le llegó a planta.
+                  Tu solicitud <span className="font-mono font-semibold text-foreground">{sentCode}</span> ya le llegó a {sourceName}.
                   <br />
                   Te avisamos aquí cuando venga en camino.
                 </>
@@ -251,15 +261,47 @@ export function NewRequestDialog({ open, onOpenChange, storeName: ownStoreName, 
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-xl font-bold text-foreground">
                 <PackagePlus className="size-6 text-primary" aria-hidden="true" />
-                Pedir stock a planta
+                Pedir stock
               </DialogTitle>
               <DialogDescription className="leading-relaxed">
-                {storeName ? `Para ${storeName}. ` : ""}Sigue los 3 pasos. Nada se envía hasta que pulses “Enviar a planta”.
+                {storeName ? `Para ${storeName}. ` : ""}Sigue los 3 pasos. Nada se envía hasta que pulses “Enviar”.
                 {chooseStore && " La tienda confirma cuando le llegue, como siempre."}
               </DialogDescription>
             </DialogHeader>
 
             <HelpSteps steps={chooseStore ? ADMIN_HELP : HELP} currentIndex={stepIndex} />
+
+            {/* ¿A quién le pides? Planta por defecto, u otra tienda con Inventario. */}
+            {sources.length > 0 && (
+              <div className="flex flex-col gap-2 rounded-xl border border-border bg-muted/30 px-3 py-2.5 sm:flex-row sm:items-center">
+                <span className="shrink-0 text-sm font-semibold text-foreground">¿A quién le pides?</span>
+                <div className="flex gap-2 overflow-x-auto pb-0.5" role="radiogroup" aria-label="A quién le pides">
+                  {[{ posConfigId: null as number | null, name: "Planta" }, ...sources].map((option) => {
+                    const active = sourceId === option.posConfigId;
+                    const Icon = option.posConfigId === null ? Factory : Store;
+                    return (
+                      <button
+                        key={option.posConfigId ?? "planta"}
+                        type="button"
+                        role="radio"
+                        aria-checked={active}
+                        onClick={() => setSourceId(option.posConfigId)}
+                        className={cn(
+                          "flex min-h-10 shrink-0 items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors",
+                          active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-foreground hover:border-primary",
+                        )}
+                      >
+                        {active ? <Check className="size-4" aria-hidden="true" /> : <Icon className="size-4" aria-hidden="true" />}
+                        {option.name}
+                      </button>
+                    );
+                  })}
+                </div>
+                {sourceId !== null && (
+                  <span className="text-xs text-muted-foreground sm:ml-auto">Se le restará de su inventario cuando te lo envíe.</span>
+                )}
+              </div>
+            )}
 
             {chooseStore && (
               <div
@@ -344,7 +386,7 @@ export function NewRequestDialog({ open, onOpenChange, storeName: ownStoreName, 
                   ) : (
                     <>
                       <Send className="size-4" aria-hidden="true" />
-                      Enviar a planta
+                      {sourceId === null ? "Enviar a planta" : `Enviar a ${sourceName}`}
                     </>
                   )}
                 </Button>

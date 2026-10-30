@@ -12,7 +12,7 @@ import { formatDateTime } from "@/lib/format";
 import { useAuthStore } from "@/store/auth-store";
 import { useStartStockRequest } from "../hooks/use-stock-request-actions";
 import { useStockRequest } from "../hooks/use-stock-requests";
-import { canCancelRequest, getRequestMode, statusHint } from "../lib/request-status";
+import { canCancelRequest, getRequestMode, statusHint, type Viewer } from "../lib/request-status";
 import { downloadRequestPdf } from "../lib/request-pdf";
 import { CancelRequestDialog } from "./cancel-request-dialog";
 import { PlantResponseEditor } from "./plant-response-editor";
@@ -38,7 +38,8 @@ interface RequestDetailDialogProps {
 // Detalle de una solicitud. Según quién mira y en qué estado está, el
 // cuerpo es el editor de planta, la confirmación de la tienda o solo lectura.
 export function RequestDetailDialog({ summary, onOpenChange }: RequestDetailDialogProps) {
-  const role = useAuthStore((state) => state.user?.role);
+  const user = useAuthStore((state) => state.user);
+  const viewer: Viewer = { role: user?.role, posConfigId: user?.posConfigId };
   const { data } = useStockRequest(summary?.id ?? null);
   const request = data ?? summary;
   const [tab, setTab] = useState<Tab>("productos");
@@ -47,7 +48,7 @@ export function RequestDetailDialog({ summary, onOpenChange }: RequestDetailDial
   const [celebration, setCelebration] = useState<Celebration | null>(null);
   const start = useStartStockRequest();
 
-  const mode = request ? getRequestMode(role, request) : "view";
+  const mode = request ? getRequestMode(viewer, request) : "view";
   // Solo cuenta la animación de ESTA solicitud (si se abre otra, no se arrastra).
   const activeCelebration = celebration && celebration.requestId === summary?.id ? celebration : null;
 
@@ -94,7 +95,7 @@ export function RequestDetailDialog({ summary, onOpenChange }: RequestDetailDial
               <DialogHeader>
                 <div className="flex flex-wrap items-center gap-2 pr-8">
                   <DialogTitle className="text-lg font-bold text-foreground">
-                    {request.code} · {request.storeName}
+                    {request.code} · {request.sourceName} → {request.storeName}
                   </DialogTitle>
                   <RequestStatusBadge status={request.status} />
                 </div>
@@ -110,7 +111,7 @@ export function RequestDetailDialog({ summary, onOpenChange }: RequestDetailDial
                   <DeliveryTruck size="md" label={`Envío en camino a ${request.storeName}`} />
                 )}
                 <p className="text-sm text-foreground/80">
-                  {statusHint(role, request)}
+                  {statusHint(viewer, request)}
                   {request.status === "EN_CAMINO" && request.dispatchedAt ? ` Salió de planta ${formatDateTime(request.dispatchedAt)}.` : ""}
                 </p>
               </div>
@@ -140,7 +141,7 @@ export function RequestDetailDialog({ summary, onOpenChange }: RequestDetailDial
                     {pdfLoading ? <Loader2 className="size-3.5 animate-spin" aria-hidden="true" /> : <FileDown className="size-3.5" aria-hidden="true" />}
                     PDF
                   </Button>
-                  {canCancelRequest(role, request.status) && (
+                  {canCancelRequest(viewer, request) && (
                     <Button type="button" size="sm" variant="outline" onClick={() => setCancelTarget(request)}>
                       <XCircle className="size-3.5" aria-hidden="true" />
                       Cancelar

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { Store } from "lucide-react";
+import { Store, type LucideIcon } from "lucide-react";
 import { cn } from "cn";
 
 export interface StoreTab {
@@ -11,6 +11,8 @@ export interface StoreTab {
   total: number;
   /** Solicitudes que esperan algo de quien mira (por responder). */
   pending: number;
+  /** Ícono propio (por defecto, el de tienda en las pestañas de una tienda). */
+  icon?: LucideIcon;
 }
 
 interface StoreTabsProps {
@@ -42,16 +44,16 @@ export function StoreTabs({ tabs, value, onChange }: StoreTabsProps) {
               active ? "bg-card text-foreground" : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
             )}
           >
-            {tab.id !== undefined && <Store className="size-4 shrink-0" aria-hidden="true" />}
+            {tab.icon ? <tab.icon className="size-4 shrink-0" aria-hidden="true" /> : tab.id !== undefined && <Store className="size-4 shrink-0" aria-hidden="true" />}
             {tab.name}
             <span className={cn("rounded-full px-1.5 text-[11px] tabular-nums", active ? "bg-muted text-foreground" : "bg-muted/60")}>{tab.total}</span>
             {tab.pending > 0 && (
               <span
                 className="rounded-full bg-amber-500 px-2 py-0.5 text-[11px] font-bold text-white"
-                aria-label={`${tab.pending} por responder`}
-                title={`${tab.pending} por responder`}
+                aria-label={`${tab.pending} esperan algo de ti`}
+                title={`${tab.pending} esperan algo de ti`}
               >
-                {tab.pending} nueva{tab.pending === 1 ? "" : "s"}
+                {tab.pending} {tab.pending === 1 ? "pendiente" : "pendientes"}
               </span>
             )}
             {active && (

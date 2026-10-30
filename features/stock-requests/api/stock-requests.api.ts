@@ -1,5 +1,6 @@
 import { apiGet, apiPatch, apiPost, apiPut } from "@/lib/api/client";
 import type {
+  StockRequestSource,
   CreateStockRequestPayload,
   ReceiveStockRequestPayload,
   SavePlantResponsePayload,
@@ -49,4 +50,8 @@ export function receiveStockRequest(id: string, payload: ReceiveStockRequestPayl
 
 export function cancelStockRequest(id: string, reason: string) {
   return apiPatch<StockRequest>(`${BASE}/${id}/cancel`, { reason });
+}
+
+export function fetchStockRequestSources() {
+  return apiGet<StockRequestSource[]>(`${BASE}/sources`);
 }

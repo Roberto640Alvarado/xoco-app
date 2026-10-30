@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { ArrowDownToLine, Check, ChevronRight, Cookie, Gift, PackageX, X } from "lucide-react";
+import { ArrowDownToLine, Check, ChevronRight, Cookie, Gift, PackageX, X, ArrowRightLeft } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/design-system/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -28,6 +28,7 @@ const TYPE_LABEL: Record<InventoryMovementType, string> = {
   REGALIA: "Regalía",
   DEGUSTACION: "Degustación",
   ENTRADA: "Entrada",
+  TRASLADO: "Traslado a otra tienda",
 };
 
 const TYPE_ICON: Record<InventoryMovementType, typeof PackageX> = {
@@ -35,6 +36,7 @@ const TYPE_ICON: Record<InventoryMovementType, typeof PackageX> = {
   REGALIA: Gift,
   DEGUSTACION: Cookie,
   ENTRADA: ArrowDownToLine,
+  TRASLADO: ArrowRightLeft,
 };
 
 const ROLE_LABEL: Record<InventoryMovement["registeredByRole"], string> = {
