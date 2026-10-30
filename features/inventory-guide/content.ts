@@ -11,7 +11,7 @@
 // Planta solo ve Solicitudes.
 
 export type GuideRole = "admin" | "finanzas" | "vendedor" | "planta";
-export type GuidePage = "conteo" | "solicitudes" | "movimientos" | "registro" | "kardex" | "habilitacion";
+export type GuidePage = "conteo" | "solicitudes" | "movimientos" | "registro" | "kardex" | "recetas" | "habilitacion";
 
 export interface GuideStep {
   title: string;
@@ -34,6 +34,7 @@ export const PAGE_LABEL: Record<GuidePage, string> = {
   movimientos: "Movimientos",
   registro: "Registro",
   kardex: "Kardex",
+  recetas: "Recetas",
   habilitacion: "Habilitación por tienda",
 };
 
@@ -279,6 +280,13 @@ export const PAGE_INTRO: Record<GuidePage, Record<GuideRole, string>> = {
       "El kardex de tu tienda: por producto, con cuánto empezó el período, cada entrada y salida con el saldo que deja, y con cuánto terminó. Descárgalo en PDF para imprimirlo o en Excel.",
     planta: NOT_FOR_PLANTA,
   },
+  recetas: {
+    admin:
+      "Para productos que se venden pero no se guardan en bodega, como las bebidas: eliges la tienda, el producto y lo que gasta cada uno (ej. Americano → 1 cápsula Pacamara). Desde ahí cada venta en esa tienda descuenta los ingredientes en Conteo, Registro y Kardex.",
+    finanzas: "Esta pantalla es solo del Admin.",
+    vendedor: "Esta pantalla es solo del Admin.",
+    planta: "Esta pantalla es solo del Admin.",
+  },
   habilitacion: {
     admin:
       "Decide en qué tiendas los Vendedores ya pueden usar Inventario. Se recomienda cargar el stock de la tienda en Conteo antes de habilitarla.",
@@ -419,6 +427,7 @@ function staffSteps(role: "admin" | "finanzas"): Record<GuidePage, TourStep[]> {
       { target: '[data-tour="kardex-totals"]', title: "Totales", description: "Cuántos productos tuvieron movimiento y cuánto entró y salió (piezas y kg por separado).", side: "bottom" },
       { target: '[data-tour="kardex-list"]', title: "Cada producto", description: "Inicial → entradas, salidas y ajustes → final. Toca un producto para ver su kardex línea por línea con el saldo.", side: "top" },
     ],
+    recetas: [],
     habilitacion: [],
   };
 }
@@ -515,6 +524,7 @@ const VENDEDOR_STEPS: Record<GuidePage, TourStep[]> = {
     { target: '[data-tour="kardex-totals"]', title: "Totales", description: "Cuántos productos tuvieron movimiento y cuánto entró y salió (piezas y kg por separado).", side: "bottom" },
     { target: '[data-tour="kardex-list"]', title: "Cada producto", description: "Inicial → entradas, salidas y ajustes → final. Toca un producto para ver su kardex línea por línea con el saldo.", side: "top" },
   ],
+  recetas: [],
   habilitacion: [],
 };
 
@@ -561,8 +571,26 @@ const PLANTA_STEPS: Record<GuidePage, TourStep[]> = {
   movimientos: [],
   registro: [],
   kardex: [],
+  recetas: [],
   habilitacion: [],
 };
+
+// Recetas es solo del Admin.
+ADMIN_STEPS.recetas = [
+  WELCOME("recetas", "admin"),
+  {
+    target: '[data-tour="recipes-header"]',
+    title: "Tienda y botones",
+    description: "Elige la tienda. \"Nueva receta\" crea una; \"Copiar de otra tienda\" trae todas las de otra para no empezar de cero.",
+    side: "bottom",
+  },
+  {
+    target: '[data-tour="recipes-list"]',
+    title: "Recetas de la tienda",
+    description: "Cada tarjeta dice qué descuenta cada producto vendido. Edítala o quítala desde ahí.",
+    side: "top",
+  },
+];
 
 // La pantalla de habilitación es solo del Admin.
 ADMIN_STEPS.habilitacion = [
@@ -610,6 +638,7 @@ export const TOURS: Record<GuidePage, Record<GuideRole, TourStep[]>> = {
   },
   registro: { admin: ADMIN_STEPS.registro, finanzas: FINANZAS_STEPS.registro, vendedor: VENDEDOR_STEPS.registro, planta: PLANTA_STEPS.registro },
   kardex: { admin: ADMIN_STEPS.kardex, finanzas: FINANZAS_STEPS.kardex, vendedor: VENDEDOR_STEPS.kardex, planta: [] },
+  recetas: { admin: ADMIN_STEPS.recetas, finanzas: [], vendedor: [], planta: [] },
   habilitacion: { admin: ADMIN_STEPS.habilitacion, finanzas: [], vendedor: [], planta: [] },
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpenCheck, Building2, CalendarCheck2, CalendarClock, ClipboardList, DollarSign, GitCompareArrows, LayoutDashboard, ListOrdered, Package, PackageMinus, PackagePlus, Receipt, ReceiptText, Search, Settings, Store, Tags, TrendingUp, Users, Wallet, Warehouse } from "lucide-react";
+import { BookOpenCheck, Building2, ChefHat, CalendarCheck2, CalendarClock, ClipboardList, DollarSign, GitCompareArrows, LayoutDashboard, ListOrdered, Package, PackageMinus, PackagePlus, Receipt, ReceiptText, Search, Settings, Store, Tags, TrendingUp, Users, Wallet, Warehouse } from "lucide-react";
 import { useMemo } from "react";
 import { DashboardShell, type DashboardNavItem } from "@/components/layout/dashboard-shell";
 import { useMovementNotifications } from "@/features/inventory-movements/hooks/use-movement-notifications";
@@ -97,6 +97,9 @@ const NAV_ITEMS: DashboardNavItem[] = [
       // Kardex: saldo inicial, entradas, salidas y saldo final por producto,
       // descargable en PDF/Excel. El Vendedor solo el de su tienda.
       { label: "Kardex", href: "/dashboard/inventario/kardex", icon: BookOpenCheck, roles: ["SUPER_ADMIN", "FINANZAS", "VENDEDOR"], moduleKey: "dashboard.inventario" },
+      // Recetas: qué ingredientes descuenta cada producto vendido, por
+      // tienda. Configuración del Super admin (la API también lo exige).
+      { label: "Recetas", href: "/dashboard/inventario/recetas", icon: ChefHat, roles: ["SUPER_ADMIN"] },
     ],
   },
 

@@ -51,6 +51,8 @@ interface ConfirmSaveDialogProps {
   onOpenChange: (open: boolean) => void;
   storeName?: string;
   entries: DirtyEntry[];
+  /** Productos nunca contados que se dejaron vacíos: se guardan en 0. */
+  zeroFillCount: number;
   upsert: ReturnType<typeof useUpsertInventoryBulk>;
   onConfirm: () => void;
 }
@@ -60,14 +62,14 @@ interface ConfirmSaveDialogProps {
 // patrón visual que CreateUserModal/GrowthPercentModal: éxito visible
 // antes de cerrarse solo, error inline si falla, sin cerrar para poder
 // reintentar.
-function ConfirmSaveDialog({ open, onOpenChange, storeName, entries, upsert, onConfirm }: ConfirmSaveDialogProps) {
+function ConfirmSaveDialog({ open, onOpenChange, storeName, entries, zeroFillCount, upsert, onConfirm }: ConfirmSaveDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(next) => !upsert.isPending && onOpenChange(next)}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold text-foreground">Confirmar guardado</DialogTitle>
           <DialogDescription className="pt-1 leading-relaxed">
-            Vas a guardar {entries.length} {entries.length === 1 ? "cambio" : "cambios"} de inventario
+            Vas a guardar {entries.length + zeroFillCount} {entries.length + zeroFillCount === 1 ? "producto" : "productos"} de inventario
             {storeName ? (
               <>
                 {" "}
@@ -84,6 +86,14 @@ function ConfirmSaveDialog({ open, onOpenChange, storeName, entries, upsert, onC
             Inventario guardado correctamente.
           </div>
         ) : (
+          <>
+          {zeroFillCount > 0 && (
+            <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-foreground">
+              Además, <span className="font-semibold">{zeroFillCount} producto{zeroFillCount === 1 ? "" : "s"}</span> que{" "}
+              {zeroFillCount === 1 ? "quedó vacío se guardará" : "quedaron vacíos se guardarán"} en <span className="font-semibold">0</span> (no hay).
+            </p>
+          )}
+          {entries.length > 0 && (
           <div className="max-h-64 overflow-y-auto rounded-lg border border-border">
             <ul className="divide-y divide-border">
               {entries.map((entry) => (
@@ -96,6 +106,8 @@ function ConfirmSaveDialog({ open, onOpenChange, storeName, entries, upsert, onC
               ))}
             </ul>
           </div>
+          )}
+          </>
         )}
 
         {upsert.isError && (
@@ -187,8 +199,16 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
     })
     .filter((entry): entry is DirtyEntry => entry !== null);
 
+  // Un producto que nunca se ha contado y se deja vacío se guarda en 0 ("no
+  // hay"): así quien llena el inventario solo escribe lo que sí hay y no
+  // tiene que poner 0 a mano en cada producto vacío. Un producto que YA
+  // tenía conteo y se deja vacío no se toca (conserva su valor).
+  const zeroFillEntries: DirtyEntry[] = items
+    .filter((item) => item.recipe === null && item.quantity === null && (drafts[item.productId] ?? "").trim() === "")
+    .map((item) => ({ productId: item.productId, productName: item.productName, unit: item.unit, quantity: 0 }));
+
   const hasInvalidDraft = Object.values(drafts).some((value) => !isValidDraft(value));
-  const canOpenConfirm = dirtyEntries.length > 0 && !hasInvalidDraft;
+  const canOpenConfirm = dirtyEntries.length + zeroFillEntries.length > 0 && !hasInvalidDraft;
 
   function handleOpenConfirm() {
     if (!canOpenConfirm) return;
@@ -198,7 +218,7 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
 
   function handleConfirm() {
     upsert.mutate(
-      { posConfigId, entries: dirtyEntries.map(({ productId, quantity }) => ({ productId, quantity })) },
+      { posConfigId, entries: [...dirtyEntries, ...zeroFillEntries].map(({ productId, quantity }) => ({ productId, quantity })) },
       {
         onSuccess: () => {
           setDrafts({});
@@ -214,6 +234,13 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
   // Son funciones de render (no componentes) para que el input no se
   // remonte —y pierda el foco— en cada tecla.
   function renderEstimated(item: InventoryItem) {
+    if (item.recipe) {
+      return (
+        <div className="flex justify-end">
+          <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-300">Por receta</span>
+        </div>
+      );
+    }
     return (
       <div className="flex items-center justify-end gap-1.5">
         <ValueBox
@@ -226,6 +253,15 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
   }
 
   function renderNewQuantity(item: InventoryItem) {
+    // Producto con receta: no se cuenta; sus ventas descuentan sus ingredientes.
+    if (item.recipe) {
+      return (
+        <p className="ml-auto max-w-56 text-right text-xs text-muted-foreground">
+          No se cuenta. Cada venta descuenta{" "}
+          {item.recipe.components.map((component) => `${component.quantity} ${component.productName}`).join(", ")}.
+        </p>
+      );
+    }
     const value = draftValue(item);
     const invalid = !isValidDraft(value);
     return (
@@ -235,7 +271,7 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
             type="number"
             min={0}
             step={item.unit === "kg" ? "0.001" : "1"}
-            placeholder="Sin contar"
+            placeholder={item.quantity === null ? "0" : undefined}
             value={value}
             onChange={(e) => setDraft(item.productId, e.target.value)}
             aria-invalid={invalid}
@@ -297,7 +333,7 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
       ),
       label: "Existencia estimada",
       cell: (item) => renderEstimated(item),
-      accessor: (item) => (item.estimatedQuantity != null ? "Contado" : "Sin contar"),
+      accessor: (item) => (item.recipe ? "Por receta" : item.estimatedQuantity != null ? "Contado" : "Sin contar"),
       filter: "select",
       align: "right",
       tourId: "inv-estimated",
@@ -310,7 +346,7 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
             header: (
               <>
                 Inventario nuevo
-                <span className="block text-[10px] font-normal text-muted-foreground">se guarda esto</span>
+                <span className="block text-[10px] font-normal text-muted-foreground">vacío se guarda como 0</span>
               </>
             ),
             label: "Inventario nuevo",
@@ -328,6 +364,11 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
           {dirtyEntries.length > 0 && (
             <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
               {dirtyEntries.length} sin guardar
+            </span>
+          )}
+          {zeroFillEntries.length > 0 && (
+            <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-300">
+              {zeroFillEntries.length} vacío{zeroFillEntries.length === 1 ? "" : "s"} se guardará{zeroFillEntries.length === 1 ? "" : "n"} en 0
             </span>
           )}
           <Button type="button" onClick={handleOpenConfirm} disabled={!canOpenConfirm} data-tour="inv-save">
@@ -357,6 +398,7 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
         onOpenChange={setConfirmOpen}
         storeName={storeName}
         entries={dirtyEntries}
+        zeroFillCount={zeroFillEntries.length}
         upsert={upsert}
         onConfirm={handleConfirm}
       />

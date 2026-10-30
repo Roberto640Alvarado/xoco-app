@@ -16,6 +16,8 @@ export interface InventoryItem {
   // confirmadas, todo desde esa fecha. null si el producto nunca se ha
   // contado.
   estimatedQuantity: number | null;
+  /** En esta tienda se vende por receta (ej. una bebida): no lleva existencia y sus ventas descuentan estos ingredientes. */
+  recipe: { components: { productId: number; productName: string; quantity: number }[] } | null;
   updatedAt: string | null;
   updatedByEmail: string | null;
 }

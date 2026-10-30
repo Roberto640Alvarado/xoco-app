@@ -33,6 +33,7 @@ function pageFromPath(pathname: string): GuidePage {
   if (pathname.startsWith("/dashboard/inventario/movimientos")) return "movimientos";
   if (pathname.startsWith("/dashboard/inventario/registro")) return "registro";
   if (pathname.startsWith("/dashboard/inventario/kardex")) return "kardex";
+  if (pathname.startsWith("/dashboard/inventario/recetas")) return "recetas";
   return "conteo";
 }
 
@@ -57,7 +58,7 @@ export function InventoryGuideBar() {
   if (!user) return null;
   const flow = FLOW[role];
   const permissions = PERMISSIONS[role];
-  const pages = role === "admin" ? [...PAGE_ORDER, "habilitacion" as GuidePage] : role === "planta" ? PLANTA_PAGES : PAGE_ORDER;
+  const pages = role === "admin" ? [...PAGE_ORDER, "recetas" as GuidePage, "habilitacion" as GuidePage] : role === "planta" ? PLANTA_PAGES : PAGE_ORDER;
 
   return (
     <>

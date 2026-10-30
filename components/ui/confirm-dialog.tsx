@@ -1,5 +1,6 @@
 "use client";
 
+import type * as React from "react";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { cn } from "cn";
 import {
@@ -24,6 +25,8 @@ interface ConfirmDialogProps {
   errorMessage?: string | null;
   /** "destructive" para acciones que quitan acceso/datos (ej. desactivar); "default" para el resto. */
   variant?: "default" | "destructive";
+  /** Contenido extra entre la descripción y los botones (ej. un selector). */
+  children?: React.ReactNode;
 }
 
 // Confirmación genérica para acciones que conviene no disparar con un
@@ -41,6 +44,7 @@ export function ConfirmDialog({
   isLoading = false,
   errorMessage,
   variant = "default",
+  children,
 }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(next) => !isLoading && onOpenChange(next)}>
@@ -61,6 +65,8 @@ export function ConfirmDialog({
           </div>
           <DialogDescription className="pt-1 leading-relaxed">{description}</DialogDescription>
         </DialogHeader>
+
+        {children}
 
         {errorMessage && (
           <div
