@@ -53,8 +53,65 @@ interface ConfirmSaveDialogProps {
   entries: DirtyEntry[];
   /** Productos nunca contados que se dejaron vacíos: se guardan en 0. */
   zeroFillCount: number;
+  /** "" = ahora; si no, un datetime-local con la hora real del conteo. */
+  countedAt: string;
+  onCountedAtChange: (value: string) => void;
   upsert: ReturnType<typeof useUpsertInventoryBulk>;
   onConfirm: () => void;
+}
+
+// "AAAA-MM-DDTHH:MM" en hora local para el input datetime-local.
+function toLocalInput(date: Date): string {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+// Cuándo se contó: por defecto "ahora"; si se contó antes (ej. antes de abrir
+// la tienda) y se está pasando más tarde, se pone esa hora para que las
+// ventas de en medio sí se resten del conteo.
+function CountedAtField({ value, onChange, disabled }: { value: string; onChange: (value: string) => void; disabled: boolean }) {
+  const now = new Date();
+  const custom = value !== "";
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border border-border bg-muted/30 p-3">
+      <p className="text-sm font-semibold text-foreground">¿Cuándo se contó?</p>
+      <div className="flex gap-1.5" role="radiogroup" aria-label="Cuándo se contó">
+        {[
+          { key: "now", label: "Ahora mismo", active: !custom, onClick: () => onChange("") },
+          { key: "custom", label: "Antes, a otra hora", active: custom, onClick: () => onChange(toLocalInput(new Date(now.getTime() - 60 * 60 * 1000))) },
+        ].map((option) => (
+          <button
+            key={option.key}
+            type="button"
+            role="radio"
+            aria-checked={option.active}
+            disabled={disabled}
+            onClick={option.onClick}
+            className={cn(
+              "flex-1 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors",
+              option.active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-foreground hover:border-primary",
+            )}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+      {custom && (
+        <Input
+          type="datetime-local"
+          value={value}
+          max={toLocalInput(now)}
+          min={toLocalInput(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000))}
+          onChange={(event) => onChange(event.target.value)}
+          aria-label="Fecha y hora del conteo"
+          disabled={disabled}
+        />
+      )}
+      <p className="text-xs text-muted-foreground">
+        Las ventas desde esa hora se restan de lo que contaron. Si contaron antes de abrir y lo están pasando ahora, pongan la hora en que contaron.
+      </p>
+    </div>
+  );
 }
 
 // Panel de confirmación antes de guardar — pedido explícito del usuario
@@ -62,7 +119,7 @@ interface ConfirmSaveDialogProps {
 // patrón visual que CreateUserModal/GrowthPercentModal: éxito visible
 // antes de cerrarse solo, error inline si falla, sin cerrar para poder
 // reintentar.
-function ConfirmSaveDialog({ open, onOpenChange, storeName, entries, zeroFillCount, upsert, onConfirm }: ConfirmSaveDialogProps) {
+function ConfirmSaveDialog({ open, onOpenChange, storeName, entries, zeroFillCount, countedAt, onCountedAtChange, upsert, onConfirm }: ConfirmSaveDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(next) => !upsert.isPending && onOpenChange(next)}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
@@ -87,6 +144,7 @@ function ConfirmSaveDialog({ open, onOpenChange, storeName, entries, zeroFillCou
           </div>
         ) : (
           <>
+          <CountedAtField value={countedAt} onChange={onCountedAtChange} disabled={upsert.isPending} />
           {zeroFillCount > 0 && (
             <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-foreground">
               Además, <span className="font-semibold">{zeroFillCount} producto{zeroFillCount === 1 ? "" : "s"}</span> que{" "}
@@ -168,6 +226,7 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
   const upsert = useUpsertInventoryBulk();
   const [drafts, setDrafts] = useState<Record<number, string>>({});
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [countedAt, setCountedAt] = useState("");
 
   // Si se cambia de tienda, los drafts de la tienda anterior ya no
   // aplican — mismo criterio de "ajustar estado durante el render" que
@@ -218,10 +277,15 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
 
   function handleConfirm() {
     upsert.mutate(
-      { posConfigId, entries: [...dirtyEntries, ...zeroFillEntries].map(({ productId, quantity }) => ({ productId, quantity })) },
+      {
+        posConfigId,
+        entries: [...dirtyEntries, ...zeroFillEntries].map(({ productId, quantity }) => ({ productId, quantity })),
+        countedAt: countedAt ? new Date(countedAt).toISOString() : undefined,
+      },
       {
         onSuccess: () => {
           setDrafts({});
+          setCountedAt("");
           setTimeout(() => setConfirmOpen(false), 1200);
         },
       },
@@ -280,7 +344,7 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
           />
           <span className="text-xs text-muted-foreground">{item.unit === "kg" ? "Kg" : "u"}</span>
         </div>
-        <LastModifiedNote email={item.updatedByEmail} date={item.updatedAt} />
+        <LastModifiedNote email={item.updatedByEmail} date={item.countedAt ?? item.updatedAt} />
       </div>
     );
   }
@@ -399,6 +463,8 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
         storeName={storeName}
         entries={dirtyEntries}
         zeroFillCount={zeroFillEntries.length}
+        countedAt={countedAt}
+        onCountedAtChange={setCountedAt}
         upsert={upsert}
         onConfirm={handleConfirm}
       />

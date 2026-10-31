@@ -18,6 +18,8 @@ export interface InventoryItem {
   estimatedQuantity: number | null;
   /** En esta tienda se vende por receta (ej. una bebida): no lleva existencia y sus ventas descuentan estos ingredientes. */
   recipe: { components: { productId: number; productName: string; quantity: number }[] } | null;
+  /** Cuándo se contó físicamente: las ventas se restan desde aquí. */
+  countedAt: string | null;
   updatedAt: string | null;
   updatedByEmail: string | null;
 }
@@ -34,4 +36,6 @@ export interface InventorySavedItem {
 export interface UpsertInventoryBulkPayload {
   posConfigId: number;
   entries: Array<{ productId: number; quantity: number }>;
+  /** Cuándo se contó físicamente (ISO). Sin valor = ahora. */
+  countedAt?: string;
 }

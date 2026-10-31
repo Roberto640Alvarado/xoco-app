@@ -8,8 +8,8 @@ export function fetchInventoryItems(posConfigId: number) {
 // El backend expone PUT /inventory/stores/:posConfigId/items (lote) — no
 // hay helper apiPut en lib/api/client.ts todavía (mismo caso que
 // features/goals), se usa apiClient directo.
-export function upsertInventoryBulk({ posConfigId, entries }: UpsertInventoryBulkPayload) {
+export function upsertInventoryBulk({ posConfigId, entries, countedAt }: UpsertInventoryBulkPayload) {
   return apiClient
-    .put<InventorySavedItem[]>(`/inventory/stores/${posConfigId}/items`, { entries })
+    .put<InventorySavedItem[]>(`/inventory/stores/${posConfigId}/items`, { entries, countedAt })
     .then((res) => res.data);
 }
