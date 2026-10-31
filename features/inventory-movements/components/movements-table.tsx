@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { useState, type ReactNode } from "react";
 import { ArrowDownToLine, Check, ChevronRight, Cookie, Gift, PackageX, X, ArrowRightLeft } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/design-system/components/data-table";
@@ -77,6 +78,17 @@ function statusHint(movement: InventoryMovement, isAdmin: boolean): string | nul
     return isAdmin ? "Falta confirmar o rechazar." : "Pendiente de confirmación de Admin o Finanzas.";
   }
   return null;
+}
+
+// ENTRADA suma (+, verde); el resto resta (−).
+function SignedQuantity({ movement }: { movement: InventoryMovement }) {
+  const entry = movement.type === "ENTRADA";
+  return (
+    <span className={cn("tabular-nums font-medium", entry ? "text-emerald-600 dark:text-emerald-400" : "text-foreground")}>
+      {entry ? "+" : "−"}
+      {formatQuantity(movement.quantity)}
+    </span>
+  );
 }
 
 function formatQuantity(quantity: number): string {
@@ -214,7 +226,7 @@ function MovementDetailDialog({ movement, onOpenChange, storeName, isAdmin, acti
 
             <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg border border-border p-3">
               <DetailRow label="Cantidad">
-                <span className="tabular-nums">{formatQuantity(movement.quantity)}</span>
+                <SignedQuantity movement={movement} />
               </DetailRow>
               <DetailRow label="Fecha">{formatDateTime(movement.occurredAt)}</DetailRow>
               <DetailRow label="Registrado por">
@@ -382,7 +394,7 @@ export function MovementsTable({
       id: "quantity",
       header: "Cantidad",
       label: "Cantidad",
-      cell: (movement) => <span className="tabular-nums">{formatQuantity(movement.quantity)}</span>,
+      cell: (movement) => <SignedQuantity movement={movement} />,
       align: "right",
       nowrap: true,
     },

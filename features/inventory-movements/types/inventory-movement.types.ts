@@ -1,6 +1,7 @@
-// ENTRADA ya no se registra a mano: la crea el sistema (ya CONFIRMADA) cuando
-// la tienda confirma una solicitud recibida (Inventario → Solicitudes). Puede
-// aparecer en listados históricos, pero no se crea ni resuelve desde aquí.
+// ENTRADA tiene dos orígenes: la crea el sistema (ya CONFIRMADA) al recibir
+// una solicitud (Inventario → Solicitudes), o se registra a mano aquí cuando
+// llega mercadería sin solicitud (pasa por la misma bandeja que la merma).
+// TRASLADO nace solo al despachar una solicitud entre tiendas.
 export type InventoryMovementType = "MERMA" | "REGALIA" | "DEGUSTACION" | "ENTRADA" | "TRASLADO";
 
 // Merma/regalía/degustación: PENDIENTE (lo reportó un Vendedor) ->

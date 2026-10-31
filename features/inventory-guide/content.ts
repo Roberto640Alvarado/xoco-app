@@ -89,12 +89,13 @@ export const PERMISSIONS: Record<GuideRole, { can: string[]; cannot: string[] }>
     can: [
       "Ver la existencia de tu tienda (solo lectura).",
       "Solicitar stock a planta y confirmar lo que llega.",
+      "Registrar entradas de producto que llegó sin solicitud.",
       "Reportar mermas, regalías y degustaciones.",
       "Ver el Registro de tu tienda y exportar a Excel.",
     ],
     cannot: [
       "Capturar o cambiar el conteo físico: lo hace Finanzas o Admin.",
-      "Confirmar o rechazar mermas, regalías y degustaciones: lo hace Finanzas o Admin.",
+      "Confirmar o rechazar entradas, mermas, regalías y degustaciones: lo hace Finanzas o Admin.",
       "Cambiar lo que planta envía: solo confirmas lo que de verdad llegó.",
       "Ver otras tiendas.",
       "Entrar a Inventario antes de que el Admin habilite tu tienda.",
@@ -121,8 +122,8 @@ const ADMIN_FLOW: { intro: string; steps: GuideStep[] } = {
       body: "La existencia estimada es: último conteo − ventas de Odoo (efectivo y tarjeta, sin canceladas) − mermas, regalías y degustaciones confirmadas + entradas confirmadas. Cada vez que guardas un conteo nuevo, vuelve a empezar desde ahí.",
     },
     {
-      title: "4. Mermas, regalías y degustaciones",
-      body: "El Vendedor las reporta en Movimientos y quedan pendientes. Tú las confirmas (se restan del stock) o las rechazas con un motivo. Si las registras tú, quedan confirmadas de una vez.",
+      title: "4. Entradas, mermas, regalías y degustaciones",
+      body: "El Vendedor las reporta en Movimientos y quedan pendientes. Tú las confirmas (la entrada suma al stock; las demás restan) o las rechazas con un motivo. Si las registras tú, quedan confirmadas de una vez. Si llegó producto, regístralo como Entrada y no en Conteo: el conteo reemplaza la cantidad.",
     },
     {
       title: "5. Solicitudes de stock (solo seguimiento)",
@@ -160,8 +161,8 @@ const VENDEDOR_FLOW: { intro: string; steps: GuideStep[] } = {
       body: "En Conteo ves la existencia estimada de cada producto de tu tienda, solo para leer. Baja con las ventas y con las mermas y regalías confirmadas, y sube cuando confirmas un envío recibido.",
     },
     {
-      title: "2. Reporta mermas, regalías y degustaciones",
-      body: "En Movimientos registra lo que salió de la tienda sin venderse (con una nota si hace falta). Queda pendiente y se resta del stock cuando Admin o Finanzas lo confirma; si lo rechazan, verás el motivo.",
+      title: "2. Registra lo que entra y lo que sale",
+      body: "En Movimientos usa \"Registrar entrada\" cuando llega producto sin una solicitud (ej. lo trajeron de planta a mano), y \"Registrar movimiento\" para mermas, regalías y degustaciones. Queda pendiente y se aplica al stock cuando Admin o Finanzas lo confirma; si lo rechazan, verás el motivo.",
     },
     {
       title: "3. Pide stock a planta o a otra tienda",
@@ -242,7 +243,7 @@ const NOT_FOR_PLANTA = "Esta pantalla no está disponible para Planta: tu acceso
 const KARDEX_STAFF =
   "Kardex por tienda: elige la tienda y el período y ve, por producto, el saldo inicial, cada entrada, salida y ajuste por conteo con su saldo, y el saldo final. Descárgalo en PDF (con firmas) o Excel.";
 const MOVIMIENTOS_STAFF =
-  "Mermas, regalías y degustaciones. Elige una tienda o mira los pendientes de todas; confirma o rechaza (con motivo) lo que reportan los Vendedores, o registra uno tú directamente.";
+  "Entradas manuales, mermas, regalías y degustaciones. Elige una tienda o mira los pendientes de todas; confirma o rechaza (con motivo) lo que reportan los Vendedores, o registra uno tú directamente.";
 const REGISTRO_STAFF =
   "Línea de tiempo de entradas y salidas de una tienda, con fecha y hora: ventas de Odoo, movimientos y conteos. Filtra y exporta a Excel.";
 
@@ -267,7 +268,7 @@ export const PAGE_INTRO: Record<GuidePage, Record<GuideRole, string>> = {
     admin: MOVIMIENTOS_STAFF,
     finanzas: MOVIMIENTOS_STAFF,
     vendedor:
-      "Registra mermas, regalías y degustaciones de tu tienda. Quedan pendientes hasta que Admin o Finanzas las confirme; tú no puedes confirmarlas.",
+      "Registra las entradas de producto que llegó sin solicitud, y las mermas, regalías y degustaciones de tu tienda. Quedan pendientes hasta que Admin o Finanzas las confirme; tú no puedes confirmarlas.",
     planta: NOT_FOR_PLANTA,
   },
   registro: {
@@ -389,6 +390,12 @@ function staffSteps(role: "admin" | "finanzas"): Record<GuidePage, TourStep[]> {
         side: "bottom",
       },
       {
+        target: '[data-tour="mov-entry"]',
+        title: "Registrar entrada",
+        description: "Producto que llegó a la tienda sin una solicitud. Se suma al stock sin borrar el conteo; al registrarla tú queda confirmada.",
+        side: "bottom",
+      },
+      {
         target: '[data-tour="mov-new"]',
         title: "Registrar movimiento",
         description: "Anota tú una merma, regalía o degustación. Al registrarla tú queda confirmada y se resta del stock de inmediato.",
@@ -484,6 +491,12 @@ const VENDEDOR_STEPS: Record<GuidePage, TourStep[]> = {
   movimientos: [
     WELCOME("movimientos", "vendedor"),
     { target: '[data-tour="mov-store"]', title: "Tu tienda", description: "Solo registras y ves movimientos de tu propia tienda.", side: "bottom" },
+    {
+      target: '[data-tour="mov-entry"]',
+      title: "Registrar entrada",
+      description: "¿Llegó producto sin una solicitud? Regístralo aquí con su cantidad. Se suma al stock cuando Admin o Finanzas lo confirma.",
+      side: "bottom",
+    },
     {
       target: '[data-tour="mov-new"]',
       title: "Registrar movimiento",
@@ -705,7 +718,7 @@ export const INFO: Record<InfoTopic, InfoContent> = {
     bullets: [
       "Venta (−): una línea por producto vendido en el POS de Odoo.",
       "Merma, Regalía, Degustación (−): salidas reportadas a mano; muestran su estado (pendiente, confirmado, rechazado).",
-      "Entrada (+): lo que la tienda confirmó haber recibido de una solicitud a planta.",
+      "Entrada (+): lo recibido de una solicitud, o una entrada registrada a mano en Movimientos (con su estado).",
       "Conteo (sin signo): un conteo físico; la cantidad es la contada y el detalle muestra cuánto había antes.",
       "Pendientes y rechazados aparecen, pero solo los confirmados afectan la existencia estimada.",
     ],

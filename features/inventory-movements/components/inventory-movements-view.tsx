@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { PackageMinus, Plus, Store as StoreIcon } from "lucide-react";
+import { ArrowDownToLine, PackageMinus, Plus, Store as StoreIcon } from "lucide-react";
 import { SectionCard } from "@/design-system/components/section-card";
 import { StoreSelect } from "@/components/filters/store-select";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { useInventoryMovements } from "../hooks/use-inventory-movements";
 import { useMovementsInbox } from "../hooks/use-movements-inbox";
 import { markSeen } from "../lib/last-seen";
-import { CreateMovementDialog } from "./create-movement-dialog";
+import { CreateMovementDialog, type ManualMovementType } from "./create-movement-dialog";
 import { MovementsTable } from "./movements-table";
 
 // Merma, regalías y degustaciones (salidas). Las solicitudes de stock
@@ -40,6 +40,12 @@ export function InventoryMovementsView() {
   const { data: stores, isLoading: storesLoading } = useStores();
   const [posConfigId, setPosConfigId] = useState<number | undefined>(defaultPosConfigId);
   const [createOpen, setCreateOpen] = useState(false);
+  const [createType, setCreateType] = useState<ManualMovementType | undefined>(undefined);
+
+  function openCreate(type: ManualMovementType | undefined) {
+    setCreateType(type);
+    setCreateOpen(true);
+  }
   const [allStoresPending, setAllStoresPending] = useState(false);
 
   // Autoselección de la primera tienda para Admin/Finanzas (Vendedor ya
@@ -62,7 +68,11 @@ export function InventoryMovementsView() {
       <SectionCard
         icon={PackageMinus}
         title="Movimientos"
-        description={isVendedor ? "Reporta mermas, regalías y degustaciones." : "Mermas, regalías y degustaciones."}
+        description={
+          isVendedor
+            ? "Registra lo que llega (entradas) y lo que sale: mermas, regalías y degustaciones."
+            : "Entradas manuales, mermas, regalías y degustaciones."
+        }
       >
         {!allStoresPending && (
           <StoreSelect
@@ -86,7 +96,18 @@ export function InventoryMovementsView() {
             Pendientes de todas las tiendas
           </Button>
         )}
-        <Button type="button" data-tour="mov-new" onClick={() => setCreateOpen(true)} disabled={posConfigId == null || allStoresPending}>
+        <Button
+          type="button"
+          data-tour="mov-entry"
+          variant="outline"
+          className="border-emerald-500/40 text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400"
+          onClick={() => openCreate("ENTRADA")}
+          disabled={posConfigId == null || allStoresPending}
+        >
+          <ArrowDownToLine className="h-4 w-4" aria-hidden="true" />
+          Registrar entrada
+        </Button>
+        <Button type="button" data-tour="mov-new" onClick={() => openCreate(undefined)} disabled={posConfigId == null || allStoresPending}>
           <Plus className="h-4 w-4" aria-hidden="true" />
           Registrar movimiento
         </Button>
@@ -105,7 +126,7 @@ export function InventoryMovementsView() {
           canResolve={canResolve}
           storeNames={allStoresPending ? storeNames : undefined}
           emptyMessage={
-            allStoresPending ? "No hay mermas, regalías ni degustaciones pendientes." : "Todavía no hay movimientos registrados."
+            allStoresPending ? "No hay entradas, mermas, regalías ni degustaciones pendientes." : "Todavía no hay movimientos registrados."
           }
         />
       )}
@@ -114,6 +135,7 @@ export function InventoryMovementsView() {
         <CreateMovementDialog
           open={createOpen}
           onOpenChange={setCreateOpen}
+          initialType={createType}
           posConfigId={posConfigId}
           storeName={selectedStore?.name}
           isVendedor={isVendedor}
