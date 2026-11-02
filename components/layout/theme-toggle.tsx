@@ -1,21 +1,18 @@
 "use client";
 
 import * as React from "react";
-import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { Button } from "@/components/ui/button";
+import { SkyToggle } from "@/components/ui/sky-toggle";
 
 interface ThemeToggleProps {
   className?: string;
-  /** Oculta el texto junto al ícono (usado en el sidebar colapsado a modo ícono). */
-  labelClassName?: string;
 }
 
-// Toggle claro/oscuro sobre next-themes (ver app/providers.tsx). El guard de
-// `mounted` evita el mismatch de hidratación: el servidor no sabe qué tema
-// eligió el usuario, así que el ícono real solo se pinta una vez montado
-// en el cliente.
-export function ThemeToggle({ className, labelClassName }: ThemeToggleProps) {
+// Interruptor claro/oscuro (cielo de día / de noche) sobre next-themes (ver
+// app/providers.tsx). Vive en la esquina superior derecha del header. El
+// guard de `mounted` evita el mismatch de hidratación: el servidor no sabe
+// qué tema eligió el usuario, así que hasta montar se pinta deshabilitado.
+export function ThemeToggle({ className }: ThemeToggleProps) {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
 
@@ -24,31 +21,14 @@ export function ThemeToggle({ className, labelClassName }: ThemeToggleProps) {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
-    return (
-      <Button variant="ghost" size="sm" className={className} disabled>
-        <Sun className="size-4 shrink-0" aria-hidden="true" />
-        <span className={labelClassName}>Claro</span>
-      </Button>
-    );
-  }
-
-  const isDark = resolvedTheme === "dark";
+  const isDark = mounted && resolvedTheme === "dark";
 
   return (
-    <Button
-      variant="ghost"
-      size="sm"
+    <SkyToggle
       className={className}
-      onClick={() => setTheme(isDark ? "light" : "dark")}
-      aria-label={isDark ? "Cambiar a claro" : "Cambiar a oscuro"}
-    >
-      {isDark ? (
-        <Sun className="size-4 shrink-0" aria-hidden="true" />
-      ) : (
-        <Moon className="size-4 shrink-0" aria-hidden="true" />
-      )}
-      <span className={labelClassName}>{isDark ? "Claro" : "Oscuro"}</span>
-    </Button>
+      checked={isDark}
+      disabled={!mounted}
+      onCheckedChange={(dark) => setTheme(dark ? "dark" : "light")}
+    />
   );
 }

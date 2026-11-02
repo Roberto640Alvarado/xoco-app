@@ -1,8 +1,9 @@
 "use client";
 
-import { BookOpenCheck, Building2, ChefHat, CalendarCheck2, CalendarClock, ClipboardList, DollarSign, GitCompareArrows, LayoutDashboard, ListOrdered, Package, PackageMinus, PackagePlus, Receipt, ReceiptText, Search, Settings, Store, Tags, TrendingUp, Users, Wallet, Warehouse } from "lucide-react";
+import { BookOpenCheck, Coins, House, KeyRound, MessageCircle, Plug, Building2, ChefHat, CalendarCheck2, CalendarClock, ClipboardList, DollarSign, GitCompareArrows, LayoutDashboard, ListOrdered, Package, PackageMinus, PackagePlus, Receipt, ReceiptText, Search, Settings, Store, Tags, TrendingUp, Users, Wallet, Warehouse } from "lucide-react";
 import { useMemo } from "react";
 import { DashboardShell, type DashboardNavItem } from "@/components/layout/dashboard-shell";
+import { XocoNavIcon } from "@/features/ai-xoco/components/xoco-nav-icon";
 import { useMovementNotifications } from "@/features/inventory-movements/hooks/use-movement-notifications";
 import { useStockRequestNotifications } from "@/features/stock-requests/hooks/use-stock-requests";
 import { getDashboardPath } from "@/features/auth/utils/get-dashboard-path";
@@ -20,6 +21,8 @@ import { useCanUseInventory } from "@/features/inventory-access/hooks/use-invent
 // y quién compra) y Tickets. "Cierre del mes" queda como ítem directo porque
 // no comparte tipo con ninguno.
 const NAV_ITEMS: DashboardNavItem[] = [
+  // Inicio: bienvenida y accesos según el rol (todos los roles, también Planta).
+  { label: "Inicio", href: "/dashboard/inicio", icon: House, group: "", roles: ["SUPER_ADMIN", "FINANZAS", "VENDEDOR", "PLANTA"] },
   {
     label: "Productos",
     icon: Package,
@@ -100,6 +103,22 @@ const NAV_ITEMS: DashboardNavItem[] = [
       // Recetas: qué ingredientes descuenta cada producto vendido, por
       // tienda. Configuración del Super admin (la API también lo exige).
       { label: "Recetas", href: "/dashboard/inventario/recetas", icon: ChefHat, roles: ["SUPER_ADMIN"] },
+    ],
+  },
+
+  // Xoco IA (solo Super admin): el chat, el conector MCP para usar Xoco
+  // desde Claude/ChatGPT, las llaves de API y el gasto.
+  {
+    label: "Xoco IA",
+    icon: XocoNavIcon,
+    group: "",
+    roles: ["SUPER_ADMIN"],
+    // Primero lo que más se usa (el chat); la configuración al final.
+    children: [
+      { label: "Chat", href: "/dashboard/ia-xoco/chat", icon: MessageCircle, roles: ["SUPER_ADMIN"] },
+      { label: "Conectar MCP", href: "/dashboard/ia-xoco", icon: Plug, roles: ["SUPER_ADMIN"] },
+      { label: "Llaves de API", href: "/dashboard/ia-xoco/llaves", icon: KeyRound, roles: ["SUPER_ADMIN"] },
+      { label: "Gasto", href: "/dashboard/ia-xoco/gasto", icon: Coins, roles: ["SUPER_ADMIN"] },
     ],
   },
 

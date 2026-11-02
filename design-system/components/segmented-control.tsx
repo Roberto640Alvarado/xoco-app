@@ -1,11 +1,14 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";
 
 export interface SegmentedOption<T extends string> {
   value: T;
   label: string;
+  /** Ícono opcional antes del texto (ej. el logo de una marca). */
+  icon?: ReactNode;
 }
 
 interface SegmentedControlProps<T extends string> {
@@ -33,8 +36,9 @@ export function SegmentedControl<T extends string>({ options, value, onChange, a
           variant={value === option.value ? "default" : "ghost"}
           onClick={() => onChange(option.value)}
           aria-pressed={value === option.value}
-          className={cn("h-7 px-3", value !== option.value && "text-muted-foreground")}
+          className={cn("h-7 px-3", option.icon && "gap-1.5", value !== option.value && "text-muted-foreground")}
         >
+          {option.icon}
           {option.label}
         </Button>
       ))}

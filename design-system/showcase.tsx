@@ -5,6 +5,7 @@ import { ClipboardCheck, DollarSign, Eye, Loader2, MousePointerClick, Package, P
 import { Button } from "@/components/ui/button";
 import { ChangeIndicator } from "@/design-system/components/change-indicator";
 import { ChocolateBreak } from "@/design-system/components/chocolate-break";
+import { ChocolateWalker } from "@/design-system/components/chocolate-walker";
 import { ChocolateLoader } from "@/design-system/components/chocolate-loader";
 import { DataTable, type DataTableColumn } from "@/design-system/components/data-table";
 import { ComparisonStat } from "@/design-system/components/comparison-stat";
@@ -380,7 +381,11 @@ function CardsSection() {
             <ChocolateLoader size="md" label="Mediano" />
             <ChocolateLoader size="lg" label="Cargando..." />
           </div>
-          <p className="mt-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">ChocolateBreak: tableta que se parte (Iniciando sesión)</p>
+          <p className="mt-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">ChocolateWalker: Xoco caminando (Iniciando sesión y cargas)</p>
+          <div className="flex justify-center py-2">
+            <ChocolateWalker className="w-40" />
+          </div>
+          <p className="mt-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">ChocolateBreak: tableta que se parte</p>
           <div className="flex justify-center rounded-2xl border border-border bg-card p-6">
             <ChocolateBreak className="w-48" />
           </div>

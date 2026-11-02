@@ -6,14 +6,15 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "cn";
 import { Collapsible } from "@base-ui/react/collapsible";
-import { ChevronDown, Lock, LogOut, type LucideIcon } from "lucide-react";
+import { ChevronRight, ChevronsUpDown, Lock, type LucideIcon } from "lucide-react";
 import { XocolatisimoMark } from "@/components/brand/xocolatisimo-mark";
 import { useAuthStore } from "@/store/auth-store";
 import { useLogout } from "@/features/auth/hooks/use-logout";
 import { usePermissionsRefresh } from "@/features/auth/hooks/use-permissions-refresh";
-import { UserAvatar } from "@/components/ui/user-avatar";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { buttonVariants } from "@/components/ui/button";
+import { NavSearch } from "@/components/layout/nav-search";
+import { UserMenu } from "@/components/layout/user-menu";
+import { NotificationsBell } from "@/features/notifications/components/notifications-bell";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import {
   Sidebar,
@@ -32,15 +33,18 @@ import {
   SidebarMenuSubItem,
   SidebarProvider,
   SidebarRail,
-  SidebarSeparator,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import type { AuthUser, UserRole } from "@/features/auth/types/auth.types";
 import { ChocolateLoader } from "@/design-system/components/chocolate-loader";
 
+/** Ícono de lucide o un componente propio que acepte className (ej. Xoco). */
+export type NavIcon = LucideIcon | React.ComponentType<{ className?: string; "aria-hidden"?: boolean | "true" | "false" }>;
+
 interface DashboardNavLeafBase {
   label: string;
-  icon: LucideIcon;
+  icon: NavIcon;
   roles?: UserRole[]; // sin esto, visible para cualquier rol autenticado
   /** Llave del panel "Permisos" (Fase 3 de RBAC) — sin esto (ej.
    * Administración), el módulo no es configurable desde ese panel y solo
@@ -101,8 +105,17 @@ const GROUP_ORDER = ["", "Sistema"];
 // que matchea (dependiente del orden del arreglo), se toma el href más
 // específico (el más largo) entre los que matchean.
 function isNavItemActive(pathname: string, href: string): boolean {
+  // "/dashboard" (Resumen) solo cuenta exacto: si no, cualquier pantalla sin
+  // ítem propio en el menú (ej. Mi perfil) se tomaba como el Resumen y Planta
+  // veía "no disponible para tu rol".
+  if (href === "/dashboard") return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
 }
+
+// Pantallas fuera del menú lateral que igual llevan título en la barra de arriba.
+const EXTRA_TITLES: Record<string, string> = {
+  "/dashboard/perfil": "Mi perfil",
+};
 
 function findActiveNavItem<T extends { href: string }>(
   items: T[],
@@ -150,14 +163,22 @@ function filterNavItemsByRole(
   }, []);
 }
 
-// Globo rojo con el conteo; con el sidebar colapsado a ícono se reduce a un
+// Estilo de las filas (referencia que pidió el usuario: filas compactas de
+// 13px, íconos finos, activo con fondo tenue en vez de pill con sombra).
+const ROW_CLASS =
+  "h-8 gap-2.5 rounded-md px-2.5 text-[13px] font-medium tracking-wide text-foreground/80 transition-colors duration-200 hover:bg-black/5 hover:text-foreground dark:hover:bg-white/5 data-active:bg-black/5 data-active:font-semibold data-active:text-foreground data-active:shadow-none data-active:hover:bg-black/5 dark:data-active:bg-white/10 dark:data-active:hover:bg-white/10 data-open:bg-transparent data-open:shadow-none [&_svg]:size-4 [&_svg]:stroke-[1.75] [&_svg]:text-foreground/70 data-active:[&_svg]:text-foreground";
+
+const SUB_ROW_CLASS =
+  "h-8 gap-2.5 rounded-md px-2.5 text-[13px] font-medium tracking-wide text-foreground/80 transition-colors duration-200 hover:bg-black/5 hover:text-foreground dark:hover:bg-white/5 data-active:bg-black/5 data-active:font-semibold data-active:text-foreground data-active:hover:bg-black/5 dark:data-active:bg-white/10 dark:data-active:hover:bg-white/10 [&>svg]:size-4 [&>svg]:stroke-[1.75] [&>svg]:text-foreground/70 data-active:[&>svg]:text-foreground";
+
+// Globo con el conteo; con el sidebar colapsado a ícono se reduce a un
 // punto en la esquina (el número no cabe en el carril de 3rem).
 function NavBadge({ count, label }: { count?: number; label?: string }) {
   if (!count || count <= 0) return null;
   return (
     <>
       <span
-        className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[11px] font-semibold leading-none text-white group-data-[collapsible=icon]:hidden"
+        className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive/12 px-1.5 text-[10px] font-semibold leading-none text-destructive group-data-[collapsible=icon]:hidden"
         title={label}
         aria-label={label ?? `${count} avisos`}
       >
@@ -169,6 +190,15 @@ function NavBadge({ count, label }: { count?: number; label?: string }) {
       />
     </>
   );
+}
+
+// En móvil el sidebar es un panel encima de la pantalla: al elegir una opción
+// se cierra para mostrar la pantalla elegida.
+function useCloseMobileSidebar() {
+  const { isMobile, setOpenMobile } = useSidebar();
+  return () => {
+    if (isMobile) setOpenMobile(false);
+  };
 }
 
 function NavLeafRow({
@@ -183,21 +213,20 @@ function NavLeafRow({
   shouldReduceMotion: boolean | null;
 }) {
   const Icon = item.icon;
+  const closeMobile = useCloseMobileSidebar();
 
   return (
     <motion.div
-      initial={shouldReduceMotion ? false : { opacity: 0, x: -8 }}
+      initial={shouldReduceMotion ? false : { opacity: 0, x: -6 }}
       animate={{ opacity: 1, x: 0 }}
-      whileHover={shouldReduceMotion ? undefined : { x: 3 }}
-      whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
-      transition={{ duration: 0.2, delay: index * 0.03, ease: "easeOut" }}
+      transition={{ duration: 0.2, delay: index * 0.025, ease: "easeOut" }}
     >
       <SidebarMenuItem>
         <SidebarMenuButton
           isActive={isActive}
           tooltip={item.label}
-          render={<Link href={item.href} />}
-          className="h-11 gap-3 rounded-xl px-3 text-[15px] [&_svg]:size-[18px]"
+          render={<Link href={item.href} onClick={closeMobile} />}
+          className={ROW_CLASS}
         >
           <Icon />
           <span>{item.label}</span>
@@ -209,13 +238,16 @@ function NavLeafRow({
 }
 
 function NavSubLeafRow({ item, isActive }: { item: DashboardNavLeaf; isActive: boolean }) {
+  const Icon = item.icon;
+  const closeMobile = useCloseMobileSidebar();
   return (
     <SidebarMenuSubItem>
       <SidebarMenuSubButton
         isActive={isActive}
-        render={<Link href={item.href} />}
-        className="gap-2.5 text-[14px]"
+        render={<Link href={item.href} onClick={closeMobile} />}
+        className={SUB_ROW_CLASS}
       >
+        <Icon aria-hidden="true" />
         <span>{item.label}</span>
         <NavBadge count={item.badge} label={item.badgeLabel} />
       </SidebarMenuSubButton>
@@ -254,11 +286,9 @@ function NavGroupRow({
 
   return (
     <motion.div
-      initial={shouldReduceMotion ? false : { opacity: 0, x: -8 }}
+      initial={shouldReduceMotion ? false : { opacity: 0, x: -6 }}
       animate={{ opacity: 1, x: 0 }}
-      whileHover={shouldReduceMotion ? undefined : { x: 3 }}
-      whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
-      transition={{ duration: 0.2, delay: index * 0.03, ease: "easeOut" }}
+      transition={{ duration: 0.2, delay: index * 0.025, ease: "easeOut" }}
     >
       <SidebarMenuItem>
         <Collapsible.Root open={open} onOpenChange={setOpen}>
@@ -266,21 +296,21 @@ function NavGroupRow({
             render={
               <SidebarMenuButton
                 tooltip={item.label}
-                className="h-11 gap-3 rounded-xl px-3 text-[15px] [&_svg]:size-[18px]"
+                className={cn(ROW_CLASS, hasActiveChild && "font-semibold text-foreground")}
               />
             }
           >
             <Icon aria-hidden="true" />
             <span>{item.label}</span>
             <NavBadge count={childrenBadge} label={`${childrenBadge} avisos en ${item.label}`} />
-            <ChevronDown className={cn("size-4! shrink-0 text-muted-foreground transition-transform duration-200 ease-out group-data-[panel-open]/menu-button:rotate-180", childrenBadge > 0 ? "ml-2" : "ml-auto")} />
+            <ChevronRight className={cn("size-3.5! shrink-0 stroke-2! text-foreground/50 transition-transform duration-200 ease-out group-data-[panel-open]/menu-button:rotate-90", childrenBadge > 0 ? "ml-2" : "ml-auto")} />
           </Collapsible.Trigger>
           {/* Base UI expone la altura medida del panel en la variable CSS
               --collapsible-panel-height — sin animar `height` a partir de
               ahí (y sin el overflow-hidden), el submenú aparecía/
               desaparecía de golpe en vez de deslizarse. */}
           <Collapsible.Panel className="h-(--collapsible-panel-height) overflow-hidden transition-[height,opacity] duration-200 ease-out data-[ending-style]:h-0 data-[ending-style]:opacity-0 data-[starting-style]:h-0 data-[starting-style]:opacity-0">
-            <SidebarMenuSub>
+            <SidebarMenuSub className="mx-0 ml-[17px] mt-0.5 gap-0.5 border-black/5 px-0 pl-1.5 dark:border-white/5">
               {item.children.map((child) => (
                 <NavSubLeafRow key={child.href} item={child} isActive={child.href === activeHref} />
               ))}
@@ -314,12 +344,12 @@ function NavList({ navItems }: { navItems: DashboardNavItem[] }) {
       {groups.map(({ group, items }) => (
         <SidebarGroup key={group}>
           {group && (
-            <SidebarGroupLabel className="uppercase tracking-wide text-[11px]">
+            <SidebarGroupLabel className="px-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               {group}
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-0.5">
               {items.map((item, index) =>
                 hasChildren(item) ? (
                   <NavGroupRow
@@ -380,6 +410,10 @@ export function DashboardShell({ navItems, dashboardHref, children }: DashboardS
   const visibleNavItems = filterNavItemsByRole(navItems, user);
   const visibleLeaves = flattenLeaves(visibleNavItems);
   const activeItem = findActiveNavItem(visibleLeaves, pathname);
+  // Submenú al que pertenece la pantalla actual (para la ruta "Inventario / Kardex").
+  const activeParent = activeItem
+    ? visibleNavItems.find((item) => hasChildren(item) && item.children.some((child) => child.href === activeItem.href))?.label
+    : undefined;
   // Pantalla pedida por URL que el rol no puede ver (por rol o porque el Admin
   // la quitó en Permisos): se muestra un aviso en vez de la pantalla.
   const requestedItem = findActiveNavItem(flattenLeaves(navItems), pathname);
@@ -403,61 +437,39 @@ export function DashboardShell({ navItems, dashboardHref, children }: DashboardS
   return (
     <SidebarProvider>
       <Sidebar collapsible="icon">
-        <SidebarHeader>
-          {/* Mismos paddings que la versión anterior (px-2 py-1 en el link,
-              sin padding extra en la fila) — el sidebar colapsado a modo
-              ícono mide 3rem: cualquier padding de más hace que el
-              logo-badge se desborde del carril angosto (ver SidebarHeader
-              -> p-2 en components/ui/sidebar.tsx, ya deja solo 32px de
-              ancho útil). */}
+        <SidebarHeader className="gap-1 p-3 pb-1 group-data-[collapsible=icon]:p-2">
+          {/* Bloque de marca, como el "workspace" de la referencia. Con el
+              sidebar colapsado a ícono (3rem) solo queda el logo. */}
           <Link
             href={dashboardHref}
-            className="flex min-w-0 items-center gap-2 px-2 py-1 font-semibold text-lg text-sidebar-foreground focus:outline-hidden focus:opacity-80 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center"
+            className="group/brand flex min-w-0 items-center justify-between gap-2 rounded-lg px-2 py-2 transition-colors hover:bg-black/5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-sidebar-ring dark:hover:bg-white/5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
           >
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-sidebar-accent text-[#45382E] dark:text-[#E8DCC8]">
-              <XocolatisimoMark className="h-5 w-5" />
+            <span className="flex min-w-0 items-center gap-3">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[6px] bg-[#3b2216] text-[#f1dcc7] shadow-sm dark:bg-[#E8DCC8] dark:text-[#3b2216]">
+                <XocolatisimoMark className="h-5 w-5" />
+              </span>
+              <span className="flex min-w-0 flex-col group-data-[collapsible=icon]:hidden">
+                <span className="mb-1 truncate text-[13px] font-medium leading-none text-foreground">Xocolatísimo</span>
+                <span className="truncate text-[11px] leading-none text-muted-foreground">
+                  {user ? ROLE_LABEL[user.role] : "Panel"}
+                </span>
+              </span>
             </span>
-            <span className="truncate text-sidebar-primary group-data-[collapsible=icon]:hidden">
-              Xocolatísimo
-            </span>
+            <ChevronsUpDown
+              className="h-4 w-4 shrink-0 text-muted-foreground/50 transition-colors group-hover/brand:text-foreground/70 group-data-[collapsible=icon]:hidden"
+              strokeWidth={1.5}
+              aria-hidden="true"
+            />
           </Link>
+          <NavSearch items={visibleLeaves} className={ROW_CLASS} />
         </SidebarHeader>
 
-        <SidebarContent>
+        <SidebarContent className="gap-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <NavList navItems={visibleNavItems} />
         </SidebarContent>
 
-        <SidebarFooter className="gap-2">
-          <div className="flex flex-col gap-1">
-            <ThemeToggle
-              className="h-9 w-full justify-start gap-3 rounded-lg px-2 text-sidebar-foreground transition-colors duration-150 ease-out hover:bg-sidebar-primary/8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
-              labelClassName="group-data-[collapsible=icon]:hidden"
-            />
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-9 w-full justify-start gap-3 rounded-lg px-2 text-sidebar-foreground transition-colors duration-150 ease-out hover:bg-sidebar-primary/8 hover:text-sidebar-foreground group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
-              onClick={() => void logout()}
-              aria-label="Cerrar sesión"
-            >
-              <LogOut className="size-4 shrink-0" aria-hidden="true" />
-              <span className="group-data-[collapsible=icon]:hidden">Salir</span>
-            </Button>
-          </div>
-
-          <SidebarSeparator className="mx-0" />
-
-          <div className="flex items-center gap-3 rounded-xl border border-sidebar-border bg-background px-2 py-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:px-0">
-            <UserAvatar name={user?.name} email={user?.email} size="sm" />
-            <div className="min-w-0 group-data-[collapsible=icon]:hidden">
-              <p className="truncate text-sm font-semibold text-sidebar-foreground">
-                {user?.email ?? "..."}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">
-                {user ? ROLE_LABEL[user.role] : ""}
-              </p>
-            </div>
-          </div>
+        <SidebarFooter className="border-t border-border/50 p-2">
+          <UserMenu user={user} homeHref={dashboardHref} onLogout={() => void logout()} />
         </SidebarFooter>
 
         <SidebarRail />
@@ -466,16 +478,20 @@ export function DashboardShell({ navItems, dashboardHref, children }: DashboardS
       {/* min-w-0: sin esto, cualquier fila ancha con scroll horizontal (pestañas,
           chips de categorías) estira toda la página y la corta por la derecha. */}
       <SidebarInset className="min-w-0">
-        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/80 px-4 backdrop-blur-md">
-          <SidebarTrigger />
-          {activeItem && (
-            <>
-              <Separator orientation="vertical" className="h-5" />
-              <h1 className="truncate text-lg font-bold text-foreground sm:text-xl">
-                {activeItem.label}
-              </h1>
-            </>
+        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-3 border-b border-border/50 bg-background/80 px-4 backdrop-blur-md">
+          <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+          {(activeItem || EXTRA_TITLES[pathname]) && (
+            <nav aria-label="Ubicación" className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+              <span className="hidden truncate sm:inline">{activeParent ?? "Xocolatísimo"}</span>
+              <span aria-hidden="true" className="hidden sm:inline">/</span>
+              <h1 className="truncate font-medium text-foreground">{activeItem?.label ?? EXTRA_TITLES[pathname]}</h1>
+            </nav>
           )}
+          {/* Tema claro/oscuro: esquina superior derecha. */}
+          <div className="ml-auto flex shrink-0 items-center gap-3">
+            <NotificationsBell />
+            <ThemeToggle />
+          </div>
         </header>
         <div className="min-w-0 px-4 pb-4 pt-2 sm:px-6 sm:pb-6 sm:pt-3 lg:px-10 lg:pb-10 lg:pt-4">
           {isBlocked ? <RouteBlockedNotice href={fallbackHref} /> : children}

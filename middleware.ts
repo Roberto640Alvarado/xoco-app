@@ -10,7 +10,7 @@ const AUTH_ROUTES = ["/login"];
 // lo que ya hace el backend (403 por rol y por permisos). "/dashboard" (el
 // Resumen) es SOLO esa ruta: antes se comparaba por prefijo y dejaba pasar
 // cualquier /dashboard/*.
-const VENDEDOR_EXACT_PATHS = ["/dashboard"];
+const VENDEDOR_EXACT_PATHS = ["/dashboard", "/dashboard/inicio", "/dashboard/perfil"];
 const VENDEDOR_PREFIX_PATHS = [
   "/dashboard/productos",
   "/dashboard/categorias",
@@ -28,7 +28,7 @@ const VENDEDOR_PREFIX_PATHS = [
 // cada tienda en solo lectura (ruta exacta: no Movimientos ni Registro).
 // Cualquier otra ruta del panel la regresa a Solicitudes.
 const PLANTA_PREFIX_PATHS = [PLANTA_HOME_PATH];
-const PLANTA_EXACT_PATHS = ["/dashboard/inventario"];
+const PLANTA_EXACT_PATHS = ["/dashboard/inventario", "/dashboard/inicio", "/dashboard/perfil"];
 
 function normalizePath(pathname: string): string {
   return pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
@@ -71,7 +71,8 @@ export function middleware(request: NextRequest) {
   // SUPER_ADMIN es el único rol con acceso a administración (usuarios,
   // configuración de Odoo) — FINANZAS solo ve ventas/reportes dentro de
   // /dashboard (ver CLAUDE.md, "Autorización").
-  const isAdminRoute = pathname.startsWith("/dashboard/admin");
+  // IA Xoco (conector MCP y chat) también es solo de SUPER_ADMIN.
+  const isAdminRoute = pathname.startsWith("/dashboard/admin") || pathname.startsWith("/dashboard/ia-xoco");
 
   // Sin sesión y la URL ni siquiera es una ruta conocida: a login
   // directamente, nunca al 404 — no hay registro público, así que no tiene

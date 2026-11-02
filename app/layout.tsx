@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Xocolatísimo | Panel administrativo",
+  title: "Xocolatísimo",
   description: "Panel interno de reportes y ventas de Xocolatísimo.",
 };
 
