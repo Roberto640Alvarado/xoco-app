@@ -83,5 +83,6 @@ El detalle de una orden (Tickets → Órdenes) se dibuja como el recibo de la ca
 
 ## Otros
 
+- `ThemeSwitch` (`components/ui/theme-switch.tsx`): interruptor claro/oscuro del header (vía `ThemeToggle`): pastilla con pulgar que se desliza y el ícono del modo actual (sol en claro, luna en oscuro). Reemplazó al interruptor de cielo (`SkyToggle`, ya sin uso).
 - `InfoHint` (`features/inventory-guide/components/info-hint.tsx`): ⓘ que abre un modal con la explicación de un concepto.
 - Tokens, animación y principios generales: sección "Sistema de Diseño" de `CLAUDE.md`.

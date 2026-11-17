@@ -2,13 +2,13 @@
 
 import * as React from "react";
 import { useTheme } from "next-themes";
-import { SkyToggle } from "@/components/ui/sky-toggle";
+import { ThemeSwitch } from "@/components/ui/theme-switch";
 
 interface ThemeToggleProps {
   className?: string;
 }
 
-// Interruptor claro/oscuro (cielo de día / de noche) sobre next-themes (ver
+// Interruptor claro/oscuro (sol / luna, ver ThemeSwitch) sobre next-themes (ver
 // app/providers.tsx). Vive en la esquina superior derecha del header. El
 // guard de `mounted` evita el mismatch de hidratación: el servidor no sabe
 // qué tema eligió el usuario, así que hasta montar se pinta deshabilitado.
@@ -24,11 +24,11 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
   const isDark = mounted && resolvedTheme === "dark";
 
   return (
-    <SkyToggle
+    <ThemeSwitch
       className={className}
-      checked={isDark}
+      checked={!isDark}
       disabled={!mounted}
-      onCheckedChange={(dark) => setTheme(dark ? "dark" : "light")}
+      onCheckedChange={(light) => setTheme(light ? "light" : "dark")}
     />
   );
 }
