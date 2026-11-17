@@ -38,9 +38,17 @@ export interface AiUsageItem {
   durationMs: number;
 }
 
+export interface AiUsageReset {
+  provider: AiProviderKey;
+  /** Desde aquí cuenta el Gasto de ese proveedor (lo anterior no se suma). */
+  resetAt: string;
+  resetByEmail: string;
+}
+
 export interface AiUsageResponse {
   dateFrom: string;
   dateTo: string;
+  resets: AiUsageReset[];
   totals: { costUsd: number; queries: number; inputTokens: number; outputTokens: number; errors: number; averageCostUsd: number };
   byDay: { date: string; costUsd: number; queries: number; claude: number; openai: number }[];
   byProvider: { provider: AiProviderKey; model: string; costUsd: number; queries: number; inputTokens: number; outputTokens: number }[];

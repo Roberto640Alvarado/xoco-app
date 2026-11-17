@@ -63,6 +63,8 @@ interface DataTableProps<T> {
   columnFilters?: boolean;
   /** Si viene, la fila completa es clicable (ej. abrir un modal de detalle). */
   onRowClick?: (row: T) => void;
+  /** Clases extra por fila (ej. resaltar las filas editadas en Conteo). */
+  getRowClassName?: (row: T) => string | undefined;
   className?: string;
 }
 
@@ -170,6 +172,7 @@ export function DataTable<T>({
   filtersTourId,
   columnFilters = true,
   onRowClick,
+  getRowClassName,
   className,
 }: DataTableProps<T>) {
   const [filters, setFilters] = useState<Record<string, string>>({});
@@ -337,7 +340,7 @@ export function DataTable<T>({
                 <TableRow
                   key={getRowKey(row)}
                   {...rowClickProps(row)}
-                  className={onRowClick ? "cursor-pointer" : undefined}
+                  className={cn(onRowClick && "cursor-pointer", getRowClassName?.(row))}
                 >
                   {columns.map((column) => (
                     <TableCell
@@ -402,7 +405,7 @@ export function DataTable<T>({
               <li
                 key={getRowKey(row)}
                 {...rowClickProps(row)}
-                className={cn("flex flex-col gap-3 p-3", onRowClick && "cursor-pointer hover:bg-muted/40")}
+                className={cn("flex flex-col gap-3 p-3", onRowClick && "cursor-pointer hover:bg-muted/40", getRowClassName?.(row))}
               >
                 <div className="min-w-0 break-words text-sm font-medium text-foreground">
                   {titleColumn.cell(row, start + offset)}

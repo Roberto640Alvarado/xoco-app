@@ -1,12 +1,12 @@
 import { cn } from "cn";
-import { ChocolateWalker } from "./chocolate-walker";
+import { ChocolateBarLoader } from "./chocolate-bar-loader";
 
 type ChocolateLoaderSize = "sm" | "md" | "lg";
 
 const SIZE: Record<ChocolateLoaderSize, string> = {
-  sm: "w-14",
-  md: "w-24",
-  lg: "w-32",
+  sm: "w-9",
+  md: "w-14",
+  lg: "w-20",
 };
 
 interface ChocolateLoaderProps {
@@ -19,14 +19,13 @@ interface ChocolateLoaderProps {
 }
 
 /**
- * Animación de carga del panel: "Xoco caminando", la tableta de chocolate con
- * el logo de Xocolatísimo (ver ChocolateWalker). Respeta
- * `prefers-reduced-motion` (queda quieta).
+ * Animación de carga del panel: la tableta de Xocolatísimo con su envoltura
+ * de mazorcas de cacao (ver ChocolateBarLoader). Respeta `prefers-reduced-motion` (queda quieta).
  */
 export function ChocolateLoader({ label = "Cargando...", size = "md", delayed = false, className }: ChocolateLoaderProps) {
   return (
     <div role="status" aria-live="polite" className={cn("flex flex-col items-center gap-2", delayed && "choco-fade-in", className)}>
-      <ChocolateWalker className={SIZE[size]} />
+      <ChocolateBarLoader className={SIZE[size]} />
       {label ? <p className="text-sm text-muted-foreground">{label}</p> : <span className="sr-only">Cargando...</span>}
     </div>
   );

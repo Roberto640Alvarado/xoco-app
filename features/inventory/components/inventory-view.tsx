@@ -9,6 +9,7 @@ import { ExportExcelButton } from "@/components/ui/export-excel-button";
 import { useStores } from "@/features/sales/hooks/use-stores";
 import { useVendedorStoreFilter } from "@/features/sales/hooks/use-vendedor-store-filter";
 import { useAuthStore } from "@/store/auth-store";
+import { formatDateTime } from "@/lib/format";
 import { useInventoryItems } from "../hooks/use-inventory-items";
 import { InventoryTable } from "./inventory-table";
 
@@ -82,10 +83,10 @@ export function InventoryView() {
                 Categoría: item.categoryName,
                 Producto: item.productName,
                 Unidad: item.unit === "kg" ? "Kg" : "Unidad",
-                "Existencia estimada": item.estimatedQuantity ?? "",
-                "Inventario nuevo": item.quantity ?? "Sin contar",
-                "Última modificación": item.updatedAt ?? "",
-                "Modificado por": item.updatedByEmail ?? "",
+                "Existencia estimada": item.estimatedQuantity != null ? Math.round(item.estimatedQuantity * 1000) / 1000 : "",
+                "Último conteo": item.quantity ?? "Sin contar",
+                "Fecha del conteo": item.countedAt ? formatDateTime(item.countedAt) : "",
+                "Guardado por": item.updatedByEmail ?? "",
               })),
             },
           ]}

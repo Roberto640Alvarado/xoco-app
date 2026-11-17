@@ -22,9 +22,15 @@ function useApplyKeys() {
 
 export function useSaveAiKey() {
   const apply = useApplyKeys();
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ provider, apiKey }: { provider: AiProviderKey; apiKey: string }) => saveAiKey(provider, apiKey),
-    onSuccess: (result) => apply(result.keys),
+    mutationFn: ({ provider, apiKey, resetUsage }: { provider: AiProviderKey; apiKey: string; resetUsage: boolean }) =>
+      saveAiKey(provider, apiKey, resetUsage),
+    onSuccess: (result, variables) => {
+      apply(result.keys);
+      // Con reinicio, el Gasto cambia: se vuelve a pedir.
+      if (variables.resetUsage) void queryClient.invalidateQueries({ queryKey: ["ai-chat", "usage"] });
+    },
   });
 }
 

@@ -6,8 +6,8 @@ export function fetchAiKeys() {
   return apiGet<AiKeyInfo[]>("/ai-chat/keys");
 }
 
-export function saveAiKey(provider: AiProviderKey, apiKey: string) {
-  return apiPut<AiKeyCheckResult>(`/ai-chat/keys/${provider}`, { apiKey });
+export function saveAiKey(provider: AiProviderKey, apiKey: string, resetUsage: boolean) {
+  return apiPut<AiKeyCheckResult>(`/ai-chat/keys/${provider}`, { apiKey, resetUsage });
 }
 
 export function testAiKey(provider: AiProviderKey) {

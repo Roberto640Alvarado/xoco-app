@@ -5,12 +5,13 @@ import { ClipboardCheck, DollarSign, Eye, Loader2, MousePointerClick, Package, P
 import { Button } from "@/components/ui/button";
 import { ChangeIndicator } from "@/design-system/components/change-indicator";
 import { ChocolateBreak } from "@/design-system/components/chocolate-break";
-import { ChocolateWalker } from "@/design-system/components/chocolate-walker";
+import { ChocolateBarLoader } from "@/design-system/components/chocolate-bar-loader";
 import { ChocolateLoader } from "@/design-system/components/chocolate-loader";
 import { DataTable, type DataTableColumn } from "@/design-system/components/data-table";
 import { ComparisonStat } from "@/design-system/components/comparison-stat";
 import { InfoBadge, type InfoBadgeTone } from "@/design-system/components/info-badge";
 import { SegmentedControl } from "@/design-system/components/segmented-control";
+import { DateTimePicker, toLocalDateTime } from "@/design-system/components/date-time-picker";
 import { QuantityStepper } from "@/design-system/components/quantity-stepper";
 import { ProgressSteps } from "@/design-system/components/progress-steps";
 import { DeliveryTruck } from "@/design-system/components/delivery-truck";
@@ -276,6 +277,7 @@ function ComparisonSection() {
         <ComparisonStat icon={DollarSign} label="Ingresos" value="$2,410.50" compareValue="$2,655.00" valueLabel="Octubre 2026 (al 20)" compareLabel="Septiembre 2026" change={{ diff: -244.5, pct: -0.092 }} />
       </div>
       <QuantitySpecimen />
+      <DateTimeSpecimen />
       <Specimen label="SegmentedControl: 2-3 opciones excluyentes">
         <SegmentedControl
           ariaLabel="Medir por"
@@ -288,6 +290,15 @@ function ComparisonSection() {
         />
       </Specimen>
     </Section>
+  );
+}
+
+function DateTimeSpecimen() {
+  const [value, setValue] = useState(() => toLocalDateTime(new Date()));
+  return (
+    <Specimen label="DateTimePicker: fecha y hora (hasta 7 días atrás, nada en el futuro)">
+      <DateTimePicker value={value} onChange={setValue} min={new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)} />
+    </Specimen>
   );
 }
 
@@ -381,9 +392,9 @@ function CardsSection() {
             <ChocolateLoader size="md" label="Mediano" />
             <ChocolateLoader size="lg" label="Cargando..." />
           </div>
-          <p className="mt-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">ChocolateWalker: Xoco caminando (Iniciando sesión y cargas)</p>
+          <p className="mt-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">ChocolateBarLoader: tableta de Xocolatísimo con su envoltura de mazorcas (Iniciando sesión y cargas)</p>
           <div className="flex justify-center py-2">
-            <ChocolateWalker className="w-40" />
+            <ChocolateBarLoader className="w-32" />
           </div>
           <p className="mt-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">ChocolateBreak: tableta que se parte</p>
           <div className="flex justify-center rounded-2xl border border-border bg-card p-6">

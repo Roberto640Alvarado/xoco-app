@@ -236,7 +236,7 @@ export const FLOW: Record<GuideRole, { intro: string; steps: GuideStep[] }> = {
 // ── Qué hace cada pantalla ────────────────────────────────────────────────
 
 const CONTEO_STAFF =
-  "Captura el conteo físico de cada producto por tienda (columna \"Inventario nuevo\") y guarda en lote. La existencia estimada se calcula sola desde el último conteo.";
+  "Captura el conteo físico de cada producto por tienda (columna \"Conteo físico\": reemplaza el conteo anterior, no se suma) y guarda en lote. La existencia estimada se calcula sola desde el último conteo.";
 const SOLICITUDES_STAFF =
   "Seguimiento de las solicitudes de stock de todas las tiendas: quién pidió, qué respondió planta y si ya llegó. Puedes cancelar, y el Admin también puede pedir stock para una tienda con \"Nueva solicitud\" (eligiendo la tienda); planta despacha y la tienda confirma.";
 const NOT_FOR_PLANTA = "Esta pantalla no está disponible para Planta: tu acceso es Solicitudes y el Conteo (solo lectura).";
@@ -345,9 +345,16 @@ function staffSteps(role: "admin" | "finanzas"): Record<GuidePage, TourStep[]> {
       },
       {
         target: '[data-tour="inv-count"]',
-        title: "Inventario nuevo",
+        title: "Conteo físico",
         description:
-          "Escribe lo que contaste físicamente. Es lo único que se guarda; desde ese momento la existencia estimada vuelve a empezar de tu conteo.",
+          "Escribe lo que hay físicamente hoy. Reemplaza el conteo anterior, no se suma. Al escribir ves si cuadra con la estimada; Enter pasa al siguiente producto y \"Usar estimada\" la copia si es igual a lo que contaste.",
+        side: "bottom",
+      },
+      {
+        target: '[data-tour="inv-counted-at"]',
+        title: "Fecha del conteo",
+        description:
+          "Si contaron antes y lo están pasando ahora, elige \"Otra fecha\" y pon el día y la hora en que contaron (hasta 7 días atrás). Las ventas desde esa hora se restan del conteo.",
         side: "bottom",
       },
       {

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { CheckCircle2, ExternalLink, FlaskConical, KeyRound, Loader2, Plus, RefreshCw, Trash2, TriangleAlert } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Coins, ExternalLink, FlaskConical, KeyRound, Loader2, Plus, RefreshCw, RotateCcw, Trash2, TriangleAlert } from "lucide-react";
 import { ProviderIcon } from "./provider-icon";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -62,14 +62,20 @@ function CheckNotice({ status, message }: { status: AiKeyStatus; message: string
   );
 }
 
+// Dos pasos: 1) escribir la llave; 2) decidir si el Gasto de esa IA se
+// reinicia (empieza en $0 desde ahora, sin borrar el historial). Recién en el
+// paso 2 se prueba y guarda; si la llave falla, vuelve al paso 1 con el error
+// y el contador no se toca (el servidor solo reinicia si la llave se guardó).
 function SaveKeyDialog({ target, onClose }: { target: AiKeyInfo | null; onClose: () => void }) {
   const save = useSaveAiKey();
   const [value, setValue] = useState("");
+  const [step, setStep] = useState<"key" | "reset">("key");
   const [lastTarget, setLastTarget] = useState<AiKeyInfo | null>(null);
 
   if (target !== lastTarget) {
     setLastTarget(target);
     setValue("");
+    setStep("key");
     save.reset();
   }
 
@@ -80,11 +86,19 @@ function SaveKeyDialog({ target, onClose }: { target: AiKeyInfo | null; onClose:
   function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!target || value.trim().length < 20) return;
+    save.reset();
+    setStep("reset");
+  }
+
+  function saveKey(resetUsage: boolean) {
+    if (!target) return;
     save.mutate(
-      { provider: target.provider, apiKey: value.trim() },
-      { onSuccess: () => setTimeout(onClose, 1800) },
+      { provider: target.provider, apiKey: value.trim(), resetUsage },
+      { onSuccess: () => setTimeout(onClose, 2200), onError: () => setStep("key") },
     );
   }
+
+  const resetRequested = save.variables?.resetUsage === true;
 
   return (
     <Dialog open={target !== null} onOpenChange={(open) => !open && !save.isPending && onClose()}>
@@ -101,7 +115,53 @@ function SaveKeyDialog({ target, onClose }: { target: AiKeyInfo | null; onClose:
         </DialogHeader>
 
         {result ? (
-          <CheckNotice status={result.status} message={result.message} />
+          <div className="flex flex-col gap-2">
+            <CheckNotice status={result.status} message={result.message} />
+            {resetRequested && (
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                <RotateCcw className="h-4 w-4 shrink-0" aria-hidden="true" />
+                El gasto de {target?.label} se reinició: desde ahora cuenta desde $0.
+              </p>
+            )}
+          </div>
+        ) : step === "reset" ? (
+          <div className="flex flex-col gap-4">
+            <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/30 px-3 py-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Coins className="h-4 w-4" aria-hidden="true" />
+              </span>
+              <div className="flex flex-col gap-1">
+                <p className="text-sm font-semibold text-foreground">¿Reiniciar el contador del gasto de {target?.label}?</p>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Útil si es otra cuenta o recargaste crédito: en Gasto, {target?.label} empezará en $0 desde ahora. El historial de
+                  consultas no se borra.
+                </p>
+              </div>
+            </div>
+
+            {save.isPending && (
+              <p className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                Probando la llave con {target?.model}…
+              </p>
+            )}
+
+            <DialogFooter className="sm:justify-between">
+              <Button type="button" variant="ghost" onClick={() => setStep("key")} disabled={save.isPending}>
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                Atrás
+              </Button>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row">
+                <Button type="button" variant="outline" onClick={() => saveKey(false)} disabled={save.isPending}>
+                  No, seguir sumando
+                </Button>
+                <Button type="button" onClick={() => saveKey(true)} disabled={save.isPending}>
+                  <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                  Sí, reiniciar
+                </Button>
+              </div>
+            </DialogFooter>
+          </div>
         ) : (
           <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
             <div className="flex flex-col gap-1.5">
@@ -123,12 +183,6 @@ function SaveKeyDialog({ target, onClose }: { target: AiKeyInfo | null; onClose:
               )}
             </div>
 
-            {save.isPending && (
-              <p className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                Probando la llave con {target?.model}…
-              </p>
-            )}
             {errorMessage && !save.isPending && (
               <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {errorMessage}
@@ -140,8 +194,7 @@ function SaveKeyDialog({ target, onClose }: { target: AiKeyInfo | null; onClose:
                 Cancelar
               </Button>
               <Button type="submit" disabled={save.isPending || value.trim().length < 20}>
-                {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <FlaskConical className="h-4 w-4" aria-hidden="true" />}
-                Probar y guardar
+                Continuar
               </Button>
             </DialogFooter>
           </form>

@@ -251,6 +251,7 @@ export function AiUsageView() {
           {isLoading && [0, 1].map((index) => <Skeleton key={index} className="h-12 w-full rounded-lg" />)}
           {!isLoading && PROVIDERS.map((item) => {
             const row = data?.byProvider.find((entry) => entry.provider === item.key);
+            const reset = data?.resets?.find((entry) => entry.provider === item.key);
             const share = providerTotal ? ((row?.costUsd ?? 0) / providerTotal) * 100 : 0;
             return (
               <div key={item.key} className="flex flex-col gap-1.5">
@@ -269,6 +270,11 @@ export function AiUsageView() {
                 <span className="text-xs text-muted-foreground">
                   {row ? `${formatInteger(row.queries)} consultas · ${row.model}` : "Sin consultas"}
                 </span>
+                {reset && (
+                  <span className="text-xs text-muted-foreground" title={`Reiniciado por ${reset.resetByEmail}`}>
+                    Contador reiniciado el {formatDateTime(reset.resetAt)}
+                  </span>
+                )}
               </div>
             );
           })}

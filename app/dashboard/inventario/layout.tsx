@@ -5,7 +5,8 @@ import { InventoryGuideBar } from "@/features/inventory-guide/components/invento
 
 // Envoltorio común de las pantallas de Inventario: el Vendedor solo entra
 // si su tienda fue habilitada (InventoryAccessGate).
-// Todos ven la card del Tour guiado (Cómo funciona + recorrido por rol).
+// Todos ven la card del Tour guiado (Cómo funciona + recorrido por rol),
+// menos en Conteo (ver InventoryGuideBar).
 export default function InventarioLayout({ children }: { children: React.ReactNode }) {
   return (
     <InventoryAccessGate>

@@ -46,7 +46,7 @@ const PLANTA_PAGES: GuidePage[] = ["solicitudes"];
 // "Iniciar tour" lanza el recorrido de la pantalla actual y el botón ⓘ abre
 // un modal con el flujo completo, qué hace cada pantalla y qué puede (y qué
 // no) hacer el rol de quien mira. El contenido depende del rol: Admin,
-// Finanzas, Vendedor o Planta.
+// Finanzas, Vendedor o Planta. No se muestra en Conteo.
 export function InventoryGuideBar() {
   const pathname = usePathname();
   const user = useAuthStore((state) => state.user);
@@ -55,7 +55,9 @@ export function InventoryGuideBar() {
   const [open, setOpen] = useState(false);
   const { start, seen } = useInventoryTour(page, role, user?.email);
 
-  if (!user) return null;
+  // Conteo no lleva el tour: su propia guía de pasos (HelpSteps en
+  // InventoryTable) ya explica cómo se llena.
+  if (!user || page === "conteo") return null;
   const flow = FLOW[role];
   const permissions = PERMISSIONS[role];
   const pages = role === "admin" ? [...PAGE_ORDER, "recetas" as GuidePage, "habilitacion" as GuidePage] : role === "planta" ? PLANTA_PAGES : PAGE_ORDER;

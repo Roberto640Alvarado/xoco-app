@@ -1,8 +1,8 @@
 import type { CSSProperties } from "react";
-import { ChocolateWalker } from "@/design-system/components/chocolate-walker";
+import { ChocolateBarLoader } from "@/design-system/components/chocolate-bar-loader";
 
-// Pantalla que cubre el login mientras se inicia sesión: Xoco, la tableta de
-// chocolate con el logo, caminando, y el mensaje "Iniciando sesión en Xocolatísimo".
+// Pantalla que cubre el login mientras se inicia sesión: la tableta de
+// Xocolatísimo con su envoltura de mazorcas de cacao y el mensaje "Iniciando sesión en Xocolatísimo".
 // Aparece al instante y se queda hasta que el panel termina de abrirse.
 export function LoginOverlay() {
   return (
@@ -11,7 +11,7 @@ export function LoginOverlay() {
       aria-live="polite"
       className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-5 bg-background/95 backdrop-blur-sm"
     >
-      <ChocolateWalker className="w-36 sm:w-44" />
+      <ChocolateBarLoader className="w-24 sm:w-28" />
       <div className="text-center">
         <p className="text-lg font-semibold text-foreground">Iniciando sesión en Xocolatísimo</p>
         <p className="mt-1 text-sm text-muted-foreground">
