@@ -6,6 +6,7 @@ import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useClearCacheOnUserChange } from "@/features/auth/hooks/use-clear-cache-on-user-change";
 import { useSessionHydration } from "@/features/auth/hooks/use-session-hydration";
 import { getDashboardPath } from "@/features/auth/utils/get-dashboard-path";
 import { setModuleDisabledHandler, setUnauthorizedHandler } from "@/lib/api/client";
@@ -13,6 +14,12 @@ import { useAuthStore } from "@/store/auth-store";
 
 function AuthHydrator() {
   useSessionHydration();
+  return null;
+}
+
+// Vive dentro del QueryClientProvider: limpia la caché al cambiar de usuario.
+function QueryCacheSessionGuard() {
+  useClearCacheOnUserChange();
   return null;
 }
 
@@ -70,6 +77,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <TooltipProvider>
             <AuthHydrator />
+            <QueryCacheSessionGuard />
             <UnauthorizedRedirector />
             <ModuleDisabledRedirector />
             {children}
