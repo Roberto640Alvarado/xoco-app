@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteConversation, fetchAiChatConfig, fetchConversation, fetchConversations, renameConversation, streamAiChat } from "../api/ai-chat.api";
-import type { AiChatEvent, AiConversationDetail, AiProviderKey, AssistantBlock, ChatEntry } from "../types/ai-chat.types";
+import type { AiAttachmentMeta, AiChatEvent, AiConversationDetail, AiProviderKey, AssistantBlock, ChatAttachment, ChatEntry, PendingAttachment } from "../types/ai-chat.types";
 
 const CONVERSATIONS = ["ai-chat", "conversations"] as const;
 
@@ -63,10 +63,12 @@ function applyEvent(blocks: AssistantBlock[], event: AiChatEvent): AssistantBloc
 
 const PROVIDER_LABEL: Record<AiProviderKey, string> = { claude: "Claude", openai: "ChatGPT" };
 
+const fromMeta = (meta: AiAttachmentMeta): ChatAttachment => ({ key: meta.id, ...meta });
+
 function toEntries(detail: AiConversationDetail): ChatEntry[] {
   return detail.messages.map((message) =>
     message.role === "user"
-      ? { id: message.id, role: "user", text: message.text }
+      ? { id: message.id, role: "user", text: message.text, attachments: message.attachments?.map(fromMeta) }
       : {
           id: message.id,
           role: "assistant",
@@ -125,16 +127,25 @@ export function useXocoChat(conversationId: string | null, onConversation: (id: 
   }, []);
 
   const send = useCallback(
-    async (text: string, provider: AiProviderKey, label: string) => {
+    async (text: string, provider: AiProviderKey, label: string, attachments: PendingAttachment[] = []) => {
       const question = text.trim();
-      if (!question || isStreaming) return;
+      if ((!question && attachments.length === 0) || isStreaming) return;
 
+      const userId = newId();
       const assistantId = newId();
+      const localAttachments: ChatAttachment[] = attachments.map(({ localId, name, mimeType, kind, size, previewUrl }) => ({
+        key: localId,
+        name,
+        mimeType,
+        kind,
+        size,
+        previewUrl,
+      }));
       setLive((current) => ({
         ...current,
         entries: [
           ...current.entries,
-          { id: newId(), role: "user", text: question },
+          { id: userId, role: "user", text: question, ...(localAttachments.length ? { attachments: localAttachments } : {}) },
           { id: assistantId, role: "assistant", provider, label, blocks: [], status: "streaming" },
         ],
       }));
@@ -147,6 +158,7 @@ export function useXocoChat(conversationId: string | null, onConversation: (id: 
           provider,
           conversationId: liveIdRef.current ?? undefined,
           message: question,
+          attachments,
           signal: controller.signal,
           onEvent: (event) => {
             if (event.type === "conversation") {
@@ -161,6 +173,21 @@ export function useXocoChat(conversationId: string | null, onConversation: (id: 
             if (event.type === "title") {
               freshTitles.add(event.id);
               void queryClient.invalidateQueries({ queryKey: CONVERSATIONS });
+              return;
+            }
+            if (event.type === "attachments") {
+              // Ya guardados: se queda la vista previa local y se agrega el id del servidor (para abrirlos).
+              setLive((current) => ({
+                ...current,
+                entries: current.entries.map((entry) =>
+                  entry.id === userId && entry.role === "user"
+                    ? {
+                        ...entry,
+                        attachments: event.attachments.map((meta, index) => ({ ...fromMeta(meta), key: localAttachments[index]?.key ?? meta.id, previewUrl: localAttachments[index]?.previewUrl })),
+                      }
+                    : entry,
+                ),
+              }));
               return;
             }
             if (event.type === "start") {

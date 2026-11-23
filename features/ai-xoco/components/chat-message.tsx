@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { AlertTriangle, Check } from "lucide-react";
-import type { ChatEntry } from "../types/ai-chat.types";
+import type { ChatAttachment, ChatEntry } from "../types/ai-chat.types";
 import { XocoAgent } from "./xoco-agent";
 import { CopyButton } from "./copy-button";
 import { ThinkingIndicator } from "./thinking-indicator";
@@ -11,20 +11,28 @@ import { TypingText } from "./typing-text";
 import { SpeakButton } from "./speak-button";
 import { ChatChart } from "./chat-chart";
 import { ChatTable } from "./chat-table";
+import { MessageAttachments } from "./message-attachments";
 
 type AssistantEntry = Extract<ChatEntry, { role: "assistant" }>;
 
-export function UserBubble({ text }: { text: string }) {
+interface UserBubbleProps {
+  text: string;
+  attachments?: ChatAttachment[];
+  conversationId?: string | null;
+}
+
+export function UserBubble({ text, attachments, conversationId = null }: UserBubbleProps) {
   return (
     <div className="group/user ml-auto flex max-w-[85%] flex-col items-end gap-1">
-      <div className="whitespace-pre-wrap rounded-3xl bg-muted px-4 py-2.5 text-sm text-foreground">{text}</div>
-      <CopyButton
+      {attachments?.length ? <MessageAttachments conversationId={conversationId} attachments={attachments} /> : null}
+      {text && <div className="whitespace-pre-wrap rounded-3xl bg-muted px-4 py-2.5 text-sm text-foreground">{text}</div>}
+      {text && <CopyButton
         value={text}
         size="icon"
         variant="ghost"
         label="Copiar pregunta"
         className="h-7 w-7 text-muted-foreground opacity-0 transition-opacity group-hover/user:opacity-100 focus-visible:opacity-100 max-md:opacity-100"
-      />
+      />}
     </div>
   );
 }
