@@ -32,8 +32,46 @@ export interface AiTable {
   nota?: string;
 }
 
+/** Tipo de archivo que Xoco IA sabe leer. */
+export type AiAttachmentKind = "image" | "pdf" | "text";
+
+/** Archivo adjunto ya guardado en el servidor (sin contenido). */
+export interface AiAttachmentMeta {
+  id: string;
+  name: string;
+  mimeType: string;
+  kind: AiAttachmentKind;
+  size: number;
+}
+
+/** Archivo listo para subirse (base64) con su vista previa local. */
+export interface PendingAttachment {
+  localId: string;
+  name: string;
+  mimeType: string;
+  kind: AiAttachmentKind;
+  size: number;
+  data: string;
+  /** URL local (object URL) para ver la imagen antes de que el servidor la guarde. */
+  previewUrl?: string;
+  /** Nota corta para el usuario (ej. "Excel convertido a CSV"). */
+  note?: string;
+}
+
+/** Adjunto que se dibuja en una pregunta: puede venir del servidor (`id`) o ser local todavía. */
+export interface ChatAttachment {
+  key: string;
+  id?: string;
+  name: string;
+  mimeType: string;
+  kind: AiAttachmentKind;
+  size: number;
+  previewUrl?: string;
+}
+
 export type AiChatEvent =
   | { type: "conversation"; id: string; title: string }
+  | { type: "attachments"; messageId: string; attachments: AiAttachmentMeta[] }
   | { type: "title"; id: string; title: string }
   | { type: "start"; provider: AiProviderKey; label: string; model: string }
   | { type: "tool"; name: string; title: string }
@@ -53,7 +91,7 @@ export type AssistantBlock =
   | { kind: "error"; message: string };
 
 export type ChatEntry =
-  | { id: string; role: "user"; text: string }
+  | { id: string; role: "user"; text: string; attachments?: ChatAttachment[] }
   | { id: string; role: "assistant"; provider: AiProviderKey; label: string; model?: string; blocks: AssistantBlock[]; status: "streaming" | "done" | "error" | "stopped" };
 
 export interface AiConversationSummary {
@@ -70,6 +108,7 @@ export interface AiConversationDetail extends AiConversationSummary {
     role: "user" | "assistant";
     text: string;
     blocks: AssistantBlock[] | null;
+    attachments: AiAttachmentMeta[] | null;
     provider: AiProviderKey | null;
     model: string | null;
     status: "done" | "error" | "stopped" | null;

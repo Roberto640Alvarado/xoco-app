@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { parseAsString, useQueryState } from "nuqs";
-import { AlertTriangle, ArrowUp, Loader2, PanelLeft, Square, SquarePen } from "lucide-react";
+import { AlertTriangle, ArrowUp, Loader2, PanelLeft, Paperclip, Square, SquarePen, Upload } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth-store";
@@ -10,9 +10,11 @@ import { XocoAgent } from "./xoco-agent";
 import { AssistantMessage, UserBubble } from "./chat-message";
 import { ChatHistory } from "./chat-history";
 import { ProviderIcon } from "./provider-icon";
+import { ComposerAttachments } from "./composer-attachments";
+import { ATTACHMENT_ACCEPT, AttachmentError, MAX_ATTACHMENTS, MAX_TOTAL_BYTES, prepareAttachment, releasePreview } from "../lib/attachments";
 import { CHAT_SUGGESTIONS } from "../lib/connector-content";
 import { useAiChatConfig, useXocoChat } from "../hooks/use-xoco-chat";
-import type { AiProviderKey } from "../types/ai-chat.types";
+import type { AiProviderKey, PendingAttachment } from "../types/ai-chat.types";
 
 const SUGGESTION_PROMPTS: Record<string, string> = {
   "Resumen del mes": "Dame el resumen de este mes: venta oficial por tienda y cómo vamos contra la meta. Con gráfica.",
@@ -32,8 +34,14 @@ export function XocoChatView() {
   const { entries, isStreaming, isLoading: chatLoading, loadError, send, stop } = useXocoChat(conversationId, onConversation);
   const [draft, setDraft] = useState("");
   const [chosen, setChosen] = useState<AiProviderKey | null>(null);
+  const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
+  const [preparing, setPreparing] = useState(0);
+  const [attachError, setAttachError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const dragDepth = useRef(0);
 
   const providers = config?.providers ?? [];
   const available = providers.filter((provider) => provider.available);
@@ -45,10 +53,66 @@ export function XocoChatView() {
     if (node) node.scrollTo({ top: node.scrollHeight, behavior: "smooth" });
   }, [entries]);
 
+  const canAttach = Boolean(provider) && !isStreaming;
+
+  async function addFiles(files: File[]) {
+    if (!canAttach || files.length === 0) return;
+    setAttachError(null);
+    const room = MAX_ATTACHMENTS - attachments.length - preparing;
+    if (room <= 0) {
+      setAttachError(`Puedes adjuntar hasta ${MAX_ATTACHMENTS} archivos por mensaje.`);
+      return;
+    }
+    const accepted = files.slice(0, room);
+    if (files.length > room) setAttachError(`Solo se agregaron ${room} archivo${room === 1 ? "" : "s"}: el máximo es ${MAX_ATTACHMENTS} por mensaje.`);
+
+    setPreparing((count) => count + accepted.length);
+    for (const file of accepted) {
+      try {
+        const prepared = await prepareAttachment(file);
+        setAttachments((current) => {
+          const total = current.reduce((sum, item) => sum + item.size, 0) + prepared.size;
+          if (total > MAX_TOTAL_BYTES) {
+            releasePreview(prepared);
+            setAttachError("Los archivos juntos pesan más de 20 MB. Quita alguno o envíalos en otro mensaje.");
+            return current;
+          }
+          return [...current, prepared];
+        });
+      } catch (error) {
+        setAttachError(error instanceof AttachmentError ? error.message : `No se pudo leer "${file.name}".`);
+      } finally {
+        setPreparing((count) => count - 1);
+      }
+    }
+    inputRef.current?.focus();
+  }
+
+  function removeAttachment(localId: string) {
+    setAttachments((current) => {
+      const removed = current.find((item) => item.localId === localId);
+      if (removed) releasePreview(removed);
+      return current.filter((item) => item.localId !== localId);
+    });
+    setAttachError(null);
+  }
+
+  function clearAttachments() {
+    attachments.forEach(releasePreview);
+    setAttachments([]);
+    setAttachError(null);
+  }
+
+  const canSend = Boolean(provider) && preparing === 0 && (draft.trim().length > 0 || attachments.length > 0);
+
   function submit(text: string) {
-    if (!provider || !text.trim() || isStreaming) return;
-    void send(text, provider.key, provider.label);
+    if (!provider || isStreaming || preparing > 0) return;
+    if (!text.trim() && attachments.length === 0) return;
+    // Las vistas previas pasan a la burbuja de la pregunta: no se liberan aquí.
+    void send(text, provider.key, provider.label, attachments);
     setDraft("");
+    setAttachments([]);
+    setAttachError(null);
     inputRef.current?.focus();
   }
 
@@ -56,6 +120,7 @@ export function XocoChatView() {
     if (isStreaming) stop();
     void setConversationId(null);
     setDraft("");
+    clearAttachments();
     setHistoryOpen(false);
     inputRef.current?.focus();
   }
@@ -86,7 +151,36 @@ export function XocoChatView() {
         {history}
       </aside>
 
-      <section className="flex min-w-0 flex-1 flex-col">
+      <section
+        className="relative flex min-w-0 flex-1 flex-col"
+        onDragEnter={(event) => {
+          if (!event.dataTransfer.types.includes("Files")) return;
+          event.preventDefault();
+          dragDepth.current += 1;
+          if (canAttach) setDragging(true);
+        }}
+        onDragOver={(event) => {
+          if (event.dataTransfer.types.includes("Files")) event.preventDefault();
+        }}
+        onDragLeave={() => {
+          dragDepth.current = Math.max(0, dragDepth.current - 1);
+          if (dragDepth.current === 0) setDragging(false);
+        }}
+        onDrop={(event) => {
+          if (!event.dataTransfer.types.includes("Files")) return;
+          event.preventDefault();
+          dragDepth.current = 0;
+          setDragging(false);
+          void addFiles(Array.from(event.dataTransfer.files));
+        }}
+      >
+        {dragging && (
+          <div className="pointer-events-none absolute inset-2 z-20 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#7b4a30]/60 bg-background/90 text-center backdrop-blur-sm dark:border-[#d0996c]/60">
+            <Upload className="h-7 w-7 text-[#7b4a30] dark:text-[#d0996c]" aria-hidden="true" />
+            <p className="text-sm font-semibold text-foreground">Suelta los archivos aquí</p>
+            <p className="text-xs text-muted-foreground">Imágenes, PDF, Excel, CSV o texto · hasta {MAX_ATTACHMENTS} archivos</p>
+          </div>
+        )}
         <header className="flex items-center justify-between gap-2 border-b border-border/60 px-3 py-2.5 sm:px-4">
           <div className="flex min-w-0 items-center gap-2">
             <button
@@ -159,11 +253,17 @@ export function XocoChatView() {
                 <p className="max-w-md text-sm text-muted-foreground">
                   {noProviders
                     ? "Xoco IA todavía no tiene llaves de Claude ni de OpenAI. Agrégalas en Xoco IA → Llaves de API para empezar."
-                    : "Pregúntame por ventas, metas, inventario o cualquier dato de Odoo. Te respondo con cifras del panel, gráficas y tablas."}
+                    : "Pregúntame por ventas, metas, inventario o cualquier dato de Odoo. También puedes adjuntar imágenes, PDF o Excel para que los revise."}
                 </p>
               </div>
             ) : (
-              entries.map((entry) => (entry.role === "user" ? <UserBubble key={entry.id} text={entry.text} /> : <AssistantMessage key={entry.id} entry={entry} />))
+              entries.map((entry) =>
+                entry.role === "user" ? (
+                  <UserBubble key={entry.id} text={entry.text} attachments={entry.attachments} conversationId={conversationId} />
+                ) : (
+                  <AssistantMessage key={entry.id} entry={entry} />
+                ),
+              )
             )}
           </div>
         </div>
@@ -199,6 +299,7 @@ export function XocoChatView() {
             }}
             className="rounded-3xl border border-border bg-card p-2 shadow-sm focus-within:border-foreground/20"
           >
+            <ComposerAttachments attachments={attachments} preparing={preparing} disabled={isStreaming} onRemove={removeAttachment} />
             <label htmlFor="xoco-chat-input" className="sr-only">
               Mensaje para Xoco IA
             </label>
@@ -209,17 +310,46 @@ export function XocoChatView() {
               value={draft}
               disabled={!provider}
               onChange={(event) => setDraft(event.target.value)}
+              onPaste={(event) => {
+                const files = Array.from(event.clipboardData.files);
+                if (files.length === 0) return;
+                event.preventDefault();
+                void addFiles(files);
+              }}
               onKeyDown={(event) => {
                 if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
                   event.preventDefault();
                   submit(draft);
                 }
               }}
-              placeholder={provider ? "Pregúntale a Xoco…" : configLoading ? "Cargando…" : "Agrega una llave en Xoco IA → Llaves de API"}
+              placeholder={provider ? (attachments.length ? "Pregunta algo sobre los archivos…" : "Pregúntale a Xoco…") : configLoading ? "Cargando…" : "Agrega una llave en Xoco IA → Llaves de API"}
               className="block max-h-40 min-h-[2.5rem] w-full resize-none bg-transparent px-3 py-2 text-sm text-foreground [field-sizing:content] placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed"
             />
+            <input
+              ref={fileRef}
+              type="file"
+              multiple
+              accept={ATTACHMENT_ACCEPT}
+              className="sr-only"
+              tabIndex={-1}
+              aria-hidden="true"
+              onChange={(event) => {
+                void addFiles(Array.from(event.target.files ?? []));
+                event.target.value = "";
+              }}
+            />
             <div className="flex items-center justify-between gap-2 px-1">
-              <span className="flex min-w-0 items-center gap-1.5 truncate pl-2 text-[11px] text-muted-foreground">
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={!canAttach || attachments.length + preparing >= MAX_ATTACHMENTS}
+                aria-label="Adjuntar archivos"
+                title="Adjuntar imágenes, PDF, Excel, CSV o texto"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-black/5 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/5"
+              >
+                <Paperclip className="h-4 w-4" aria-hidden="true" />
+              </button>
+              <span className="flex min-w-0 flex-1 items-center gap-1.5 truncate text-[11px] text-muted-foreground">
                 {provider && <ProviderIcon provider={provider.key} className="size-3" />}
                 <span className="truncate">{provider ? `${provider.label} · ${provider.model}` : ""}</span>
               </span>
@@ -236,7 +366,7 @@ export function XocoChatView() {
               ) : (
                 <button
                   type="submit"
-                  disabled={!provider || !draft.trim()}
+                  disabled={!canSend}
                   aria-label="Enviar"
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground text-background transition-opacity disabled:opacity-30"
                 >
@@ -245,6 +375,12 @@ export function XocoChatView() {
               )}
             </div>
           </form>
+          {attachError && (
+            <p role="alert" className="mt-2 flex items-start gap-1.5 px-2 text-xs text-destructive">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              {attachError}
+            </p>
+          )}
           <p className="mt-2 text-center text-[11px] text-muted-foreground">Xoco IA puede equivocarse. Revisa las cifras importantes en el panel.</p>
         </div>
       </section>
