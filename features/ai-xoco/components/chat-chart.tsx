@@ -19,6 +19,8 @@ import {
 } from "recharts";
 import type { AiChart } from "../types/ai-chat.types";
 import { formatValue } from "./value-format";
+import { chartToTable, exportTableToPdf, exportTablesToExcel } from "../lib/answer-export";
+import { ExportButtons } from "./export-buttons";
 
 // Paleta de gráficas de Xoco (tokens --chart-1..5 de globals.css).
 const COLORS = ["var(--color-chart-1)", "var(--color-chart-2)", "var(--color-chart-3)", "var(--color-chart-4)", "var(--color-chart-5)"];
@@ -117,7 +119,15 @@ export function ChatChart({ chart }: { chart: AiChart }) {
 
   return (
     <figure className="w-full rounded-2xl border border-border bg-card p-3 sm:p-4">
-      <figcaption className="mb-2 text-sm font-semibold text-foreground">{chart.titulo}</figcaption>
+      <figcaption className="mb-2 flex items-center justify-between gap-2 text-sm font-semibold text-foreground">
+        <span className="min-w-0 truncate">{chart.titulo}</span>
+        <ExportButtons
+          subject="datos de la gráfica"
+          onExcel={() => exportTablesToExcel([chartToTable(chart)])}
+          onPdf={() => exportTableToPdf(chartToTable(chart))}
+          className="-mr-1.5"
+        />
+      </figcaption>
       <div className="h-64 w-full sm:h-72">
         <ResponsiveContainer width="100%" height="100%">
           {content}

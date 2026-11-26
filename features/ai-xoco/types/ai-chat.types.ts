@@ -32,6 +32,17 @@ export interface AiTable {
   nota?: string;
 }
 
+export type AiFileFormat = "excel" | "pdf" | "csv" | "txt" | "md" | "json";
+
+/** Archivo que generó Xoco IA: el panel lo arma en el navegador al descargarlo. */
+export interface AiFile {
+  nombre: string;
+  formato: AiFileFormat;
+  titulo?: string;
+  contenido?: string;
+  tablas?: AiTable[];
+}
+
 /** Tipo de archivo que Xoco IA sabe leer. */
 export type AiAttachmentKind = "image" | "pdf" | "text";
 
@@ -78,6 +89,7 @@ export type AiChatEvent =
   | { type: "text"; text: string }
   | { type: "chart"; chart: AiChart }
   | { type: "table"; table: AiTable }
+  | { type: "file"; file: AiFile }
   | { type: "done"; usage: { inputTokens: number; outputTokens: number }; steps: number }
   | { type: "error"; message: string };
 
@@ -88,6 +100,7 @@ export type AssistantBlock =
   | { kind: "text"; text: string; fresh?: boolean }
   | { kind: "chart"; chart: AiChart }
   | { kind: "table"; table: AiTable }
+  | { kind: "file"; file: AiFile }
   | { kind: "error"; message: string };
 
 export type ChatEntry =

@@ -14,6 +14,7 @@ export function blocksToPlainText(blocks: AssistantBlock[]): string {
       if (block.kind === "text") return block.text.replace(/\*\*(.+?)\*\*/g, "$1");
       if (block.kind === "table") return tableToTsv(block.table);
       if (block.kind === "chart") return `[Gráfica: ${block.chart.titulo}]`;
+      if (block.kind === "file") return `[Archivo: ${block.file.nombre} (${block.file.formato})]`;
       return "";
     })
     .filter(Boolean)

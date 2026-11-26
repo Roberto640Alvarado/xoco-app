@@ -11,7 +11,10 @@ import { TypingText } from "./typing-text";
 import { SpeakButton } from "./speak-button";
 import { ChatChart } from "./chat-chart";
 import { ChatTable } from "./chat-table";
+import { ChatFile } from "./chat-file";
 import { MessageAttachments } from "./message-attachments";
+import { ExportButtons } from "./export-buttons";
+import { answerTables, answerTitle, exportBlocksToPdf, exportTablesToExcel } from "../lib/answer-export";
 
 type AssistantEntry = Extract<ChatEntry, { role: "assistant" }>;
 
@@ -48,6 +51,7 @@ export function AssistantMessage({ entry }: { entry: AssistantEntry }) {
   const thinking = streaming && last?.kind !== "text";
   const mood = streaming ? (thinking ? "thinking" : "talking") : "idle";
   const plain = blocksToPlainText(entry.blocks);
+  const tables = answerTables(entry.blocks);
 
   return (
     <motion.div
@@ -73,6 +77,7 @@ export function AssistantMessage({ entry }: { entry: AssistantEntry }) {
           }
           if (block.kind === "chart") return <ChatChart key={index} chart={block.chart} />;
           if (block.kind === "table") return <ChatTable key={index} table={block.table} />;
+          if (block.kind === "file") return <ChatFile key={index} file={block.file} />;
           return (
             <p key={index} role="alert" className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
@@ -88,6 +93,14 @@ export function AssistantMessage({ entry }: { entry: AssistantEntry }) {
           <div className="-ml-1.5 flex items-center gap-0.5">
             <CopyButton value={plain} size="icon" variant="ghost" label="Copiar respuesta" className="h-7 w-7 text-muted-foreground" />
             <SpeakButton id={entry.id} text={entry.blocks.filter((block) => block.kind === "text").map((block) => (block.kind === "text" ? block.text : "")).join("\n\n")} />
+            {tables.length > 0 && (
+              <ExportButtons
+                size="icon"
+                subject="respuesta completa"
+                onExcel={() => exportTablesToExcel(tables, answerTitle(entry.blocks))}
+                onPdf={() => exportBlocksToPdf(entry.blocks, answerTitle(entry.blocks))}
+              />
+            )}
           </div>
         )}
       </div>

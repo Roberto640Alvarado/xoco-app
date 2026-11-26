@@ -54,6 +54,8 @@ function applyEvent(blocks: AssistantBlock[], event: AiChatEvent): AssistantBloc
       return [...blocks, { kind: "chart", chart: event.chart }];
     case "table":
       return [...blocks, { kind: "table", table: event.table }];
+    case "file":
+      return [...blocks, { kind: "file", file: event.file }];
     case "error":
       return [...blocks, { kind: "error", message: event.message }];
     default:

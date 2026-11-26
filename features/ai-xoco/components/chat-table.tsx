@@ -3,6 +3,8 @@ import type { AiTable } from "../types/ai-chat.types";
 import { formatValue } from "./value-format";
 import { CopyButton } from "./copy-button";
 import { tableToTsv } from "../lib/copy-text";
+import { exportTableToPdf, exportTablesToExcel } from "../lib/answer-export";
+import { ExportButtons } from "./export-buttons";
 
 /** Tabla que pidió Xoco IA. Números alineados a la derecha; scroll horizontal en celular. */
 export function ChatTable({ table }: { table: AiTable }) {
@@ -10,7 +12,10 @@ export function ChatTable({ table }: { table: AiTable }) {
     <figure className="w-full overflow-hidden rounded-2xl border border-border bg-card">
       <figcaption className="flex items-center justify-between gap-2 border-b border-border py-1.5 pl-4 pr-2 text-sm font-semibold text-foreground">
         <span className="min-w-0 truncate">{table.titulo}</span>
-        <CopyButton value={tableToTsv(table)} label="Copiar tabla" variant="ghost" size="sm" className="shrink-0 text-xs font-normal text-muted-foreground" />
+        <div className="flex shrink-0 items-center gap-0.5">
+          <ExportButtons subject="tabla" onExcel={() => exportTablesToExcel([table])} onPdf={() => exportTableToPdf(table)} />
+          <CopyButton value={tableToTsv(table)} label="Copiar" variant="ghost" size="sm" className="h-7 shrink-0 px-2 text-xs font-normal text-muted-foreground" />
+        </div>
       </figcaption>
       <div className="max-h-96 overflow-auto">
         <table className="w-full min-w-max border-collapse text-[13px]">
