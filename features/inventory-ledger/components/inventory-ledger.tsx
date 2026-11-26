@@ -72,6 +72,8 @@ export function InventoryLedger({ posConfigId, storeName, leading }: InventoryLe
   const { data: items } = useInventoryItems(posConfigId);
   const ledger = useInventoryLedger({ posConfigId, ...range, productId, type });
   const entries = ledger.data ?? [];
+  // Lo que queda tras los filtros de columna de la tabla (todas las páginas).
+  const [filteredEntries, setFilteredEntries] = useState<InventoryLedgerEntry[]>([]);
 
   const productLabel = (raw: string) => items?.find((item) => String(item.productId) === raw)?.productName ?? raw;
 
@@ -203,11 +205,11 @@ export function InventoryLedger({ posConfigId, storeName, leading }: InventoryLe
         </Select>
         <ExportExcelButton
           filename={`registro-inventario${storeName ? `-${storeName}` : ""}`}
-          disabled={ledger.isLoading || entries.length === 0}
+          disabled={ledger.isLoading || filteredEntries.length === 0}
           sheets={() => [
             {
               name: "Registro",
-              rows: entries.map((entry) => ({
+              rows: filteredEntries.map((entry) => ({
                 "Fecha y hora": formatDateTime(entry.occurredAt),
                 Tipo: TYPE_LABEL[entry.type],
                 Producto: entry.productName,
@@ -232,6 +234,7 @@ export function InventoryLedger({ posConfigId, storeName, leading }: InventoryLe
           emptyMessage="No hay movimientos en este rango."
           itemLabel={{ singular: "registro", plural: "registros" }}
           tourId="ledger-table"
+          onFilteredRowsChange={setFilteredEntries}
         />
       )}
     </div>

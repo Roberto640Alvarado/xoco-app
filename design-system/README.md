@@ -74,6 +74,8 @@ Texto de las cards: una frase corta, sin guiones largos ("—"), y los botones s
 - Wrap de texto (`nowrap` solo para fechas y cantidades); en móvil se vuelve tarjetas (`mobile: "title" | "footer" | "hidden"`).
 - `onRowClick` para abrir un modal de detalle; la tabla muestra lo esencial y el resto vive en el modal.
 - `getRowClassName` para resaltar filas (ej. en Conteo, las filas con un conteo escrito sin guardar llevan `bg-primary/[0.04]`).
+- `onFilteredRowsChange` avisa las filas que quedan tras los filtros (todas las páginas). Todo botón "Exportar" junto a una `DataTable` exporta esas filas, no `rows` completo ni solo la página visible.
+- Listados que pagina la API: el Excel trae TODAS las páginas con los mismos filtros de la pantalla (ej. `fetchAllPosTickets` en Órdenes); `ExportExcelButton` acepta `sheets` async para eso.
 - `TablePagination` (`design-system/components/table-pagination.tsx`): el pie de paginación (Mostrando X–Y de N, filas por página y botones). Lo usa `DataTable` y los listados que pagina la API (ej. Tickets → Órdenes).
 - Tabla de captura (Conteo): `ValueBox` (`design-system/components/value-box.tsx`) para el valor de solo lectura y un `Input` con borde marcado para el editable. El campo arranca vacío con el valor de referencia como placeholder; al escribir se marca con borde `primary` y debajo sale una `InfoBadge` `sm` con la diferencia (Cuadra en `success`, Sobran en `info`, Faltan en `warning`). Enter o ↓ pasa al siguiente campo y ↑ al anterior.
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import { Check, Filter, FilterX, ListFilter, X } from "lucide-react";
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";
@@ -65,6 +65,10 @@ interface DataTableProps<T> {
   onRowClick?: (row: T) => void;
   /** Clases extra por fila (ej. resaltar las filas editadas en Conteo). */
   getRowClassName?: (row: T) => string | undefined;
+  /** Avisa las filas que quedan tras los filtros de columna (todas las
+   * páginas, no solo la visible). Para que "Exportar" descargue exactamente
+   * lo filtrado. Pasar una función estable (ej. el setter de un useState). */
+  onFilteredRowsChange?: (rows: T[]) => void;
   className?: string;
 }
 
@@ -173,6 +177,7 @@ export function DataTable<T>({
   columnFilters = true,
   onRowClick,
   getRowClassName,
+  onFilteredRowsChange,
   className,
 }: DataTableProps<T>) {
   const [filters, setFilters] = useState<Record<string, string>>({});
@@ -213,6 +218,10 @@ export function DataTable<T>({
       }),
     );
   }, [rows, filters, columns]);
+
+  useEffect(() => {
+    onFilteredRowsChange?.(filteredRows);
+  }, [filteredRows, onFilteredRowsChange]);
 
   const total = filteredRows.length;
   const pageCount = Math.max(1, Math.ceil(total / pageSize));

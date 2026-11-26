@@ -104,6 +104,9 @@ export function ProductComparisonView() {
   const comparison = useProductComparison(periods, posConfigId, !periodsError);
   const data = comparison.data;
   const items = useMemo(() => sortItems(data?.items ?? [], sort, metric), [data, sort, metric]);
+  // Lo que queda tras el filtro de la tabla; null = aún no reportó (todo).
+  const [filteredItems, setFilteredItems] = useState<ProductComparisonItem[] | null>(null);
+  const exportItems = filteredItems ?? items;
 
   let labelA = formatPeriodLabel(periods.a, today);
   let labelB = formatPeriodLabel(periods.b, today);
@@ -147,7 +150,7 @@ export function ProductComparisonView() {
             },
             {
               name: "Productos",
-              rows: items.map((item) => ({
+              rows: exportItems.map((item) => ({
                 Producto: item.productName,
                 [`Unidades ${labelA}`]: item.periodA.quantity,
                 [`Unidades ${labelB}`]: item.periodB.quantity,
@@ -248,7 +251,13 @@ export function ProductComparisonView() {
       </Panel>
 
       <Panel title="Todos los productos" description="Unidades e ingresos de cada período y su cambio." flush>
-        <ProductComparisonTable items={items} labelA={labelA} labelB={labelB} isLoading={isLoading} />
+        <ProductComparisonTable
+          items={items}
+          labelA={labelA}
+          labelB={labelB}
+          isLoading={isLoading}
+          onFilteredItemsChange={setFilteredItems}
+        />
       </Panel>
     </div>
   );

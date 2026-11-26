@@ -328,6 +328,9 @@ interface InventoryTableProps {
   /** Vendedor/Planta: solo ven la existencia estimada — sin la columna de
    * captura ni el botón de guardar (el backend tampoco les deja escribir). */
   readOnly?: boolean;
+  /** Avisa los productos que quedan tras la búsqueda y los filtros de la
+   * tabla (todas las páginas), para que "Exportar" respete lo filtrado. */
+  onFilteredItemsChange?: (items: InventoryItem[]) => void;
 }
 
 // Tabla de captura del conteo físico por tienda. Cada producto muestra
@@ -340,7 +343,16 @@ interface InventoryTableProps {
 // la estimada cuando cuadra, y la tabla arranca con 50 filas por página. Se
 // guarda en LOTE con confirmación. Los borradores viven aquí, así que se
 // conservan al cambiar de página o filtrar.
-export function InventoryTable({ posConfigId, storeName, items, isLoading, isError, errorMessage, readOnly = false }: InventoryTableProps) {
+export function InventoryTable({
+  posConfigId,
+  storeName,
+  items,
+  isLoading,
+  isError,
+  errorMessage,
+  readOnly = false,
+  onFilteredItemsChange,
+}: InventoryTableProps) {
   const upsert = useUpsertInventoryBulk();
   const [drafts, setDrafts] = useState<Record<number, string>>({});
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -726,6 +738,7 @@ export function InventoryTable({ posConfigId, storeName, items, isLoading, isErr
           itemLabel={{ singular: "producto", plural: "productos" }}
           defaultPageSize={50}
           filtersTourId="inv-search"
+          onFilteredRowsChange={onFilteredItemsChange}
         />
       )}
 

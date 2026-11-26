@@ -11,6 +11,8 @@ interface ProductComparisonTableProps {
   labelA: string;
   labelB: string;
   isLoading: boolean;
+  /** Productos que quedan tras el filtro de la tabla (todas las páginas). */
+  onFilteredItemsChange?: (items: ProductComparisonItem[]) => void;
 }
 
 function signed(value: number, format: (value: number) => string): string {
@@ -34,7 +36,7 @@ function ChangeCell({ a, b, format }: { a: number; b: number; format: (value: nu
  * con unidades e ingresos de cada período y su cambio. Recibe las filas ya
  * ordenadas por la pantalla.
  */
-export function ProductComparisonTable({ items, labelA, labelB, isLoading }: ProductComparisonTableProps) {
+export function ProductComparisonTable({ items, labelA, labelB, isLoading, onFilteredItemsChange }: ProductComparisonTableProps) {
   const columns: DataTableColumn<ProductComparisonItem>[] = [
     {
       id: "product",
@@ -104,6 +106,7 @@ export function ProductComparisonTable({ items, labelA, labelB, isLoading }: Pro
       emptyMessage="Sin productos vendidos en ninguno de los dos períodos"
       itemLabel={{ singular: "producto", plural: "productos" }}
       defaultPageSize={25}
+      onFilteredRowsChange={onFilteredItemsChange}
     />
   );
 }

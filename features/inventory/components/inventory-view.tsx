@@ -12,6 +12,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { formatDateTime } from "@/lib/format";
 import { useInventoryItems } from "../hooks/use-inventory-items";
 import { InventoryTable } from "./inventory-table";
+import type { InventoryItem } from "../types/inventory.types";
 
 // Inventario inicial por tienda (primer tramo — ver plan-history):
 // captura centralizada de Finanzas del conteo físico de cada producto del
@@ -49,6 +50,10 @@ export function InventoryView() {
     [inventory.data],
   );
   const selectedStore = stores?.find((store) => store.id === posConfigId);
+  // Lo que queda tras la búsqueda y los filtros de la tabla; null = la tabla
+  // aún no reportó (exporta todo).
+  const [filteredItems, setFilteredItems] = useState<InventoryItem[] | null>(null);
+  const exportItems = filteredItems ?? items;
 
   return (
     <div className="flex flex-col gap-4">
@@ -75,11 +80,11 @@ export function InventoryView() {
         <ExportExcelButton
           tourId="inv-export"
           filename={`inventario${selectedStore ? `-${selectedStore.name}` : ""}`}
-          disabled={inventory.isLoading || items.length === 0}
+          disabled={inventory.isLoading || exportItems.length === 0}
           sheets={() => [
             {
               name: "Inventario",
-              rows: items.map((item) => ({
+              rows: exportItems.map((item) => ({
                 Categoría: item.categoryName,
                 Producto: item.productName,
                 Unidad: item.unit === "kg" ? "Kg" : "Unidad",
@@ -106,6 +111,7 @@ export function InventoryView() {
           isError={inventory.isError}
           errorMessage={inventory.error?.message}
           readOnly={readOnly}
+          onFilteredItemsChange={setFilteredItems}
         />
       )}
     </div>

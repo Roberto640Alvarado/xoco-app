@@ -19,6 +19,7 @@ import { formatCurrency, formatInteger } from "@/lib/format";
 import { addDaysIso, isIsoDate, todayLocalIso } from "@/lib/local-date";
 import { useDebouncedValue } from "../hooks/use-debounced-value";
 import { usePosTickets } from "../hooks/use-pos-tickets";
+import { fetchAllPosTickets } from "../api/pos-tickets.api";
 import type { PosTicketSort, PosTicketSummary } from "../types/pos-tickets.types";
 import { ticketNumber, ticketState, ticketWithoutTip } from "../utils/ticket-format";
 import { TicketDetailDialog } from "./ticket-detail-dialog";
@@ -104,14 +105,25 @@ export function PosTicketsView() {
         />
         <ExportExcelButton
           filename="ordenes"
-          label="Exportar página"
+          label="Exportar"
           disabled={isFirstLoad || items.length === 0}
-          sheets={() => [
+          // Todas las páginas con los mismos filtros de la pantalla (rango,
+          // tienda, búsqueda y orden), no solo la página visible. La búsqueda
+          // sale de la caja (aunque no haya pasado el debounce).
+          sheets={async () => [
             {
               name: "Órdenes",
               // La propina no cuenta como venta en el Excel (en pantalla sí
               // se ve como producto). "Pagado" queda tal cual lo cobró Odoo.
-              rows: items.map((ticket) => {
+              rows: (
+                await fetchAllPosTickets({
+                  dateFrom,
+                  dateTo,
+                  posConfigId,
+                  search: searchInput.trim() || undefined,
+                  sort: query.orden,
+                })
+              ).map((ticket) => {
                 const sale = ticketWithoutTip(ticket);
                 return {
                   Orden: ticketNumber(ticket),

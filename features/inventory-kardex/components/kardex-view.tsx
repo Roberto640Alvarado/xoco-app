@@ -104,7 +104,7 @@ export function KardexView() {
     if (!kardex.data) return;
     setPdfLoading(true);
     try {
-      await downloadKardexPdf(kardex.data, email);
+      await downloadKardexPdf({ ...kardex.data, products: visible }, email);
     } finally {
       setPdfLoading(false);
     }
@@ -128,7 +128,7 @@ export function KardexView() {
         }
         tourId="kardex-download"
       >
-        <Button type="button" onClick={handlePdf} disabled={!ready || pdfLoading}>
+        <Button type="button" onClick={handlePdf} disabled={!ready || visible.length === 0 || pdfLoading}>
           {pdfLoading ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <FileDown className="size-4" aria-hidden="true" />}
           Descargar PDF
         </Button>
@@ -136,8 +136,9 @@ export function KardexView() {
           size="default"
           label="Excel"
           filename={`kardex-${slug(storeName ?? "tienda")}-${range.dateFrom}-a-${range.dateTo}`}
-          disabled={!ready}
-          sheets={() => (kardex.data ? kardexSheets(kardex.data) : [])}
+          disabled={!ready || visible.length === 0}
+          // Respeta los filtros (movimiento, categoría y búsqueda).
+          sheets={() => (kardex.data ? kardexSheets({ ...kardex.data, products: visible }) : [])}
         />
       </SectionCard>
 
